@@ -25,9 +25,9 @@ export default function RootLayout({
 		<html lang="es" suppressHydrationWarning className="h-full">
 			<head>
 				<link rel="manifest" href="/manifest.json" />
-				<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-ar-180.png" />
-				<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-ar-512.png" />
-				<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-ar-192.png" />
+				<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-doce8.png" />
+				<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-doce8.png" />
+				<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-doce8.png" />
 				<meta name="theme-color" content="#0f172a" />
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-capable" content="yes" />
