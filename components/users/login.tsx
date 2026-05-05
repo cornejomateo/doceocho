@@ -61,7 +61,7 @@ export default function LoginPage() {
 
 				{/* Logo and Title */}
 				<div className="text-center mb-8">
-					<h1 className="text-3xl font-bold text-white">AR Aberturas</h1>
+					<h1 className="text-3xl font-bold text-white">Doce ocho</h1>
 					<h3 className="text-lg text-gray-300 mt-2">Iniciar sesión</h3>
 				</div>
 
@@ -113,7 +113,7 @@ export default function LoginPage() {
 				</form>
 
 				<div className="mt-6 text-center text-sm text-gray-400">
-					<p>Sistema de gestión para AR Aberturas</p>
+					<p>Sistema de gestión para Doce ocho</p>
 				</div>
 			</div>
 		</div>

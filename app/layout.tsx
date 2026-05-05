@@ -10,8 +10,8 @@ import { ThemeProvider } from '@/components/provider/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-	title: 'AR Aberturas - Sistema de Gestión',
-	description: 'Ecosistema administrativo para AR Aberturas',
+	title: 'Doce ocho - Sistema de Gestión',
+	description: 'Ecosistema administrativo para Doce ocho',
 	generator: 'v0.app',
 };
 

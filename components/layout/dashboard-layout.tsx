@@ -292,7 +292,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 					{/* Logo */}
 					<div className="flex h-16 items-center justify-between border-b border-border px-6">
 						<div className="flex items-center gap-2">
-							<Image src="/logo-original.png" alt="Logo" width={80} height={80} style={{ height: 'auto' }} />
+							<Image src="/logo-doce8.png" alt="Logo" width={60} height={60} style={{ height: 'auto' }} />
 							<span className="font-semibold text-foreground">Doce ocho</span>
 						</div>
 						<Button
