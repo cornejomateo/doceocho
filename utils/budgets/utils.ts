@@ -1,0 +1,84 @@
+import { FolderBudget } from '@/lib/budgets/folder_budgets';
+import { BudgetWithWork } from '@/lib/works/balances';
+import { DEFAULT_TYPES } from '../../constants/budgets/constants';
+
+export function normalizeType(type: string | null | undefined): string {
+	const t = (type ?? '').trim();
+	if (!t) return 'Otros';
+	return t;
+}
+
+export function workLabel(folder: FolderBudget): string {
+	const w = folder.works;
+	if (!w) return 'Sin obra';
+	const parts = [w.address, w.locality].filter(Boolean);
+	return parts.length > 0 ? parts.join(' - ') : 'Obra';
+}
+
+export function formatCurrency(amount: number | null | undefined, currency: string): string {
+	if (typeof amount !== 'number') return `Monto ${currency} no cargado`;
+	return `$${amount.toLocaleString('es-AR')} ${currency}`;
+}
+
+export function groupBudgetsByType(budgets: BudgetWithWork[]): Map<string, BudgetWithWork[]> {
+	const budgetsByType = new Map<string, BudgetWithWork[]>();
+
+	for (const budget of budgets) {
+		const typeKey = normalizeType(budget.type);
+		const prev = budgetsByType.get(typeKey) ?? [];
+		prev.push(budget);
+		budgetsByType.set(typeKey, prev);
+	}
+
+	return budgetsByType;
+}
+
+export function getOrderedTypeKeys(budgetsByType: Map<string, BudgetWithWork[]>): string[] {
+	return Array.from(budgetsByType.keys()).sort((a, b) => {
+		const ai = DEFAULT_TYPES.includes(a as any) ? DEFAULT_TYPES.indexOf(a as any) : Number.MAX_SAFE_INTEGER;
+		const bi = DEFAULT_TYPES.includes(b as any) ? DEFAULT_TYPES.indexOf(b as any) : Number.MAX_SAFE_INTEGER;
+		if (ai !== bi) return ai - bi;
+		return a.localeCompare(b);
+	});
+}
+
+export function parseAmount(amount: string): number | null {
+	const trimmed = amount.trim();
+	if (!trimmed) return null;
+	const parsed = Number(trimmed);
+	return !Number.isNaN(parsed) ? parsed : null;
+}
+
+export const formatNumber = (value: string) => {
+	// remove all except digits and comma
+	let cleaned = value.replace(/[^\d,]/g, "");
+
+	// separate integer and decimal parts
+	const parts = cleaned.split(",");
+	const integerPart = parts[0];
+	const decimalPart = parts[1];
+
+	// format integer part with thousand separators
+	const formattedInteger = integerPart
+		? new Intl.NumberFormat("es-AR").format(Number(integerPart))
+		: "";
+
+	// reconstruct the number with comma if there was a decimal part or if the user typed a comma
+	if (cleaned.includes(",")) {
+		return decimalPart !== undefined
+		? `${formattedInteger},${decimalPart}`
+		: `${formattedInteger},`;
+	}
+
+	return formattedInteger;
+};
+
+export 	const parseArsToNumber = (value: string): number => {
+	if (!value) return 0;
+
+	const normalized = value
+		.replace(/\./g, "")
+		.replace(",", "."); 
+
+	return Number(normalized);
+};
