@@ -45,7 +45,7 @@ export default function LoginPage() {
 		return (
 			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
 				<div className="text-center">
-					<div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+					<div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#1d4344] mx-auto mb-4"></div>
 					<p className="text-white text-lg">Cargando...</p>
 				</div>
 			</div>
@@ -53,14 +53,15 @@ export default function LoginPage() {
 	}
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4">
+		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#122f30] to-[#1d4344] p-4">
 			<div className="w-full max-w-md p-8 rounded-2xl bg-gray-800/70 backdrop-blur-md shadow-2xl border border-gray-700/50 relative overflow-hidden">
 				{/* Glass pane effect */}
-				<div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full filter blur-3xl"></div>
-				<div className="absolute -bottom-10 -left-10 w-60 h-60 bg-blue-400/10 rounded-full filter blur-3xl"></div>
+				<div className="absolute -top-10 -right-10 w-40 h-40 bg-[#1d4344]/20 rounded-full filter blur-3xl"></div>
+				<div className="absolute -bottom-10 -left-10 w-60 h-60 bg-[#1d4344]/10 rounded-full filter blur-3xl"></div>
 
 				{/* Logo and Title */}
 				<div className="text-center mb-8">
+					<Image src="/icons/icon-doce8.png" alt="Doce ocho Logo" width={60} height={60} className="mx-auto mb-4" />
 					<h1 className="text-3xl font-bold text-white">Doce ocho</h1>
 					<h3 className="text-lg text-gray-300 mt-2">Iniciar sesión</h3>
 				</div>
@@ -77,7 +78,7 @@ export default function LoginPage() {
 								onChange={(e) => setUsuario(e.target.value)}
 								type="text"
 								placeholder="Usuario"
-								className="pl-10 bg-gray-700/50 text-white border-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all duration-200 placeholder-gray-400"
+								className="pl-10 bg-gray-700/50 text-white border-gray-600 focus:ring-2 focus:ring-[#1d4344]/40 focus:border-[#1d4344] transition-all duration-200 placeholder-gray-400"
 							/>
 						</div>
 					</div>
@@ -92,7 +93,7 @@ export default function LoginPage() {
 								onChange={(e) => setContraseña(e.target.value)}
 								type="password"
 								placeholder="Contraseña"
-								className="pl-10 bg-gray-700/50 text-white border-gray-600 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all duration-200 placeholder-gray-400"
+								className="pl-10 bg-gray-700/50 text-white border-gray-600 focus:ring-2 focus:ring-[#1d4344]/40 focus:border-[#1d4344] transition-all duration-200 placeholder-gray-400"
 							/>
 						</div>
 					</div>
@@ -106,7 +107,7 @@ export default function LoginPage() {
 					<Button
 						type="submit"
 						disabled={loading}
-						className="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+						className="w-full py-2 bg-[#1d4344] hover:bg-[#245253] text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
 					>
 						{loading ? 'Iniciando sesión...' : 'Acceder al sistema'}
 					</Button>
