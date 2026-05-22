@@ -15,8 +15,9 @@ export async function DELETE(req: Request) {
 			process.env.SUPABASE_SERVICE_ROLE_KEY!
 		);
 
-		const table = 'supplies_category';
-		const query = supabase.from(table).select('id, image_path').eq('supply_code', code_name);
+		const galleryTable = 'gallery_supplies';
+		const stockTable = 'stock_supplies';
+		const query = supabase.from(galleryTable).select('id, image_path').eq('supply_code', code_name);
 
 		const { data: rows, error } = await query;
 
@@ -26,21 +27,27 @@ export async function DELETE(req: Request) {
 			return NextResponse.json({ success: true });
 		}
 
-		const imagePath = rows[0].image_path;
+		const imagePaths = rows.map((row) => row.image_path).filter(Boolean) as string[];
 
-		if (imagePath) {
-			await supabase.storage.from('images').remove([imagePath]);
+		if (imagePaths.length > 0) {
+			await supabase.storage.from('stock_supplies').remove(imagePaths);
 		}
 
 		const ids = rows.map((r) => r.id);
 
 		const { error: updateError } = await supabase
-			.from(table)
-			.update({ image_url: null, image_path: null })
-			.in('id', ids);
+			.from(stockTable)
+			.update({ image_id: null })
+			.in('image_id', ids);
+
+		const { error: deleteError } = await supabase.from(galleryTable).delete().in('id', ids);
 
 		if (updateError) {
 			return NextResponse.json({ success: false, error: updateError.message }, { status: 500 });
+		}
+
+		if (deleteError) {
+			return NextResponse.json({ success: false, error: deleteError.message }, { status: 500 });
 		}
 
 		return NextResponse.json({ success: true });

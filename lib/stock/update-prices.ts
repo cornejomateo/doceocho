@@ -61,7 +61,7 @@ export async function updatePrices(
 		for (const chunk of codeChunks) {
 			// Query which codes exist in each table in a single request per table
 			const { data: supplyData, error: supplyErr } = await supabase
-				.from('supplies_category')
+				.from('stock_supplies')
 				.select('supply_code')
 				.in('supply_code', chunk);
 
@@ -79,7 +79,7 @@ export async function updatePrices(
 
 			try {
 				if (supplyPayload.length) {
-					const { error } = await supabase.from('supplies_category').upsert(supplyPayload);
+					const { error } = await supabase.from('stock_supplies').upsert(supplyPayload);
 					if (error) throw error;
 					result.updated += supplyPayload.length;
 				}

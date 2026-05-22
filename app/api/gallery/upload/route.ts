@@ -21,23 +21,8 @@ export async function POST(req: Request) {
 		);
 
 		const path = 'supplies';
-		const table = 'supplies_category';
-		const { data: matchingRows, error: searchError } = await supabase
-			.from('supplies_category')
-			.select('id')
-			.eq('supply_code', name_code);
-		if (searchError) throw searchError;
-
-		// If no matching rows found, don't upload
-		if (!matchingRows || matchingRows.length === 0) {
-			return NextResponse.json(
-				{
-					success: false,
-					error: 'No se encontraron registros que coincidan con los campos proporcionados.',
-				},
-				{ status: 404 }
-			);
-		}
+		const galleryTable = 'gallery_supplies';
+		const stockTable = 'stock_supplies';
 
 		const arrayBuffer = await file.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
@@ -53,7 +38,7 @@ export async function POST(req: Request) {
 		const filePath = `${path}/${fileName}`;
 
 		const { error: uploadError } = await supabase.storage
-			.from('images')
+			.from('stock_supplies')
 			.upload(filePath, compressed, {
 				contentType: 'image/jpeg',
 				upsert: true,
@@ -61,31 +46,48 @@ export async function POST(req: Request) {
 
 		if (uploadError) throw uploadError;
 
-		const { data: publicUrl } = supabase.storage.from('images').getPublicUrl(filePath);
-
-		const image_url = publicUrl.publicUrl;
 		const image_path = filePath;
 
-		// Update the matching rows with the new image URL (reuse matchingRows from earlier check)
-		const idsToUpdate = matchingRows.map((row: any) => row.id);
-
-		const { error } = await supabase
-			.from(table)
-			.update({
-				image_url,
+		const { data: imageRow, error: insertError } = await supabase
+			.from(galleryTable)
+			.insert({
+				supply_code: name_code,
+				image_url: null,
 				image_path,
-				last_update: new Date().toISOString().split('T')[0],
 			})
-			.in('id', idsToUpdate);
+			.select('id')
+			.single();
 
-		if (error) {
-			console.error('Error updating supplies with new image URL:', error);
-			throw error;
+		if (insertError) {
+			await supabase.storage.from('stock_supplies').remove([filePath]);
+			throw insertError;
+		}
+
+		const { data: matchingRows, error: searchError } = await supabase
+			.from(stockTable)
+			.select('id')
+			.eq('supply_code', name_code);
+
+		if (searchError) throw searchError;
+
+		if (matchingRows && matchingRows.length > 0) {
+			const idsToUpdate = matchingRows.map((row: any) => row.id);
+
+			const { error } = await supabase
+				.from(stockTable)
+				.update({ image_id: imageRow.id, last_update: new Date().toISOString().split('T')[0] })
+				.in('id', idsToUpdate);
+
+			if (error) {
+				console.error('Error updating supplies with new image URL:', error);
+				throw error;
+			}
 		}
 
 		return NextResponse.json({
 			success: true,
-			image_url,
+			image_id: imageRow.id,
+			image_url: null,
 			image_path,
 		});
 	} catch (err) {

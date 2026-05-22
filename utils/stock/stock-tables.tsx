@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/components/provider/auth-provider';
 import { toast } from '@/components/ui/use-toast';
 import type { SupplyItemStock } from '@/lib/stock/supplies-stock';
+import ImageViewer from '@/components/ui/image-viewer';
 
 interface SuppliesTableProps {
 	filteredStock: SupplyItemStock[];
@@ -49,6 +50,9 @@ export function SuppliesTable({
 	const [quantityChange, setQuantityChange] = useState<number | ''>('');
 	const [currentItemId, setCurrentItemId] = useState<number | null>(null);
 	const [currentItemTotal, setCurrentItemTotal] = useState<number>(0);
+	const [selectedImage, setSelectedImage] = useState<string | null>(null);
+	const [imageViewerOpen, setImageViewerOpen] = useState(false);
+	const [imageLoading, setImageLoading] = useState(false);
 
 	const openQuantityDialog = (id: number, type: 'increase' | 'decrease', currentQty: number) => {
 		setCurrentItemId(id);
@@ -97,6 +101,50 @@ export function SuppliesTable({
 		setCurrentItemTotal(0);
 		setQuantityChange('');
 		setQuantityDialogType(null);
+	};
+
+	const openImageViewer = async (item: SupplyItemStock) => {
+		try {
+			setSelectedImage(null);
+			setImageViewerOpen(true);
+			setImageLoading(true);
+			const params = new URLSearchParams({ name_code: item.supply_code });
+			const res = await fetch(`/api/gallery/list?${params.toString()}`);
+			const data = await res.json();
+
+			if (!data.success) {
+				setImageViewerOpen(false);
+				toast({
+					title: 'Error',
+					description: data.error || 'No se pudo cargar la imagen',
+					variant: 'destructive',
+				});
+				return;
+			}
+
+			const imageUrl = data.images?.[0]?.image_url;
+			if (!imageUrl) {
+				setImageViewerOpen(false);
+				toast({
+					title: 'Sin imagen',
+					description: 'No se encontró una imagen para este insumo',
+					variant: 'destructive',
+				});
+				return;
+			}
+
+			setSelectedImage(imageUrl);
+			setImageViewerOpen(true);
+		} catch {
+			setImageViewerOpen(false);
+			toast({
+				title: 'Error',
+				description: 'No se pudo cargar la imagen',
+				variant: 'destructive',
+			});
+		} finally {
+			setImageLoading(false);
+		}
 	};
 
 	return (
@@ -261,14 +309,19 @@ export function SuppliesTable({
 											</div>
 										</td>
 										<td className="px-2 py-2 text-center">
-											{item.image_url ? (
-												<img
-													src={item.image_url}
-													alt="Insumo"
-													className="mx-auto h-10 w-10 rounded object-cover"
-												/>
+											{item.image_id ? (
+												<button
+													type="button"
+													onClick={() => openImageViewer(item)}
+													disabled={imageLoading}
+													className="mx-auto block"
+												>
+													<div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-muted">
+														<span className="text-xs text-foreground">Ver</span>
+													</div>
+												</button>
 											) : (
-												<span className="text-xs text-muted-foreground">Sin imagen</span>
+												<div className="text-center text-sm text-foreground">-</div>
 											)}
 										</td>
 									</tr>
@@ -310,6 +363,14 @@ export function SuppliesTable({
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+
+			<ImageViewer
+				open={imageViewerOpen}
+				onOpenChange={setImageViewerOpen}
+				src={selectedImage}
+				loading={imageLoading}
+				alt="Imagen del insumo"
+			/>
 		</Card>
 	);
 }

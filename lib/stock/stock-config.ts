@@ -26,7 +26,7 @@ export interface StockConfig {
 export const STOCK_CONFIGS: Record<StockCategory, StockConfig> = {
 	Insumos: {
 		title: 'Insumos',
-		tableName: 'supplies_category',
+		tableName: 'stock_supplies',
 		galleryTableName: 'gallery_images_supplies',
 		fields: {
 			category: 'supply_category',

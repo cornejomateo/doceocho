@@ -161,7 +161,9 @@ export function PhotoGalleryModal({ open, onOpenChange }: PhotoGalleryModalProps
 						) : imagesError ? (
 							<div className="text-sm text-destructive">Error: {imagesError}</div>
 						) : images.length === 0 && searched ? (
-							<div className="text-sm text-muted-foreground">No se encontró el código.</div>
+							<div className="text-sm text-muted-foreground">
+								No se encontraron imagenes para el código.
+							</div>
 						) : (
 							<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
 								{images.map((img) => (

@@ -59,11 +59,8 @@ export function StockManagement() {
 		return filteredStock.slice(startIndex, startIndex + itemsPerPage);
 	}, [filteredStock, currentPage]);
 
-	const lowStockItems = (stock || []).filter((item: any) => adapter.getQuantity(item) < 10);
-	const totalItems = (stock || []).reduce(
-		(sum: number, item: any) => sum + adapter.getQuantity(item),
-		0
-	);
+	const totalItems = stock?.length || 0;
+
 	const lastAddedItem = [...(stock || [])].sort(
 		(a: any, b: any) =>
 			new Date(b.created_at || b.last_update || 0).getTime() -
@@ -127,11 +124,7 @@ export function StockManagement() {
 				</div>
 			</div>
 
-			<StockStats
-				totalItems={totalItems}
-				lowStockCount={lowStockItems.length}
-				lastAddedItem={lastAddedItem}
-			/>
+			<StockStats totalItems={totalItems} lastAddedItem={lastAddedItem} />
 
 			<StockFilters
 				searchTerm={searchTerm}

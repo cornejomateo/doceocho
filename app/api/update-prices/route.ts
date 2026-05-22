@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 		const now = new Date().toISOString();
 
 		const { data: supplyCodes, error: supplyErr } = await supabase
-			.from('supplies_category')
+			.from('stock_supplies')
 			.select('supply_code')
 			.in('supply_code', codes);
 
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
 			const group = supplyEntries.slice(i, i + SUPPLY_CONCURRENCY);
 			const updatePromises = group.map(async (entry) => {
 				const { error } = await supabase
-					.from('supplies_category')
+					.from('stock_supplies')
 					.update({ supply_price: entry.price, last_update: now })
 					.eq('supply_code', entry.code);
 

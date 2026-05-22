@@ -4,13 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import React from 'react';
-import { set } from 'date-fns';
 
 interface ImageViewerProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	src?: string | null;
 	alt?: string;
+	loading?: boolean;
 	trash?: boolean;
 	onDelete?: () => void;
 }
@@ -20,14 +20,11 @@ export function ImageViewer({
 	onOpenChange,
 	src,
 	alt = 'Imagen',
+	loading = false,
 	trash = false,
 	onDelete,
 }: ImageViewerProps) {
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
-	const [remove, setRemove] = React.useState(false);
-	if (!src) return null;
-
-	const largeSrc = src;
 
 	return (
 		<>
@@ -42,17 +39,23 @@ export function ImageViewer({
 
 					<div className="flex-1 p-6 pt-4 overflow-auto">
 						<div className="flex justify-center items-center w-full h-full min-h-[50vh]">
-							<img
-								src={largeSrc}
-								alt={alt}
-								className="max-w-full max-h-[70vh] w-auto h-auto object-contain rounded-md shadow-md"
-								style={{
-									maxWidth: '100%',
-									maxHeight: 'calc(100vh - 200px)',
-									width: 'auto',
-									height: 'auto',
-								}}
-							/>
+							{loading ? (
+								<p className="text-sm text-muted-foreground">Cargando imagen...</p>
+							) : src ? (
+								<img
+									src={src}
+									alt={alt}
+									className="max-w-full max-h-[70vh] w-auto h-auto object-contain rounded-md shadow-md"
+									style={{
+										maxWidth: '100%',
+										maxHeight: 'calc(100vh - 200px)',
+										width: 'auto',
+										height: 'auto',
+									}}
+								/>
+							) : (
+								<p className="text-sm text-muted-foreground">No hay imagen para mostrar.</p>
+							)}
 						</div>
 					</div>
 

@@ -4,7 +4,6 @@ import type { SupplyItemStock } from '@/lib/stock/supplies-stock';
 
 interface StockStatsProps {
 	totalItems: number;
-	lowStockCount: number;
 	lastAddedItem?: SupplyItemStock | null;
 }
 
