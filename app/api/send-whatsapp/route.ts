@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
 		// Clean and format phone number
 		const cleanPhoneNumber = phoneNumber.replace(/\D/g, '');
-		
+
 		// Ensure it has country code for Argentina (add 54 if missing)
 		let formattedPhoneNumber = cleanPhoneNumber;
 		if (cleanPhoneNumber.length === 10) {
@@ -51,12 +51,12 @@ export async function POST(req: Request) {
 			supabase.from('works').select('locality, address').eq('id', workId).single(),
 		]);
 
-		const clientName = clientResult.data ? 
-			`${clientResult.data.name || ''} ${clientResult.data.last_name || ''}`.trim() : 
-			'Cliente desconocido';
-		const workLocation = workResult.data ? 
-			`${workResult.data.locality || ''}${workResult.data.address ? `, ${workResult.data.address}` : ''}` : 
-			'Ubicación desconocida';
+		const clientName = clientResult.data
+			? `${clientResult.data.name || ''} ${clientResult.data.last_name || ''}`.trim()
+			: 'Cliente desconocido';
+		const workLocation = workResult.data
+			? `${workResult.data.locality || ''}${workResult.data.address ? `, ${workResult.data.address}` : ''}`
+			: 'Ubicación desconocida';
 
 		// Create WhatsApp URL
 		const encodedMessage = encodeURIComponent(message);
@@ -92,7 +92,6 @@ export async function POST(req: Request) {
 				arrivalDate: scheduledDate && scheduledTime ? `${scheduledDate}T${scheduledTime}` : null,
 			},
 		});
-
 	} catch (err: any) {
 		console.error('Error en API send-whatsapp:', err);
 		return NextResponse.json(
@@ -117,8 +116,8 @@ export async function GET() {
 	} catch (err: any) {
 		console.error('Error verificando configuración de WhatsApp:', err);
 		return NextResponse.json(
-			{ 
-				success: false, 
+			{
+				success: false,
 				error: err.message || 'Error en la configuración de WhatsApp',
 			},
 			{ status: 500 }

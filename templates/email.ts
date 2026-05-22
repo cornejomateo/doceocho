@@ -1,9 +1,11 @@
-import { Event } from '@/lib/calendar/events'
+import { Event } from '@/lib/calendar/events';
 
 export function buildEventEmail(events: Event[], today: string) {
-  const subject = `📅 Recordatorio de eventos para ${today}`
+	const subject = `📅 Recordatorio de eventos para ${today}`;
 
-  const eventsHtml = events.map(event => `
+	const eventsHtml = events
+		.map(
+			(event) => `
     <div style="border-left: 4px solid #3b82f6; padding: 16px; margin: 16px 0; background-color: #f8fafc; border-radius: 0 8px 8px 0;">
       <h3 style="margin: 0 0 8px 0; color: #1e40af; font-size: 18px;">
         ${event.title || 'Sin título'}
@@ -21,11 +23,13 @@ export function buildEventEmail(events: Event[], today: string) {
         </p>
       </div>
     </div>
-  `).join('')
+  `
+		)
+		.join('');
 
-  const html = `<!DOCTYPE html>...${eventsHtml}...`
+	const html = `<!DOCTYPE html>...${eventsHtml}...`;
 
-  const text = `Recordatorio de Eventos - ${today} ...`
+	const text = `Recordatorio de Eventos - ${today} ...`;
 
-  return { subject, html, text }
+	return { subject, html, text };
 }

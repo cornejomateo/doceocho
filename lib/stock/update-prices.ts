@@ -60,63 +60,24 @@ export async function updatePrices(
 
 		for (const chunk of codeChunks) {
 			// Query which codes exist in each table in a single request per table
-			const [
-				{ data: accData, error: accErr },
-				{ data: ironData, error: ironErr },
-				{ data: supplyData, error, supplyErr },
-			] = await Promise.all([
-				supabase.from('accesories_category').select('accessory_code').in('accessory_code', chunk),
-				supabase.from('ironworks_category').select('ironwork_code').in('ironwork_code', chunk),
-				supabase.from('supplies_category').select('supply_code').in('supply_code', chunk),
-			] as any);
-
-			if (accErr) {
-				console.error('Error fetching accessories chunk:', accErr);
-				result.errors.push('Error al leer accesorios (chunk)');
-				// continue to attempt ironworks
-			}
-			if (ironErr) {
-				console.error('Error fetching ironworks chunk:', ironErr);
-				result.errors.push('Error al leer herrajes (chunk)');
-			}
+			const { data: supplyData, error: supplyErr } = await supabase
+				.from('supplies_category')
+				.select('supply_code')
+				.in('supply_code', chunk);
 
 			if (supplyErr) {
 				console.error('Error fetching supplies chunk:', supplyErr);
 				result.errors.push('Error al leer insumos (chunk)');
 			}
 
-			const accCodes: string[] = (accData || []).map((r: any) => r.accessory_code);
-			const ironCodes: string[] = (ironData || []).map((r: any) => r.ironwork_code);
 			const supplyCodes: string[] = (supplyData || []).map((r: any) => r.supply_code);
-
-			// Prepare upsert payloads (only for existing codes in that table)
-			const accPayload = accCodes.map((code) => ({
-				accessory_code: code,
-				accessory_price: entriesMap.get(code) as number,
-			}));
-
-			const ironPayload = ironCodes.map((code) => ({
-				ironwork_code: code,
-				ironwork_price: entriesMap.get(code) as number,
-			}));
 
 			const supplyPayload = supplyCodes.map((code) => ({
 				supply_code: code,
 				supply_price: entriesMap.get(code) as number,
 			}));
 
-			// Run upserts sequentially to avoid type issues
 			try {
-				if (accPayload.length) {
-					const { error } = await supabase.from('accesories_category').upsert(accPayload);
-					if (error) throw error;
-					result.updated += accPayload.length;
-				}
-				if (ironPayload.length) {
-					const { error } = await supabase.from('ironworks_category').upsert(ironPayload);
-					if (error) throw error;
-					result.updated += ironPayload.length;
-				}
 				if (supplyPayload.length) {
 					const { error } = await supabase.from('supplies_category').upsert(supplyPayload);
 					if (error) throw error;

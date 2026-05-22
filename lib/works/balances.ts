@@ -111,7 +111,8 @@ export async function getBalancesByClientId(
 	const supabase = getSupabaseClient();
 	const { data, error } = await supabase
 		.from(TABLE)
-		.select(`
+		.select(
+			`
 			*,
 			budget:budgets (
 				id,
@@ -126,10 +127,11 @@ export async function getBalancesByClientId(
 					)
 				)
 			)
-		`)
+		`
+		)
 		.eq('client_id', clientId)
 		.order('created_at', { ascending: false });
-	
+
 	return { data, error };
 }
 

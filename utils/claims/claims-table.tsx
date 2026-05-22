@@ -18,7 +18,7 @@ interface Props {
 	onEdit: (claim: Claim) => void;
 	onDelete: (claim: Claim) => void;
 	onResolve: (claim: Claim) => void;
-    onReOpen: (claim: Claim) => void;
+	onReOpen: (claim: Claim) => void;
 	authorizedUser: boolean;
 	filterType: string;
 	onViewDescription: (description: string) => void;
@@ -31,7 +31,7 @@ export function ClaimsTable({
 	onEdit,
 	onDelete,
 	onResolve,
-    onReOpen,
+	onReOpen,
 	authorizedUser,
 	filterType,
 	onViewDescription,

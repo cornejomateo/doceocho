@@ -1,4 +1,4 @@
-export type StockCategory = 'Accesorios' | 'Herrajes' | 'Insumos';
+export type StockCategory = 'Insumos';
 
 export interface StockConfig {
 	title: string;
@@ -24,50 +24,6 @@ export interface StockConfig {
 }
 
 export const STOCK_CONFIGS: Record<StockCategory, StockConfig> = {
-	Accesorios: {
-		title: 'Accesorios',
-		tableName: 'accesories_category',
-		galleryTableName: 'gallery_images_accesories',
-		fields: {
-			category: 'accessory_category',
-			line: 'accessory_line',
-			brand: 'accessory_brand',
-			code: 'accessory_code',
-			description: 'accessory_description',
-			color: 'accessory_color',
-			quantityForLump: 'accessory_quantity_for_lump',
-			quantityLump: 'accessory_quantity_lump',
-			quantity: 'accessory_quantity',
-			site: 'accessory_site',
-			material: 'accessory_material',
-			price: 'accessory_price',
-			image_url: 'image_url',
-			image_path: 'image_path',
-			createdAt: 'created_at',
-		},
-	},
-	Herrajes: {
-		title: 'Herrajes',
-		tableName: 'ironworks_category',
-		galleryTableName: 'gallery_images_ironworks',
-		fields: {
-			category: 'ironwork_category',
-			line: 'ironwork_line',
-			brand: 'ironwork_brand',
-			code: 'ironwork_code',
-			description: 'ironwork_description',
-			color: 'ironwork_color',
-			quantityForLump: 'ironwork_quantity_for_lump',
-			quantityLump: 'ironwork_quantity_lump',
-			quantity: 'ironwork_quantity',
-			site: 'ironwork_site',
-			material: 'ironwork_material',
-			price: 'ironwork_price',
-			image_url: 'image_url',
-			image_path: 'image_path',
-			createdAt: 'created_at',
-		},
-	},
 	Insumos: {
 		title: 'Insumos',
 		tableName: 'supplies_category',

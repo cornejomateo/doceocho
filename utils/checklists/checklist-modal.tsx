@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -14,10 +20,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Plus, Trash2, Loader2, CheckCircle } from 'lucide-react';
-import {
-	checklistTypes,
-	ChecklistType
-} from '@/lib/works/checklists.constants';
+import { checklistTypes, ChecklistType } from '@/lib/works/checklists.constants';
 import { Checklist } from '@/lib/works/checklists';
 import { toast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -87,14 +90,8 @@ export function ChecklistModal({
 		}
 	}, [checklistToEdit, isEditMode]);
 
-	const {
-		checklist,
-		resetForm,
-		updateField,
-		addItem,
-		removeItem,
-		initializeChecklist,
-	} = useChecklistModal();
+	const { checklist, resetForm, updateField, addItem, removeItem, initializeChecklist } =
+		useChecklistModal();
 
 	const handleSaveAndNext = async () => {
 		setIsCreating(true);
@@ -161,7 +158,9 @@ export function ChecklistModal({
 						)}
 					</div>
 					<DialogDescription className="sr-only">
-						{isEditMode ? 'Modifica los detalles del checklist.' : 'Completa los campos para crear un nuevo checklist.'}
+						{isEditMode
+							? 'Modifica los detalles del checklist.'
+							: 'Completa los campos para crear un nuevo checklist.'}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -231,9 +230,7 @@ export function ChecklistModal({
 										type="number"
 										placeholder="Ancho"
 										value={checklist.width || ''}
-										onChange={(e) =>
-											updateField('width', parseFloat(e.target.value) || null)
-										}
+										onChange={(e) => updateField('width', parseFloat(e.target.value) || null)}
 										className="h-10"
 									/>
 								</div>
@@ -246,9 +243,7 @@ export function ChecklistModal({
 										type="number"
 										placeholder="Alto"
 										value={checklist.height || ''}
-										onChange={(e) =>
-											updateField('height', parseFloat(e.target.value) || null)
-										}
+										onChange={(e) => updateField('height', parseFloat(e.target.value) || null)}
 										className="h-10"
 									/>
 								</div>

@@ -35,8 +35,12 @@ export function groupBudgetsByType(budgets: BudgetWithWork[]): Map<string, Budge
 
 export function getOrderedTypeKeys(budgetsByType: Map<string, BudgetWithWork[]>): string[] {
 	return Array.from(budgetsByType.keys()).sort((a, b) => {
-		const ai = DEFAULT_TYPES.includes(a as any) ? DEFAULT_TYPES.indexOf(a as any) : Number.MAX_SAFE_INTEGER;
-		const bi = DEFAULT_TYPES.includes(b as any) ? DEFAULT_TYPES.indexOf(b as any) : Number.MAX_SAFE_INTEGER;
+		const ai = DEFAULT_TYPES.includes(a as any)
+			? DEFAULT_TYPES.indexOf(a as any)
+			: Number.MAX_SAFE_INTEGER;
+		const bi = DEFAULT_TYPES.includes(b as any)
+			? DEFAULT_TYPES.indexOf(b as any)
+			: Number.MAX_SAFE_INTEGER;
 		if (ai !== bi) return ai - bi;
 		return a.localeCompare(b);
 	});
@@ -51,34 +55,32 @@ export function parseAmount(amount: string): number | null {
 
 export const formatNumber = (value: string) => {
 	// remove all except digits and comma
-	let cleaned = value.replace(/[^\d,]/g, "");
+	let cleaned = value.replace(/[^\d,]/g, '');
 
 	// separate integer and decimal parts
-	const parts = cleaned.split(",");
+	const parts = cleaned.split(',');
 	const integerPart = parts[0];
 	const decimalPart = parts[1];
 
 	// format integer part with thousand separators
 	const formattedInteger = integerPart
-		? new Intl.NumberFormat("es-AR").format(Number(integerPart))
-		: "";
+		? new Intl.NumberFormat('es-AR').format(Number(integerPart))
+		: '';
 
 	// reconstruct the number with comma if there was a decimal part or if the user typed a comma
-	if (cleaned.includes(",")) {
+	if (cleaned.includes(',')) {
 		return decimalPart !== undefined
-		? `${formattedInteger},${decimalPart}`
-		: `${formattedInteger},`;
+			? `${formattedInteger},${decimalPart}`
+			: `${formattedInteger},`;
 	}
 
 	return formattedInteger;
 };
 
-export 	const parseArsToNumber = (value: string): number => {
+export const parseArsToNumber = (value: string): number => {
 	if (!value) return 0;
 
-	const normalized = value
-		.replace(/\./g, "")
-		.replace(",", "."); 
+	const normalized = value.replace(/\./g, '').replace(',', '.');
 
 	return Number(normalized);
 };

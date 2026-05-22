@@ -13,16 +13,16 @@ const nextConfig = {
 		if (!isServer) {
 			config.resolve.alias = {
 				...config.resolve.alias,
-				'jspdf': false,
-				'fflate': false,
+				jspdf: false,
+				fflate: false,
 			};
-			
+
 			config.resolve.fallback = {
 				...config.resolve.fallback,
 				fs: false,
 			};
 		}
-		
+
 		return config;
 	},
 };

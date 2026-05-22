@@ -129,11 +129,7 @@ export function BudgetManagement() {
 				<MetricCard
 					label="Facturación"
 					value={
-						loading
-							? '...'
-							: metrics.totalRevenue > 0
-								? formatCurrency(metrics.totalRevenue)
-								: '--'
+						loading ? '...' : metrics.totalRevenue > 0 ? formatCurrency(metrics.totalRevenue) : '--'
 					}
 					icon={DollarSign}
 					loading={false}

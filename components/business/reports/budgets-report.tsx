@@ -3,14 +3,32 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table';
 import { useOptimizedRealtime } from '@/hooks/use-optimized-realtime';
 import { formatCurrency, formatCurrencyUSD } from '@/helpers/format-prices.tsx/formats';
 import { formatShortDate } from '@/helpers/date/formats';
 import { formatBudgetType, formatBudgetStatus } from '@/helpers/budget/formats';
-import { BUDGETS_REPORT_COLUMNS, BUDGETS_REPORT_TITLE, BUDGET_TYPES, BUDGET_STATUS } from '@/constants/reports/budgets-report';
+import {
+	BUDGETS_REPORT_COLUMNS,
+	BUDGETS_REPORT_TITLE,
+	BUDGET_TYPES,
+	BUDGET_STATUS,
+} from '@/constants/reports/budgets-report';
 import { BudgetWithWorkAndClient, listBudgetsForReport } from '@/lib/budgets/budgets';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 
@@ -59,7 +77,8 @@ export function BudgetsReport() {
 				const clientName = `${b.client?.last_name ?? ''} ${b.client?.name ?? ''}`.trim() || '-';
 				const workLocality = b.folder_budget?.work?.locality ?? '';
 				const workAddress = b.folder_budget?.work?.address ?? '';
-				const work = `${workLocality}${workLocality && workAddress ? ' - ' : ''}${workAddress}`.trim() || '-';
+				const work =
+					`${workLocality}${workLocality && workAddress ? ' - ' : ''}${workAddress}`.trim() || '-';
 
 				const dateRaw = new Date(b.created_at);
 
@@ -144,14 +163,20 @@ export function BudgetsReport() {
 
 	const getSortIcon = (field: keyof BudgetReportRow) => {
 		if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-		return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+		return sortDirection === 'asc' ? (
+			<ArrowUp className="h-4 w-4" />
+		) : (
+			<ArrowDown className="h-4 w-4" />
+		);
 	};
 
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 				<div>
-					<h2 className="text-2xl font-bold text-foreground text-balance">{BUDGETS_REPORT_TITLE}</h2>
+					<h2 className="text-2xl font-bold text-foreground text-balance">
+						{BUDGETS_REPORT_TITLE}
+					</h2>
 					<p className="text-muted-foreground mt-1">Listado de todos los presupuestos realizados</p>
 				</div>
 
@@ -203,7 +228,7 @@ export function BudgetsReport() {
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead 
+							<TableHead
 								className="whitespace-nowrap cursor-pointer hover:bg-muted/50"
 								onClick={() => handleSort('date')}
 							>
@@ -212,7 +237,7 @@ export function BudgetsReport() {
 									{getSortIcon('date')}
 								</div>
 							</TableHead>
-							<TableHead 
+							<TableHead
 								className="whitespace-nowrap cursor-pointer hover:bg-muted/50"
 								onClick={() => handleSort('client')}
 							>
@@ -221,7 +246,7 @@ export function BudgetsReport() {
 									{getSortIcon('client')}
 								</div>
 							</TableHead>
-							<TableHead 
+							<TableHead
 								className="whitespace-nowrap cursor-pointer hover:bg-muted/50"
 								onClick={() => handleSort('number')}
 							>
@@ -230,7 +255,7 @@ export function BudgetsReport() {
 									{getSortIcon('number')}
 								</div>
 							</TableHead>
-							<TableHead 
+							<TableHead
 								className="whitespace-nowrap cursor-pointer hover:bg-muted/50"
 								onClick={() => handleSort('type')}
 							>
@@ -239,7 +264,7 @@ export function BudgetsReport() {
 									{getSortIcon('type')}
 								</div>
 							</TableHead>
-							<TableHead 
+							<TableHead
 								className="whitespace-nowrap cursor-pointer hover:bg-muted/50"
 								onClick={() => handleSort('work')}
 							>
@@ -248,7 +273,7 @@ export function BudgetsReport() {
 									{getSortIcon('work')}
 								</div>
 							</TableHead>
-							<TableHead 
+							<TableHead
 								className="text-right whitespace-nowrap cursor-pointer hover:bg-muted/50"
 								onClick={() => handleSort('amountArs')}
 							>
@@ -257,7 +282,7 @@ export function BudgetsReport() {
 									{getSortIcon('amountArs')}
 								</div>
 							</TableHead>
-							<TableHead 
+							<TableHead
 								className="text-right whitespace-nowrap cursor-pointer hover:bg-muted/50"
 								onClick={() => handleSort('amountUsd')}
 							>
@@ -266,7 +291,7 @@ export function BudgetsReport() {
 									{getSortIcon('amountUsd')}
 								</div>
 							</TableHead>
-							<TableHead 
+							<TableHead
 								className="whitespace-nowrap cursor-pointer hover:bg-muted/50"
 								onClick={() => handleSort('status')}
 							>
@@ -299,8 +324,12 @@ export function BudgetsReport() {
 									<TableCell className="whitespace-nowrap">{r.number}</TableCell>
 									<TableCell className="whitespace-nowrap">{r.type}</TableCell>
 									<TableCell className="whitespace-nowrap">{r.work}</TableCell>
-									<TableCell className="text-right whitespace-nowrap">{formatCurrency(r.amountArs)}</TableCell>
-									<TableCell className="text-right whitespace-nowrap">{formatCurrencyUSD(r.amountUsd)}</TableCell>
+									<TableCell className="text-right whitespace-nowrap">
+										{formatCurrency(r.amountArs)}
+									</TableCell>
+									<TableCell className="text-right whitespace-nowrap">
+										{formatCurrencyUSD(r.amountUsd)}
+									</TableCell>
 									<TableCell className="whitespace-nowrap">{r.status}</TableCell>
 								</TableRow>
 							))

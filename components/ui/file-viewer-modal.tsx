@@ -68,7 +68,8 @@ export function FileViewerModal({
 				</VisuallyHidden.Root>
 
 				<DialogDescription className="sr-only">
-					Visualiza el archivo seleccionado. Usa las flechas izquierda y derecha para navegar entre los archivos, o el botón de descarga para abrirlo en una nueva pestaña.
+					Visualiza el archivo seleccionado. Usa las flechas izquierda y derecha para navegar entre
+					los archivos, o el botón de descarga para abrirlo en una nueva pestaña.
 				</DialogDescription>
 
 				<Button

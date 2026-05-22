@@ -8,7 +8,9 @@ export interface BalanceStats {
 	creditorsCount: number;
 }
 
-export function calculateBalanceStats(balances: Array<{ balanceType: string; balanceAmountArs: number }>): BalanceStats {
+export function calculateBalanceStats(
+	balances: Array<{ balanceType: string; balanceAmountArs: number }>
+): BalanceStats {
 	return balances.reduce(
 		(stats, balance) => {
 			if (balance.balanceType === BALANCE_TYPES.DEBTOR) {

@@ -36,7 +36,7 @@ export function ArchitectsTab({ loading: externalLoading = false }: ArchitectsTa
 	}, []);
 
 	const loadMore = () => {
-		setDisplayCount(prev => prev + ITEMS_PER_PAGE);
+		setDisplayCount((prev) => prev + ITEMS_PER_PAGE);
 	};
 
 	const hasMore = (architects: ArchitectStats[]) => {
@@ -45,7 +45,7 @@ export function ArchitectsTab({ loading: externalLoading = false }: ArchitectsTa
 
 	const isLoading = externalLoading || loading;
 	const allArchitects = report?.architects ?? [];
-	const soldArchitects = allArchitects.filter(a => a.soldBudgets > 0);
+	const soldArchitects = allArchitects.filter((a) => a.soldBudgets > 0);
 	const hasMoreAnyList = hasMore(allArchitects) || hasMore(soldArchitects);
 
 	return (
@@ -67,8 +67,8 @@ export function ArchitectsTab({ loading: externalLoading = false }: ArchitectsTa
 
 			{!isLoading && displayCount > ITEMS_PER_PAGE && (
 				<div className="flex justify-center">
-					<Button 
-						variant="outline" 
+					<Button
+						variant="outline"
 						onClick={() => setDisplayCount(ITEMS_PER_PAGE)}
 						className="w-full max-w-md"
 						disabled={isLoading}
@@ -115,8 +115,8 @@ export function ArchitectsTab({ loading: externalLoading = false }: ArchitectsTa
 
 			{!isLoading && hasMoreAnyList && (
 				<div className="flex justify-center">
-					<Button 
-						variant="outline" 
+					<Button
+						variant="outline"
 						onClick={loadMore}
 						className="w-full max-w-md"
 						disabled={isLoading}

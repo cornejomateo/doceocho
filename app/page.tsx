@@ -4,9 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { DashboardHome } from '@/components/layout/dashboard-home';
-import { StockManagement } from '@/components/business/stock-management';
 import { useAuth } from '@/components/provider/auth-provider';
-import { WorksOpenings } from '@/components/business/works-progress';
 
 export default function HomePage() {
 	const { user, loading } = useAuth();
@@ -32,36 +30,6 @@ export default function HomePage() {
 
 	switch (user.role) {
 		case 'Admin':
-			return (
-				<DashboardLayout>
-					<DashboardHome />
-				</DashboardLayout>
-			);
-		case 'Fabrica':
-			return (
-				<DashboardLayout>
-					<StockManagement category="Perfiles" materialType="Aluminio" />
-				</DashboardLayout>
-			);
-		case 'Ventas':
-			return (
-				<DashboardLayout>
-					<DashboardHome />
-				</DashboardLayout>
-			);
-		case 'Marketing':
-			return (
-				<DashboardLayout>
-					<DashboardHome />
-				</DashboardLayout>
-			);
-		case 'Colocador':
-			return (
-				<DashboardLayout>
-					<WorksOpenings />
-				</DashboardLayout>
-			);
-		default:
 			return (
 				<DashboardLayout>
 					<DashboardHome />

@@ -17,7 +17,7 @@ export interface BalanceSummary {
 	remainingUsd: number;
 	progressPercentage: number;
 	type: string;
-	budgetInitialArs?: number | null;	
+	budgetInitialArs?: number | null;
 }
 
 const toSafeNumber = (value?: number | null) => Number(value) || 0;

@@ -1,14 +1,14 @@
 'use client';
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import {
-	CalendarIcon,
-	MapPin,
-	User,
-	FileText,
-	ChevronDown,
-} from 'lucide-react';
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { CalendarIcon, MapPin, User, FileText, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { typeConfig, statusOptions } from '@/constants/type-config';
 import { Event, updateEvent } from '@/lib/calendar/events';

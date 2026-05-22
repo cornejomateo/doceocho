@@ -17,7 +17,7 @@ export async function getUser(
 		.select('*')
 		.eq('username', username)
 		.maybeSingle();
-		
+
 	if (error) {
 		return { data: null, error: 'Error al buscar usuario' };
 	}

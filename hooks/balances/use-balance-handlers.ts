@@ -31,12 +31,13 @@ export function useBalanceHandlers({ onBalanceDeleted, onRefresh }: UseBalanceHa
 
 			if (error) {
 				toast({
-                    variant: 'destructive',
-                    title: 'Error al eliminar saldo',
-                    description: translateError(error) || 'Hubo un problema al eliminar el saldo. Intente nuevamente.',
-                });
-                return;
-            }
+					variant: 'destructive',
+					title: 'Error al eliminar saldo',
+					description:
+						translateError(error) || 'Hubo un problema al eliminar el saldo. Intente nuevamente.',
+				});
+				return;
+			}
 
 			// Refresh the list
 			handleBalanceUpdate();
@@ -47,10 +48,12 @@ export function useBalanceHandlers({ onBalanceDeleted, onRefresh }: UseBalanceHa
 			}
 		} catch (error) {
 			toast({
-                variant: 'destructive',
-                title: 'Error inesperado al eliminar saldo',
-                description: translateError(error) || 'Ocurrió un error inesperado al eliminar el saldo. Intente nuevamente.',
-            });
+				variant: 'destructive',
+				title: 'Error inesperado al eliminar saldo',
+				description:
+					translateError(error) ||
+					'Ocurrió un error inesperado al eliminar el saldo. Intente nuevamente.',
+			});
 		} finally {
 			setIsDeleteDialogOpen(false);
 			setBalanceToDelete(null);

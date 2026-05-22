@@ -4,25 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 export async function DELETE(req: Request) {
 	try {
 		const { searchParams } = new URL(req.url);
-		const categoryState = searchParams.get('categoryState')!;
 		const code_name = searchParams.get('code_name')!;
-		const line_name = searchParams.get('line_name')!;
-		let material_type = '';
-		if (categoryState !== 'Perfiles') {
-			if (!code_name) {
-				return NextResponse.json(
-					{ success: false, error: 'Código no completado' },
-					{ status: 400 }
-				);
-			}
-		} else {
-			material_type = searchParams.get('material_type')!;
-			if (!code_name || !line_name) {
-				return NextResponse.json(
-					{ success: false, error: 'Faltan parámetros: código o linea' },
-					{ status: 400 }
-				);
-			}
+
+		if (!code_name) {
+			return NextResponse.json({ success: false, error: 'Código no completado' }, { status: 400 });
 		}
 
 		const supabase = createClient(
@@ -30,31 +15,8 @@ export async function DELETE(req: Request) {
 			process.env.SUPABASE_SERVICE_ROLE_KEY!
 		);
 
-		let table = '';
-		if (categoryState === 'Accesorios') {
-			table = 'accesories_category';
-		}
-		if (categoryState === 'Herrajes') {
-			table = 'ironworks_category';
-		}
-		if (categoryState === 'Perfiles') {
-			table = 'profiles';
-		}
-		if (categoryState === 'Insumos') {
-			table = 'supplies_category';
-		}
-
-		const query = supabase.from(table).select('id, image_path');
-
-		if (categoryState === 'Perfiles') {
-			query.eq('line', line_name).eq('code', code_name).eq('material', material_type);
-		} else if (categoryState === 'Accesorios') {
-			query.eq('accessory_code', code_name);
-		} else if (categoryState === 'Herrajes') {
-			query.eq('ironwork_code', code_name);
-		} else if (categoryState === 'Insumos') {
-			query.eq('supply_code', code_name);
-		}
+		const table = 'supplies_category';
+		const query = supabase.from(table).select('id, image_path').eq('supply_code', code_name);
 
 		const { data: rows, error } = await query;
 

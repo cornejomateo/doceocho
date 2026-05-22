@@ -14,7 +14,6 @@ interface EmailRequest {
 
 // Create transporter
 const createTransporter = () => {
-
 	// Production configuration (Gmail)
 	return nodemailer.createTransport({
 		host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -44,10 +43,7 @@ export async function POST(req: Request) {
 		// Validate email format
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(to)) {
-			return NextResponse.json(
-				{ error: 'El formato del email es inválido' },
-				{ status: 400 }
-			);
+			return NextResponse.json({ error: 'El formato del email es inválido' }, { status: 400 });
 		}
 
 		// Get client and work information for logging
@@ -61,12 +57,12 @@ export async function POST(req: Request) {
 			supabase.from('works').select('locality, address').eq('id', workId).single(),
 		]);
 
-		const clientName = clientResult.data ? 
-			`${clientResult.data.name || ''} ${clientResult.data.last_name || ''}`.trim() : 
-			'Cliente desconocido';
-		const workLocation = workResult.data ? 
-			`${workResult.data.locality || ''}${workResult.data.address ? `, ${workResult.data.address}` : ''}` : 
-			'Ubicación desconocida';
+		const clientName = clientResult.data
+			? `${clientResult.data.name || ''} ${clientResult.data.last_name || ''}`.trim()
+			: 'Cliente desconocido';
+		const workLocation = workResult.data
+			? `${workResult.data.locality || ''}${workResult.data.address ? `, ${workResult.data.address}` : ''}`
+			: 'Ubicación desconocida';
 
 		// Create email transporter
 		const transporter = createTransporter();
@@ -99,21 +95,29 @@ export async function POST(req: Request) {
 							</div>
 						</div>
 						
-						${scheduledDate || scheduledTime ? `
+						${
+							scheduledDate || scheduledTime
+								? `
 						<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
 							<p style="color: #856404; margin: 0; font-size: 14px;">
 								<strong>🏗️ Fecha y hora de llegada:</strong> 
-								${scheduledDate ? new Date(scheduledDate + 'T00:00:00').toLocaleDateString('es-AR', { 
-									weekday: 'long', 
-									year: 'numeric', 
-									month: 'long', 
-									day: 'numeric',
-									timeZone: 'America/Argentina/Buenos_Aires'
-								}) : ''}
+								${
+									scheduledDate
+										? new Date(scheduledDate + 'T00:00:00').toLocaleDateString('es-AR', {
+												weekday: 'long',
+												year: 'numeric',
+												month: 'long',
+												day: 'numeric',
+												timeZone: 'America/Argentina/Buenos_Aires',
+											})
+										: ''
+								}
 								${scheduledTime ? ` a las ${scheduledTime}` : ''}
 							</p>
 						</div>
-						` : ''}
+						`
+								: ''
+						}
 						
 						<div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
 							<p style="color: #666; margin: 0; font-size: 12px;">
@@ -159,7 +163,6 @@ export async function POST(req: Request) {
 				arrivalDate: scheduledDate && scheduledTime ? `${scheduledDate}T${scheduledTime}` : null,
 			},
 		});
-
 	} catch (err: any) {
 		console.error('Error en API send-email:', err);
 		return NextResponse.json(
@@ -174,7 +177,7 @@ export async function GET() {
 	try {
 		const transporter = createTransporter();
 		await transporter.verify();
-		
+
 		return NextResponse.json({
 			success: true,
 			message: 'Configuración de email verificada exitosamente',
@@ -188,8 +191,8 @@ export async function GET() {
 	} catch (err: any) {
 		console.error('Error verificando configuración de email:', err);
 		return NextResponse.json(
-			{ 
-				success: false, 
+			{
+				success: false,
 				error: err.message || 'Error en la configuración de email',
 				config: {
 					host: process.env.SMTP_HOST || 'not configured',

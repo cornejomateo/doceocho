@@ -1,16 +1,18 @@
+import { useState } from 'react';
+import { Package, Edit, Trash2, Plus, Minus } from 'lucide-react';
+
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Package, Edit, Trash2, Plus, Minus } from 'lucide-react';
-import { useState } from 'react';
-import ImageViewer from '@/components/ui/image-viewer';
 import {
 	AlertDialog,
-	AlertDialogTrigger,
-	AlertDialogContent,
-	AlertDialogTitle,
-	AlertDialogDescription,
 	AlertDialogAction,
 	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
 	Dialog,
@@ -23,164 +25,128 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/components/provider/auth-provider';
 import { toast } from '@/components/ui/use-toast';
-import { STOCK_CONFIGS, type StockCategory } from '@/lib/stock/stock-config';
-import type { AccessoryItemStock } from '@/lib/stock/accesorie-stock';
-import type { IronworkItemStock } from '@/lib/stock/ironwork-stock';
 import type { SupplyItemStock } from '@/lib/stock/supplies-stock';
-import { useIsMobile } from '@/components/ui/use-mobile';
-import { formatCreatedAt } from '@/helpers/date/format-date';
 
-interface AccesoriesTableProps {
-	categoryState: StockCategory;
-	filteredStock: AccessoryItemStock[] | IronworkItemStock[] | SupplyItemStock[];
+interface SuppliesTableProps {
+	filteredStock: SupplyItemStock[];
 	onEdit: (id: number) => void;
 	onDelete: (id: number) => void;
-	onUpdateQuantity: (id: number, newQuantity: number, field?: string) => Promise<void>;
+	onUpdateQuantity: (id: number, newQuantity: number) => Promise<void>;
 }
 
-export function AccesoriesTable({
-	categoryState,
+export function SuppliesTable({
 	filteredStock,
 	onEdit,
 	onDelete,
 	onUpdateQuantity,
-}: AccesoriesTableProps) {
+}: SuppliesTableProps) {
 	const { user } = useAuth();
-	const [openImageUrl, setOpenImageUrl] = useState<string | null>(null);
-	const [isUpdating, setIsUpdating] = useState(false);
-	const [updatingId, setUpdatingId] = useState<number | null>(null);
+	const isAuthorized = user?.role === 'Admin' || user?.role === 'Ventas';
 	const [showQuantityDialog, setShowQuantityDialog] = useState(false);
-	const [quantityDialogType, setQuantityDialogType] = useState<'increase' | 'decrease' | null>(null);
+	const [quantityDialogType, setQuantityDialogType] = useState<'increase' | 'decrease' | null>(
+		null
+	);
 	const [quantityChange, setQuantityChange] = useState<number | ''>('');
 	const [currentItemId, setCurrentItemId] = useState<number | null>(null);
 	const [currentItemTotal, setCurrentItemTotal] = useState<number>(0);
 
-	const isMobile = useIsMobile();
-	const isAutorized = user?.role === 'Admin' || user?.role === 'Ventas';
-
-	const handleQuantityAction = (
-		id: number,
-		action: 'increment' | 'decrement',
-		currentQty: number
-	) => {
-		setQuantityDialogType(action === 'increment' ? 'increase' : 'decrease');
-		setQuantityChange('');
+	const openQuantityDialog = (id: number, type: 'increase' | 'decrease', currentQty: number) => {
 		setCurrentItemId(id);
 		setCurrentItemTotal(currentQty);
+		setQuantityDialogType(type);
+		setQuantityChange('');
 		setShowQuantityDialog(true);
 	};
 
-	const handleConfirmUpdate = async () => {
+	const confirmQuantityUpdate = async () => {
 		if (!currentItemId || quantityChange === '' || !quantityDialogType) {
-			toast({
-				title: 'Error',
-				description: 'Ingrese una cantidad válida',
-				variant: 'destructive',
-				duration: 3000,
-			});
+			toast({ title: 'Error', description: 'Ingrese una cantidad válida', variant: 'destructive' });
 			return;
 		}
-		
+
 		const adjustment = Number(quantityChange);
-		
 		if (adjustment < 0) {
 			toast({
 				title: 'Error',
-				description: 'La cantidad debe ser un número positivo',
+				description: 'La cantidad debe ser positiva',
 				variant: 'destructive',
-				duration: 3000,
 			});
 			return;
 		}
-		
-		const newQuantity = quantityDialogType === 'increase' 
-			? currentItemTotal + adjustment 
-			: currentItemTotal - adjustment;
-		
-		if (newQuantity < 0) {
+
+		const nextQuantity =
+			quantityDialogType === 'increase'
+				? currentItemTotal + adjustment
+				: currentItemTotal - adjustment;
+		if (nextQuantity < 0) {
 			toast({
 				title: 'Error',
 				description: `No puede disminuir ${adjustment} unidades. Solo tiene ${currentItemTotal} disponibles`,
 				variant: 'destructive',
-				duration: 3000,
 			});
 			return;
 		}
-		
-		try {
-			setIsUpdating(true);
-			setUpdatingId(currentItemId);
-			await onUpdateQuantity(currentItemId, newQuantity);
-			toast({
-				title: 'Cantidad actualizada',
-				description: `La cantidad se ha ${quantityDialogType === 'increase' ? 'aumentado' : 'disminuido'} a ${newQuantity}`,
-			});
-		} finally {
-			setIsUpdating(false);
-			setUpdatingId(null);
-			setShowQuantityDialog(false);
-			setQuantityChange('');
-			setQuantityDialogType(null);
-			setCurrentItemId(null);
-			setCurrentItemTotal(0);
-		}
+
+		await onUpdateQuantity(currentItemId, nextQuantity);
+		toast({
+			title: 'Éxito',
+			description: `Cantidad ${quantityDialogType === 'increase' ? 'aumentada' : 'disminuida'} correctamente`,
+		});
+		setShowQuantityDialog(false);
+		setCurrentItemId(null);
+		setCurrentItemTotal(0);
+		setQuantityChange('');
+		setQuantityDialogType(null);
 	};
 
-	const config = STOCK_CONFIGS[categoryState];
-	const keys = config.fields;
-
 	return (
-		<Card className="bg-card border-border overflow-hidden">
+		<Card className="overflow-hidden border-border bg-card">
 			<div className="overflow-x-auto">
 				<table className="w-full">
 					<thead className="border-b border-border bg-secondary">
 						<tr>
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Categoría
 							</th>
-							{!isMobile && (
-								<>
-									<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-										Línea
-									</th>
-									<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-										Marca
-									</th>
-								</>
-							)}
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+								Línea
+							</th>
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+								Marca
+							</th>
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Código
 							</th>
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Descripción
 							</th>
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Color
 							</th>
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Cant x bulto
 							</th>
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Bultos
 							</th>
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Total
 							</th>
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Ubicación
 							</th>
-							{user?.role === 'Admin' || user?.role === 'Ventas' ? (
-								<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							{isAuthorized && (
+								<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 									Precio
 								</th>
-							) : null}
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							)}
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Fecha de creación
 							</th>
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Acciones
 							</th>
-							<th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+							<th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								Imagen
 							</th>
 						</tr>
@@ -188,193 +154,122 @@ export function AccesoriesTable({
 					<tbody className="divide-y divide-border">
 						{filteredStock.length === 0 ? (
 							<tr>
-								<td colSpan={12} className="px-6 py-12 text-center">
+								<td colSpan={isAuthorized ? 14 : 13} className="px-6 py-12 text-center">
 									<div className="flex flex-col items-center gap-2 text-muted-foreground">
 										<Package className="h-12 w-12 opacity-50" />
-										<p className="text-lg font-medium">No hay items</p>
+										<p className="text-lg font-medium">No hay insumos</p>
 									</div>
 								</td>
 							</tr>
 						) : (
 							filteredStock.map((item) => {
-								const total =
-									((item as any)[keys.quantityForLump] ?? 0) *
-										((item as any)[keys.quantityLump] ?? 0) || 0;
 								return (
-									<tr key={(item as any).id} className={`${
-										(item as any)[keys.quantity] === 0 ? 'bg-red-300' : 'hover:bg-secondary/50 transition-colors'
-									}`}>
-										<td className="px-2 py-2 whitespace-nowrap">
-											<p className="text-center text-sm text-foreground">
-												{(item as any)[keys.category] || '—'}
+									<tr
+										key={item.id}
+										className={
+											item.supply_quantity === 0
+												? 'bg-red-300'
+												: 'transition-colors hover:bg-secondary/50'
+										}
+									>
+										<td className="px-2 py-2 text-center text-sm text-foreground">
+											{item.supply_category || '—'}
+										</td>
+										<td className="px-2 py-2 text-center text-sm text-foreground">
+											{item.supply_line || '-'}
+										</td>
+										<td className="px-2 py-2 text-center text-sm text-foreground">
+											{item.supply_brand || '-'}
+										</td>
+										<td className="px-2 py-2 text-center text-sm text-foreground">
+											{item.supply_code || '-'}
+										</td>
+										<td className="max-w-[380px] px-2 py-2 text-sm text-foreground">
+											<p className="break-words whitespace-pre-line text-justify">
+												{item.supply_description || '-'}
 											</p>
 										</td>
-										{!isMobile && (
-											<>
-												<td className="px-2 py-2 whitespace-nowrap">
-													<p className="text-center text-sm text-foreground">
-														{(item as any)[keys.line] || '-'}
-													</p>
-												</td>
-												<td className="px-2 py-2 whitespace-nowrap">
-													<p className="text-center text-sm text-foreground">
-														{(item as any)[keys.brand] || '-'}
-													</p>
-												</td>
-											</>
-										)}
-										<td className="px-2 py-2 whitespace-nowrap">
-											<p className="text-center text-sm text-foreground">
-												{(item as any)[keys.code] || '-'}
-											</p>
+										<td className="px-2 py-2 text-center text-sm text-foreground">
+											{item.supply_color || ''}
 										</td>
-										<td className="px-2 py-2 max-w-[500px]">
-											<p className="text-sm text-justify text-foreground whitespace-pre-line break-words">
-												{((item as any)[keys.description] || '')
-													.split(' ')
-													.reduce(
-														(acc: string[], word: string) => {
-															const lastLine = acc[acc.length - 1] || '';
-															if (lastLine.length + word.length <= 100) {
-																acc[acc.length - 1] = lastLine ? `${lastLine} ${word}` : word;
-															} else {
-																acc.push(word);
-															}
-															return acc;
-														},
-														['']
-													)
-													.join('\n')}
-											</p>
+										<td className="px-2 py-2 text-center text-sm text-foreground">
+											{item.supply_quantity_for_lump ?? 0}
 										</td>
-										<td className="px-2 py-2 whitespace-nowrap">
-											<p className="text-center text-sm text-foreground">
-												{(item as any)[keys.color] || ''}
-											</p>
+										<td className="px-2 py-2 text-center text-sm text-foreground">
+											{item.supply_quantity_lump ?? 0}
 										</td>
-										<td className="px-2 py-2 whitespace-nowrap">
-											<p className="text-center text-sm text-foreground">
-												{(item as any)[keys.quantityForLump] ?? 0}
-											</p>
-										</td>
-										<td className="px-2 py-2 whitespace-nowrap">
-											<p className="text-center text-sm text-foreground">
-												{(item as any)[keys.quantityLump] ?? 0}
-											</p>
-										</td>
-										<td className="px-2 py-2 whitespace-nowrap">
-											<div className="flex items-center justify-center gap-1">
-												<Button
-													variant="outline"
-													size="icon"
-													className="h-7 w-7"
-													onClick={() =>
-														handleQuantityAction(
-															(item as any).id,
-															'decrement',
-															(item as any)[keys.quantity] ?? total
-														)
-													}
-													disabled={
-														(isUpdating && updatingId === (item as any).id) ||
-														((item as any)[keys.quantity] ?? total) <= 0
-													}
-												>
-													<Minus className="h-3.5 w-3.5" />
-												</Button>
-												<div className="text-center min-w-[70px]">
-													<p className="text-sm font-medium">
-														{(item as any)[keys.quantity] ?? total}
-													</p>
-													<p className="text-xs text-muted-foreground">unidades</p>
-												</div>
-												<Button
-													variant="outline"
-													size="icon"
-													className="h-7 w-7"
-													onClick={() =>
-														handleQuantityAction(
-															(item as any).id,
-															'increment',
-															(item as any)[keys.quantity] ?? total
-														)
-													}
-													disabled={isUpdating && updatingId === (item as any).id}
-												>
-													<Plus className="h-3.5 w-3.5" />
-												</Button>
-											</div>
-										</td>
-										<td className="px-2 py-2 whitespace-nowrap">
-											<p className="text-center text-sm text-muted-foreground">
-												{(item as any)[keys.site] || ''}
-											</p>
-										</td>
-										{isAutorized ? (
-											<td className="px-2 py-2 whitespace-nowrap">
-												<p className="text-center text-sm text-foreground">
-													{(item as any)[keys.price] ? `$${(item as any)[keys.price]}` : '—'}
-												</p>
-											</td>
-										) : null}
-										<td className="px-2 py-2 whitespace-nowrap">
-											<p className="text-center text-xs text-muted-foreground">
-												{formatCreatedAt((item as any)[keys.createdAt])}
-											</p>
-										</td>
-										<td className="px-6 py-4 whitespace-nowrap text-right">
-											<div className="flex justify-end gap-2">
+										<td className="px-2 py-2 text-center">
+											<div className="flex items-center justify-center gap-2">
 												<Button
 													variant="ghost"
 													size="icon"
-													className="h-8 w-8"
-													onClick={() => onEdit((item as any).id)}
+													onClick={() =>
+														openQuantityDialog(item.id, 'decrease', item.supply_quantity || 0)
+													}
 												>
+													<Minus className="h-4 w-4" />
+												</Button>
+												<span className="text-sm text-foreground">{item.supply_quantity ?? 0}</span>
+												<Button
+													variant="ghost"
+													size="icon"
+													onClick={() =>
+														openQuantityDialog(item.id, 'increase', item.supply_quantity || 0)
+													}
+												>
+													<Plus className="h-4 w-4" />
+												</Button>
+											</div>
+										</td>
+										<td className="px-2 py-2 text-center text-sm text-foreground">
+											{item.supply_site || '-'}
+										</td>
+										{isAuthorized && (
+											<td className="px-2 py-2 text-center text-sm text-foreground">
+												{item.supply_price ?? '—'}
+											</td>
+										)}
+										<td className="px-2 py-2 text-center text-sm text-foreground">
+											{item.created_at?.split('T')[0] || '-'}
+										</td>
+										<td className="px-2 py-2 text-center">
+											<div className="flex items-center justify-center gap-2">
+												<Button variant="ghost" size="icon" onClick={() => onEdit(item.id)}>
 													<Edit className="h-4 w-4" />
 												</Button>
 												<AlertDialog>
 													<AlertDialogTrigger asChild>
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8 text-destructive hover:text-destructive"
-														>
+														<Button variant="ghost" size="icon">
 															<Trash2 className="h-4 w-4" />
 														</Button>
 													</AlertDialogTrigger>
 													<AlertDialogContent>
-														<AlertDialogTitle>¿Eliminar item?</AlertDialogTitle>
-														<AlertDialogDescription>
-															¿Estás seguro que deseas eliminar este item? Esta acción no se puede
-															deshacer.
-														</AlertDialogDescription>
-														<div className="flex justify-end gap-2 mt-4">
+														<AlertDialogHeader>
+															<AlertDialogTitle>Eliminar insumo</AlertDialogTitle>
+															<AlertDialogDescription>
+																Esta acción no se puede deshacer.
+															</AlertDialogDescription>
+														</AlertDialogHeader>
+														<AlertDialogFooter>
 															<AlertDialogCancel>Cancelar</AlertDialogCancel>
-															<AlertDialogAction
-																className="bg-destructive text-white hover:bg-destructive/90"
-																onClick={() => onDelete((item as any).id)}
-															>
+															<AlertDialogAction onClick={() => onDelete(item.id)}>
 																Eliminar
 															</AlertDialogAction>
-														</div>
+														</AlertDialogFooter>
 													</AlertDialogContent>
 												</AlertDialog>
 											</div>
 										</td>
-										<td className="px-2 py-2 whitespace-nowrap">
-											<div className="flex justify-center">
-												{(item as any)[keys.image_url] ? (
-													<Button
-														variant="outline"
-														size="sm"
-														onClick={() => setOpenImageUrl((item as any)[keys.image_url]!)}
-													>
-														Ver
-													</Button>
-												) : (
-													<span className="text-muted-foreground text-sm">No tiene</span>
-												)}
-											</div>
+										<td className="px-2 py-2 text-center">
+											{item.image_url ? (
+												<img
+													src={item.image_url}
+													alt="Insumo"
+													className="mx-auto h-10 w-10 rounded object-cover"
+												/>
+											) : (
+												<span className="text-xs text-muted-foreground">Sin imagen</span>
+											)}
 										</td>
 									</tr>
 								);
@@ -384,46 +279,37 @@ export function AccesoriesTable({
 				</table>
 			</div>
 
-			{showQuantityDialog && (
-				<Dialog open={showQuantityDialog} onOpenChange={setShowQuantityDialog}>
-					<DialogContent>
-						<DialogHeader>
-							<DialogTitle>
-								{quantityDialogType === 'increase' ? 'Aumentar cantidad' : 'Disminuir cantidad'}
-							</DialogTitle>
-							<DialogDescription>
-								{quantityDialogType === 'increase' 
-									? '¿Cuántas unidades desea aumentar?' 
-									: '¿Cuántas unidades desea disminuir?'}
-							</DialogDescription>
-						</DialogHeader>
-						<div className="py-4">
-							<Input
-								type="number"
-								value={quantityChange as any}
-								onChange={(e) => setQuantityChange(e.target.value ? Number(e.target.value) : '')}
-								placeholder="Ingrese la cantidad"
-								className="bg-background"
-								min="0"
-							/>
-						</div>
-						<DialogFooter>
-							<Button variant="outline" onClick={() => setShowQuantityDialog(false)}>
-								Cancelar
-							</Button>
-							<Button onClick={handleConfirmUpdate}>
-								{quantityDialogType === 'increase' ? 'Aumentar' : 'Disminuir'}
-							</Button>
-						</DialogFooter>
-					</DialogContent>
-				</Dialog>
-			)}
-
-			<ImageViewer
-				open={!!openImageUrl}
-				onOpenChange={(v) => (v ? null : setOpenImageUrl(null))}
-				src={openImageUrl}
-			/>
+			<Dialog open={showQuantityDialog} onOpenChange={setShowQuantityDialog}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							{quantityDialogType === 'increase' ? 'Aumentar cantidad' : 'Disminuir cantidad'}
+						</DialogTitle>
+						<DialogDescription>
+							{quantityDialogType === 'increase'
+								? '¿Cuántas unidades desea aumentar?'
+								: '¿Cuántas unidades desea disminuir?'}
+						</DialogDescription>
+					</DialogHeader>
+					<div className="py-4">
+						<Input
+							type="number"
+							value={quantityChange}
+							onChange={(e) => setQuantityChange(e.target.value ? Number(e.target.value) : '')}
+							placeholder="Ingrese la cantidad"
+							min="0"
+						/>
+					</div>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setShowQuantityDialog(false)}>
+							Cancelar
+						</Button>
+						<Button onClick={confirmQuantityUpdate}>
+							{quantityDialogType === 'increase' ? 'Aumentar' : 'Disminuir'}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</Card>
 	);
 }

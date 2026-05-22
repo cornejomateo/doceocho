@@ -13,7 +13,7 @@ export interface SalesMetrics {
 	chosenAverageTicket: number; // Average amount of chosen budgets (accepted)
 	totalAverageTicket: number; // Average amount of all budgets
 	lostAverageTicket: number; // Average amount of lost budgets
-	clientsWithBudget: number; 
+	clientsWithBudget: number;
 	budgetsByMonth: Array<{ month: string; presupuestos: number; vendidos: number }>;
 	budgetsByAmount: Array<{ amountRange: string; count: number }>;
 	budgetsByAmountChosen: Array<{ amountRange: string; count: number }>;
@@ -22,12 +22,12 @@ export interface SalesMetrics {
 	budgetsByLocation: Array<{ location: string; count: number }>;
 	clientsByContactMethod: Array<{ method: string; count: number }>;
 	budgetsByMaterial: Array<{ material: string; count: number }>;
- 	soldBudgetsByMaterial: Array<{ material: string; count: number }>;
+	soldBudgetsByMaterial: Array<{ material: string; count: number }>;
 	soldBudgetsByMaterialByMonth: Array<{ month: string; pvc: number; aluminio: number }>;
 }
 
 export interface MonthlyData {
-  month: string;
+	month: string;
 	clients: number;
 	budgets: number;
 	sales: number;

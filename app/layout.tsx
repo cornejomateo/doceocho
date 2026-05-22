@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 	generator: 'v0.app',
 };
 
-// Asegurarse de que el tema se aplique al body
 export default function RootLayout({
 	children,
 }: Readonly<{
@@ -33,16 +32,21 @@ export default function RootLayout({
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 				<meta name="apple-mobile-web-app-title" content="AR Aberturas" />
-				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+				<meta
+					name="viewport"
+					content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"
+				/>
 			</head>
-			<body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased bg-background text-foreground min-h-screen`}>
-				<ThemeProvider 
-					attribute="class" 
-					defaultTheme="system" 
-					enableSystem 
+			<body
+				className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased bg-background text-foreground min-h-screen`}
+			>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					enableSystem
 					disableTransitionOnChange
 					enableColorScheme
-					>
+				>
 					<AuthProvider>
 						<Suspense fallback={null}>{children}</Suspense>
 					</AuthProvider>

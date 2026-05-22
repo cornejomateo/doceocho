@@ -4,16 +4,16 @@ import { BudgetWithWork } from '@/lib/works/balances';
 import { FolderBudget } from '@/lib/budgets/folder_budgets';
 import { getBudgetsByFolderBudgetIds } from '@/lib/budgets/budgets';
 import { getFolderBudgetsByClientId } from '@/lib/budgets/folder_budgets';
-import { 
-	BudgetFolderVM, 
-	BudgetFormData, 
-	DeleteBudgetConfirmState, 
-	DeleteFolderConfirmState, 
-	PdfPreviewState, 
-	BudgetDetailModalState 
+import {
+	BudgetFolderVM,
+	BudgetFormData,
+	DeleteBudgetConfirmState,
+	DeleteFolderConfirmState,
+	PdfPreviewState,
+	BudgetDetailModalState,
 } from '../../utils/budgets/types';
 import { FORM_DEFAULTS } from '../../constants/budgets/constants';
-import { workLabel} from '../../utils/budgets/utils';
+import { workLabel } from '../../utils/budgets/utils';
 
 export function useClientBudgetsState(clientId: string) {
 	const [isLoading, setIsLoading] = useState(false);
@@ -120,7 +120,7 @@ export function useClientBudgetsState(clientId: string) {
 
 	const chosenBudgetIds = useMemo(() => {
 		const chosen = budgets.filter((b) => !!b.accepted);
-		return chosen.map(b => b.id);
+		return chosen.map((b) => b.id);
 	}, [budgets]);
 
 	useEffect(() => {
@@ -151,7 +151,7 @@ export function useClientBudgetsState(clientId: string) {
 	};
 
 	const updateFormData = (updates: Partial<BudgetFormData>) => {
-		setFormData(prev => ({ ...prev, ...updates }));
+		setFormData((prev) => ({ ...prev, ...updates }));
 	};
 
 	const resetFormData = () => {
@@ -193,7 +193,7 @@ export function useClientBudgetsState(clientId: string) {
 		setEditModalOpen,
 		editingBudget,
 		setEditingBudget,
-		
+
 		// Data
 		folderBudgets,
 		loadingFolders,
@@ -203,7 +203,7 @@ export function useClientBudgetsState(clientId: string) {
 		foldersVM,
 		orderedFolders,
 		chosenBudgetIds,
-		
+
 		// Actions
 		refresh,
 	};

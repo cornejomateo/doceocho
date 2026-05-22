@@ -83,23 +83,19 @@ export function WorksList({
 		filteredData: filteredClients,
 		paginatedData: currentItems,
 		totalPages,
-		totalItems
-	} = useMemo(() =>
-		paginateAndFilter(
-			initialWorks,
-			searchTerm,
-			currentPage,
-			itemsPerPage,
-			(work, search) => {
+		totalItems,
+	} = useMemo(
+		() =>
+			paginateAndFilter(initialWorks, searchTerm, currentPage, itemsPerPage, (work, search) => {
 				// Filter by search term
-				const matchesSearch = 
+				const matchesSearch =
 					work.address?.toLowerCase().includes(search) ||
 					work.architect?.toLowerCase().includes(search) ||
-					work.status?.toLowerCase().includes(search) || false;
-				
+					work.status?.toLowerCase().includes(search) ||
+					false;
+
 				return matchesSearch;
-			}
-		),
+			}),
 		[initialWorks, currentPage, itemsPerPage, searchTerm]
 	);
 

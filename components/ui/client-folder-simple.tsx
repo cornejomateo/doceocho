@@ -2,15 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-	Mail, 
-	Phone, 
-	MapPin, 
-	Eye, 
-	Edit, 
-	Trash2,
-	Building2
-} from 'lucide-react';
+import { Mail, Phone, MapPin, Eye, Edit, Trash2, Building2 } from 'lucide-react';
 import { Client } from '@/lib/clients/clients';
 
 interface ClientFolderSimpleProps {
@@ -47,7 +39,7 @@ export function ClientFolderSimple({ client, onView, onEdit, onDelete }: ClientF
 			</div>
 
 			{/* Main Card with folder styling */}
-			<Card 
+			<Card
 				className="
 					relative pt-4 p-6 bg-card border-border hover:border-primary/50 transition-colors
 					border-t-0 rounded-t-none shadow-md hover:shadow-lg

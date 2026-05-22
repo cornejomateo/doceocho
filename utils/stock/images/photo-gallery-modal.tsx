@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
 	Dialog,
 	DialogContent,
@@ -7,129 +9,123 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import { useState, useEffect } from 'react';
-import { cn } from '../../../lib/utils';
-import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LineSelect } from '@/components/stock/line-select';
-import { CodeSelect } from '@/components/stock/code-select';
+import { useToast } from '@/components/ui/use-toast';
 import ImageViewer from '@/components/ui/image-viewer';
-import { ca } from 'date-fns/locale';
-import { set } from 'date-fns';
-import { fetchImages, fetchImagesAccsIronSupply } from './gallery-api';
-import { handleUpload as uploadImage } from './gallery-upload';
-import type { StockCategory } from '@/lib/stock/stock-config';
 
 interface PhotoGalleryModalProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	materialType?: 'Aluminio' | 'PVC';
-	categoryState?: 'Perfiles' | StockCategory;
 }
 
-export function PhotoGalleryModal({
-	open,
-	onOpenChange,
-	materialType = 'Aluminio',
-	categoryState,
-}: PhotoGalleryModalProps) {
+type GalleryImage = {
+	id?: number;
+	image_url?: string | null;
+};
+
+export function PhotoGalleryModal({ open, onOpenChange }: PhotoGalleryModalProps) {
 	const { toast } = useToast();
 	const [file, setFile] = useState<File | null>(null);
-	const [nameLine, setNameLine] = useState('');
 	const [nameCode, setNameCode] = useState('');
-
-	const [loadingSearch, setLoadingSearch] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [loadingSearch, setLoadingSearch] = useState(false);
 	const [searched, setSearched] = useState(false);
-	const [images, setImages] = useState<{ id?: number; image_url?: string | null }[]>([]);
+	const [images, setImages] = useState<GalleryImage[]>([]);
 	const [imagesLoading, setImagesLoading] = useState(false);
 	const [imagesError, setImagesError] = useState<string | null>(null);
 	const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-	// Nuevo fetch para perfiles
-	const fetchImagesWrapper = async (line?: string, code?: string) => {
-		try {
-			setImagesLoading(true);
-			setImagesError(null);
-			const data = await fetchImages(materialType, line, code);
-			if (data.success) {
-				setImages(data.images ?? []);
-			} else {
-				setImages([]);
-				setImagesError(data.error ?? 'Error al obtener imágenes');
-			}
-		} catch (err: any) {
-			console.error('Error fetching images', err);
-			setImagesError(err?.message ?? String(err));
-			setImages([]);
-		} finally {
-			setImagesLoading(false);
-		}
-	};
-
-	// Nuevo fetch para accesorios/herrajes
-	const fetchImagesAccsIronWrapper = async (code?: string) => {
-		try {
-			setImagesLoading(true);
-			setImagesError(null);
-			setLoadingSearch(true);
-			const data = await fetchImagesAccsIronSupply(categoryState, code);
-			if (data.success) {
-				setImages(data.images ?? []);
-			} else {
-				setImages([]);
-				setImagesError(data.error ?? 'Error al obtener imágenes');
-			}
-		} catch (err: any) {
-			console.error('Error fetching images', err);
-			setImagesError(err?.message ?? String(err));
-			setImages([]);
-		} finally {
-			setImagesLoading(false);
-			setLoadingSearch(false);
-		}
-	};
-
-	useEffect(() => {
-		if (categoryState === 'Perfiles') {
-			if (nameLine && nameCode) {
-				fetchImagesWrapper(nameLine, nameCode);
-			} else {
-				// clear images unless both selectors are set
-				setImages([]);
-				setImagesError(null);
-			}
-		}
-	}, [nameLine, nameCode, materialType, categoryState]);
-
-	const handleUploadClick = () => {
-		uploadImage({
-			file,
-			materialType,
-			categoryState,
-			nameLine,
-			nameCode,
-			setLoading,
-			setFile,
-			setNameLine,
-			setNameCode,
-			setImages,
-		});
+	const resetState = () => {
+		setSelectedImage(null);
+		setNameCode('');
+		setImages([]);
+		setImagesError(null);
 		setSearched(false);
+		setFile(null);
 	};
 
 	const handleOpenChange = (newOpen: boolean) => {
-		if (!newOpen) {
-			setSelectedImage(null);
-			setNameCode('');
-			setNameLine('');
-			setImages([]);
-			setImagesError(null);
-			setSearched(false);
-			setFile(null);
-		}
+		if (!newOpen) resetState();
 		onOpenChange(newOpen);
+	};
+
+	const fetchImages = async (code: string) => {
+		try {
+			setImagesLoading(true);
+			setImagesError(null);
+			const params = new URLSearchParams({ name_code: code });
+			const res = await fetch(`/api/gallery/list?${params.toString()}`);
+			const data = await res.json();
+			if (data.success) {
+				setImages(data.images ?? []);
+			} else {
+				setImages([]);
+				setImagesError(data.error ?? 'Error al obtener imágenes');
+			}
+		} catch (error: any) {
+			setImages([]);
+			setImagesError(error?.message ?? 'Error al obtener imágenes');
+		} finally {
+			setImagesLoading(false);
+		}
+	};
+
+	const handleSearch = async () => {
+		if (!nameCode) {
+			toast({ title: 'Error', description: 'Ingresá un código', variant: 'destructive' });
+			return;
+		}
+		setLoadingSearch(true);
+		await fetchImages(nameCode);
+		setSearched(true);
+		setLoadingSearch(false);
+	};
+
+	const handleUpload = async () => {
+		if (!file) {
+			toast({ title: 'Error', description: 'Seleccioná una imagen', variant: 'destructive' });
+			return;
+		}
+		if (!nameCode) {
+			toast({ title: 'Error', description: 'Ingresá un código', variant: 'destructive' });
+			return;
+		}
+
+		try {
+			setLoading(true);
+			const formData = new FormData();
+			formData.append('file', file);
+			formData.append('name_code', nameCode);
+
+			const res = await fetch('/api/gallery/upload', {
+				method: 'POST',
+				body: formData,
+			});
+			const data = await res.json();
+
+			if (data.success) {
+				toast({ title: '¡Éxito!', description: 'Imagen subida correctamente', duration: 3000 });
+				setFile(null);
+				setNameCode('');
+				setImages([]);
+				setSearched(false);
+			} else {
+				toast({
+					title: 'Error',
+					description: data.error || 'Ocurrió un error al subir la imagen',
+					variant: 'destructive',
+				});
+			}
+		} catch (error) {
+			toast({
+				title: 'Error',
+				description: 'Ocurrió un error al subir la imagen',
+				variant: 'destructive',
+			});
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -137,249 +133,117 @@ export function PhotoGalleryModal({
 			<DialogContent className="max-w-[600px] w-full">
 				<DialogHeader>
 					<DialogTitle>Agregar y buscar fotos</DialogTitle>
-					<DialogDescription>
-						{categoryState == 'Perfiles'
-							? 'Subí imágenes según línea y código.'
-							: 'Subí imágenes según código'}
-					</DialogDescription>
+					<DialogDescription>Subí y buscá imágenes por código de insumo.</DialogDescription>
 				</DialogHeader>
 
-				{categoryState === 'Perfiles' && (
-					<div className="p-6 flex flex-col gap-4">
-						<LineSelect
-							value={nameLine}
-							onValueChange={(value) => {
-								setNameLine(value);
-								setNameCode(''); // Reset code when line changes
-								setSelectedImage(null);
-								setImages([]);
-								setImagesError(null);
-								setSearched(false);
-							}}
-							materialType={materialType}
-						/>
-						<CodeSelect
-							value={nameCode}
-							onValueChange={setNameCode}
-							lineName={nameLine}
-							materialType={materialType}
-						/>
-						{/* Gallery results */}
-						<div className="pt-4">
-							<h3 className="text-sm font-semibold text-foreground mb-2">Imágenes encontradas</h3>
-							{imagesLoading ? (
-								<div className="text-sm text-muted-foreground">Cargando imágenes...</div>
-							) : imagesError ? (
-								<div className="text-sm text-destructive">Error: {imagesError}</div>
-							) : !nameLine ? (
-								<div className="text-sm text-muted-foreground">
-									Seleccioná línea y código para ver imágenes.
-								</div>
-							) : nameLine && !nameCode ? (
-								<div className="text-sm text-muted-foreground">
-									Seleccioná un código para ver las imágenes de la línea seleccionada.
-								</div>
-							) : images.length === 0 ? (
-								<div className="text-sm text-muted-foreground">
-									No se encontraron imágenes para la línea y código seleccionados.
-								</div>
-							) : (
-								<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-									{images.map((img) => (
-										<button
-											key={img.id}
-											onClick={() => img.image_url && setSelectedImage(img.image_url)}
-											className="aspect-video bg-muted rounded overflow-hidden border border-border shadow-sm p-0"
-										>
-											{img.image_url ? (
-												<img
-													src={img.image_url}
-													alt={`Imagen ${img.id}`}
-													className="w-full h-full object-cover"
-													loading="lazy"
-												/>
-											) : (
-												<div className="flex items-center justify-center h-full text-muted-foreground">
-													Sin imagen
-												</div>
-											)}
-										</button>
-									))}
-								</div>
-							)}
-						</div>
-						<label htmlFor="file-upload" className="w-full">
-							<div className="w-full px-4 py-2 border rounded bg-background text-muted-foreground cursor-pointer text-center">
-								{file ? file.name : 'Elegí una imagen'}
+				<div className="flex flex-col gap-4 p-6">
+					<Input
+						value={nameCode}
+						onChange={(e) => {
+							setNameCode(e.target.value);
+							setSelectedImage(null);
+							setImages([]);
+							setImagesError(null);
+							setSearched(false);
+						}}
+						placeholder="Código"
+						className="w-full"
+					/>
+
+					<div className="pt-2">
+						<h3 className="mb-2 text-sm font-semibold text-foreground">Imágenes encontradas</h3>
+						{!nameCode ? (
+							<div className="text-sm text-muted-foreground">
+								Ingresá un código para ver imágenes.
 							</div>
-							<Input
-								id="file-upload"
-								type="file"
-								onChange={(e) => setFile(e.target.files?.[0] || null)}
-								className="hidden"
-							/>
-						</label>
-						<Button onClick={handleUploadClick} disabled={loading}>
-							{loading ? 'Subiendo...' : 'Subir imagen'}
-						</Button>{' '}
-						{/* Shared image viewer */}
-						{selectedImage && (
-							<ImageViewer
-								open={!!selectedImage}
-								onOpenChange={(v) => !v && setSelectedImage(null)}
-								src={selectedImage}
-								trash={true}
-								onDelete={async () => {
-									const res = await fetch(
-										`/api/gallery/delete?categoryState=${categoryState}&material_type=${materialType}&code_name=${nameCode}&line_name=${nameLine}`,
-										{
-											method: 'DELETE',
-										}
-									);
-									const data = await res.json();
-									if (data.success) {
-										toast({
-											title: 'Imagen eliminada correctamente',
-											variant: 'default',
-										});
-										setSelectedImage(null);
-										setNameCode('');
-										setNameLine('');
-										setImages([]);
-										setImagesError(null);
-									} else {
-										toast({
-											title: 'Error al eliminar imagen',
-											description: data.error || 'Ocurrió un error al eliminar la imagen',
-											variant: 'destructive',
-										});
-									}
-								}}
-							/>
+						) : imagesLoading ? (
+							<div className="text-sm text-muted-foreground">Cargando imágenes...</div>
+						) : imagesError ? (
+							<div className="text-sm text-destructive">Error: {imagesError}</div>
+						) : images.length === 0 && searched ? (
+							<div className="text-sm text-muted-foreground">No se encontró el código.</div>
+						) : (
+							<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+								{images.map((img) => (
+									<button
+										key={img.id}
+										onClick={() => img.image_url && setSelectedImage(img.image_url)}
+										className="aspect-video overflow-hidden rounded border border-border bg-muted p-0 shadow-sm"
+									>
+										{img.image_url ? (
+											<img
+												src={img.image_url}
+												alt={`Imagen ${img.id}`}
+												className="h-full w-full object-cover"
+												loading="lazy"
+											/>
+										) : (
+											<div className="flex h-full items-center justify-center text-muted-foreground">
+												Sin imagen
+											</div>
+										)}
+									</button>
+								))}
+							</div>
 						)}
 					</div>
-				)}
 
-				{(categoryState === 'Accesorios' ||
-					categoryState === 'Herrajes' ||
-					categoryState === 'Insumos') && (
-					<div className="p-6 flex flex-col gap-4">
+					<label htmlFor="file-upload" className="w-full">
+						<div className="w-full cursor-pointer rounded border bg-background px-4 py-2 text-center text-muted-foreground">
+							{file ? file.name : 'Elegí una imagen'}
+						</div>
 						<Input
-							value={nameCode}
-							onChange={(e) => {
-								setNameCode(e.target.value);
-								setSelectedImage(null);
-								setImages([]);
-								setImagesError(null);
-								setSearched(false);
-							}}
-							placeholder="Código"
-							className="w-full"
+							id="file-upload"
+							type="file"
+							onChange={(e) => setFile(e.target.files?.[0] || null)}
+							className="hidden"
 						/>
-						<div className="pt-4">
-							<h3 className="text-sm font-semibold text-foreground mb-2">Imágenes encontradas</h3>
-							{!nameCode ? (
-								<div className="text-sm text-muted-foreground">
-									Ingresá un código para ver imágenes.
-								</div>
-							) : imagesLoading ? (
-								<div className="text-sm text-muted-foreground">Cargando imágenes...</div>
-							) : imagesError ? (
-								<div className="text-sm text-destructive">Error: {imagesError}</div>
-							) : images.length === 0 && searched ? (
-								<div className="text-sm text-muted-foreground">No se encontro el código.</div>
-							) : (
-								<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-									{images.map((img) => (
-										<button
-											key={img.id}
-											onClick={() => img.image_url && setSelectedImage(img.image_url)}
-											className="aspect-video bg-muted rounded overflow-hidden border border-border shadow-sm p-0"
-										>
-											{img.image_url ? (
-												<img
-													src={img.image_url}
-													alt={`Imagen ${img.id}`}
-													className="w-full h-full object-cover"
-													loading="lazy"
-												/>
-											) : (
-												<div className="flex items-center justify-center h-full text-muted-foreground">
-													Sin imagen
-												</div>
-											)}
-										</button>
-									))}
-								</div>
-							)}
-						</div>
+					</label>
 
-						<label htmlFor="file-upload" className="w-full">
-							<div className="w-full px-4 py-2 border rounded bg-background text-muted-foreground cursor-pointer text-center">
-								{file ? file.name : 'Elegí una imagen'}
-							</div>
-							<Input
-								id="file-upload"
-								type="file"
-								onChange={(e) => setFile(e.target.files?.[0] || null)}
-								className="hidden"
-							/>
-						</label>
-
-						<div className="flex gap-2 w-full">
-							<Button className="flex-1 w-full" onClick={handleUploadClick} disabled={loading}>
-								{loading ? 'Subiendo...' : 'Subir imagen'}
-							</Button>
-							<Button
-								className="flex-1 w-full"
-								variant="outline"
-								onClick={() => {
-									fetchImagesAccsIronWrapper(nameCode);
-									setSearched(true);
-								}}
-								disabled={loadingSearch}
-							>
-								{loadingSearch ? 'Buscando' : 'Buscar imagen'}
-							</Button>
-						</div>
-
-						{/* Shared image viewer */}
-						{selectedImage && (
-							<ImageViewer
-								open={!!selectedImage}
-								onOpenChange={(v) => !v && setSelectedImage(null)}
-								src={selectedImage}
-								trash={true}
-								onDelete={async () => {
-									const res = await fetch(
-										`/api/gallery/delete?categoryState=${categoryState}&code_name=${nameCode}`,
-										{
-											method: 'DELETE',
-										}
-									);
-									const data = await res.json();
-									if (data.success) {
-										toast({
-											title: 'Imagen eliminada correctamente',
-											variant: 'default',
-										});
-										setSelectedImage(null);
-										setNameCode('');
-										setSearched(false);
-										setImages([]);
-										setImagesError(null);
-									} else {
-										toast({
-											title: 'Error al eliminar imagen',
-											description: data.error || 'Ocurrió un error al eliminar la imagen',
-											variant: 'destructive',
-										});
-									}
-								}}
-							/>
-						)}
+					<div className="flex gap-2">
+						<Button className="flex-1" onClick={handleUpload} disabled={loading}>
+							{loading ? 'Subiendo...' : 'Subir imagen'}
+						</Button>
+						<Button
+							className="flex-1"
+							variant="outline"
+							onClick={handleSearch}
+							disabled={loadingSearch}
+						>
+							{loadingSearch ? 'Buscando...' : 'Buscar'}
+						</Button>
 					</div>
-				)}
+
+					{selectedImage && (
+						<ImageViewer
+							open={!!selectedImage}
+							onOpenChange={(v) => !v && setSelectedImage(null)}
+							src={selectedImage}
+							trash
+							onDelete={async () => {
+								const res = await fetch(
+									`/api/gallery/delete?code_name=${encodeURIComponent(nameCode)}`,
+									{
+										method: 'DELETE',
+									}
+								);
+								const data = await res.json();
+								if (data.success) {
+									toast({ title: 'Imagen eliminada correctamente', variant: 'default' });
+									setSelectedImage(null);
+									setImages([]);
+									setImagesError(null);
+								} else {
+									toast({
+										title: 'Error al eliminar imagen',
+										description: data.error || 'Ocurrió un error al eliminar la imagen',
+										variant: 'destructive',
+									});
+								}
+							}}
+						/>
+					)}
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

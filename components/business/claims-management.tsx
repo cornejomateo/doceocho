@@ -167,7 +167,9 @@ export function ClaimsManagement() {
 							Descripción completa
 						</DialogTitle>
 					</DialogHeader>
-					<DialogDescription className="sr-only">Descripción completa del reclamo o actividad diaria</DialogDescription>
+					<DialogDescription className="sr-only">
+						Descripción completa del reclamo o actividad diaria
+					</DialogDescription>
 					<div className="py-4 space-y-6">
 						<div>
 							<p className="text-sm text-foreground whitespace-pre-wrap">{descriptionToView}</p>

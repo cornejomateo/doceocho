@@ -61,7 +61,13 @@ export default function LoginPage() {
 
 				{/* Logo and Title */}
 				<div className="text-center mb-8">
-					<Image src="/icons/icon-doce8.png" alt="Doce ocho Logo" width={60} height={60} className="mx-auto mb-4" />
+					<Image
+						src="/icons/icon-doce8.png"
+						alt="Doce ocho Logo"
+						width={60}
+						height={60}
+						className="mx-auto mb-4"
+					/>
 					<h1 className="text-3xl font-bold text-white">Doce ocho</h1>
 					<h3 className="text-lg text-gray-300 mt-2">Iniciar sesión</h3>
 				</div>

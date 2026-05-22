@@ -24,7 +24,7 @@ export function ArchitectsTopBudgetsCount({
 	displayCount,
 	isLoading,
 	showSalesInfo = false,
-	showRevenueInfo = false
+	showRevenueInfo = false,
 }: ArchitectsTopBudgetsCountProps) {
 	const getSortedArchitects = () => {
 		const sortedArchitects = [...architects];
@@ -59,7 +59,7 @@ export function ArchitectsTopBudgetsCount({
 	const getMaxValue = () => {
 		const displayed = getDisplayedArchitects();
 		if (displayed.length === 0) return 1;
-		
+
 		if (showSalesInfo) {
 			return 100;
 		}
@@ -88,13 +88,9 @@ export function ArchitectsTopBudgetsCount({
 			</div>
 			<div className="space-y-3">
 				{isLoading ? (
-					<div className="text-center text-muted-foreground py-8">
-						Cargando datos...
-					</div>
+					<div className="text-center text-muted-foreground py-8">Cargando datos...</div>
 				) : getDisplayedArchitects().length === 0 ? (
-					<div className="text-center text-muted-foreground py-8">
-						{getEmptyMessage()}
-					</div>
+					<div className="text-center text-muted-foreground py-8">{getEmptyMessage()}</div>
 				) : (
 					<>
 						{getDisplayedArchitects().map((architect, index) => {
@@ -102,7 +98,7 @@ export function ArchitectsTopBudgetsCount({
 							const currentValue = getMetricValue(architect);
 							const currentProgressValue = getProgressValue(architect);
 							const percentage = (currentProgressValue / maxValue) * 100;
-							
+
 							return (
 								<div key={architect.name} className="space-y-2">
 									<div className="flex items-center justify-between">
@@ -110,18 +106,14 @@ export function ArchitectsTopBudgetsCount({
 											<Badge variant="outline" className="text-xs">
 												#{index + 1}
 											</Badge>
-											<span className="text-sm font-medium truncate">
-												{architect.name}
-											</span>
+											<span className="text-sm font-medium truncate">{architect.name}</span>
 										</div>
 										<span className="text-sm text-muted-foreground">
 											{formatMetricValue(currentValue)}
 										</span>
 									</div>
-									{!showRevenueInfo && (
-										<Progress value={percentage} className="h-2" />
-									)}
-									
+									{!showRevenueInfo && <Progress value={percentage} className="h-2" />}
+
 									{(showSalesInfo || showRevenueInfo) && (
 										<div className="flex items-center justify-between text-xs text-muted-foreground">
 											{showSalesInfo ? (

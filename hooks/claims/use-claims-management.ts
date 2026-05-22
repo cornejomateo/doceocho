@@ -1,5 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Claim, listClaims, deleteClaim, resolveClaim, reopenClaim, updateClaim, deleteOldClaims } from '@/lib/claims/claims';
+import {
+	Claim,
+	listClaims,
+	deleteClaim,
+	resolveClaim,
+	reopenClaim,
+	updateClaim,
+	deleteOldClaims,
+} from '@/lib/claims/claims';
 import { useOptimizedRealtime } from '@/hooks/use-optimized-realtime';
 import { paginateAndFilter } from '@/helpers/clients/pagination';
 import { FilterType } from '@/constants/claims/filters';
@@ -51,7 +59,10 @@ export function useClaimsManagement() {
 			if (error) throw error;
 			toast({
 				title: filterType === 'diario' ? 'Actividad diaria eliminada' : 'Reclamo eliminado',
-				description: filterType === 'diario' ? 'La actividad diaria ha sido eliminada correctamente.' : 'El reclamo ha sido eliminado correctamente.',
+				description:
+					filterType === 'diario'
+						? 'La actividad diaria ha sido eliminada correctamente.'
+						: 'El reclamo ha sido eliminado correctamente.',
 			});
 			setClaimToDelete(null);
 			await refresh();
@@ -70,10 +81,20 @@ export function useClaimsManagement() {
 			const { error } = await reopenClaim(claim.id);
 			if (error) throw error;
 			toast({
-				title: claim.resolved ? (filterType !== 'diario' ? 'Reclamo reabierto': 'Actividad reabierta') : (filterType !== 'diario' ? 'Reclamo resuelto' : 'Actividad resuelta'),
+				title: claim.resolved
+					? filterType !== 'diario'
+						? 'Reclamo reabierto'
+						: 'Actividad reabierta'
+					: filterType !== 'diario'
+						? 'Reclamo resuelto'
+						: 'Actividad resuelta',
 				description: claim.resolved
-					? (filterType !== 'diario' ? 'El reclamo ha sido marcado como pendiente nuevamente.' : 'La actividad diaria ha sido marcada como pendiente nuevamente.')
-					: (filterType !== 'diario' ? 'El reclamo ha sido marcado como resuelto.' : 'La actividad diaria ha sido marcada como resuelta.'),
+					? filterType !== 'diario'
+						? 'El reclamo ha sido marcado como pendiente nuevamente.'
+						: 'La actividad diaria ha sido marcada como pendiente nuevamente.'
+					: filterType !== 'diario'
+						? 'El reclamo ha sido marcado como resuelto.'
+						: 'La actividad diaria ha sido marcada como resuelta.',
 			});
 			await refresh();
 		} catch (err) {
@@ -103,8 +124,14 @@ export function useClaimsManagement() {
 			}
 
 			toast({
-				title: filterType === 'diario' ? 'Actividad diaria marcada como resuelta' : 'Reclamo marcado como resuelto',
-				description: filterType === 'diario' ? 'La actividad diaria ha sido marcada como resuelta.' : 'El reclamo ha sido marcado como resuelto.',
+				title:
+					filterType === 'diario'
+						? 'Actividad diaria marcada como resuelta'
+						: 'Reclamo marcado como resuelto',
+				description:
+					filterType === 'diario'
+						? 'La actividad diaria ha sido marcada como resuelta.'
+						: 'El reclamo ha sido marcado como resuelto.',
 			});
 			setClaimToResolve(null);
 			setResolvedBy('');
@@ -123,10 +150,11 @@ export function useClaimsManagement() {
 		try {
 			const { error } = await deleteOldClaims();
 			if (error) throw error;
-			
+
 			toast({
 				title: 'Reclamos antiguos eliminados',
-				description: 'Se han eliminado los reclamos y actividades diarias resueltos hace más de un mes.',
+				description:
+					'Se han eliminado los reclamos y actividades diarias resueltos hace más de un mes.',
 			});
 			setShowDeleteOldDialog(false);
 			await refresh();
@@ -147,27 +175,27 @@ export function useClaimsManagement() {
 			currentPage,
 			itemsPerPage,
 			(claim: Claim, search: string) => {
+				const matchesFilter =
+					(filterType === 'todos' && !claim.daily) ||
+					(filterType === 'pendientes' && !claim.resolved && !claim.daily) ||
+					(filterType === 'resueltos' && claim.resolved && !claim.daily) ||
+					(filterType === 'diario' && claim.daily) ||
+					false;
 
-			const matchesFilter =
-				(filterType === 'todos' && !claim.daily) ||
-				(filterType === 'pendientes' && !claim.resolved && !claim.daily) ||
-				(filterType === 'resueltos' && claim.resolved && !claim.daily) ||
-				(filterType === 'diario' && claim.daily) || false;
+				const matchesSearch =
+					search === '' ||
+					claim.description?.toLowerCase().includes(search) ||
+					claim.attend?.toLowerCase().includes(search) ||
+					claim.client_name?.toLowerCase().includes(search) ||
+					claim.work_zone?.toLowerCase().includes(search) ||
+					claim.work_locality?.toLowerCase().includes(search) ||
+					claim.work_address?.toLowerCase().includes(search) ||
+					false;
 
-			const matchesSearch =
-				search === '' ||
-				claim.description?.toLowerCase().includes(search) ||
-				claim.attend?.toLowerCase().includes(search) ||
-				claim.client_name?.toLowerCase().includes(search) ||
-				claim.work_zone?.toLowerCase().includes(search) ||
-				claim.work_locality?.toLowerCase().includes(search) ||
-				claim.work_address?.toLowerCase().includes(search) || false;
-
-			return matchesFilter && matchesSearch;
+				return matchesFilter && matchesSearch;
 			}
 		);
 	}, [claims, searchTerm, currentPage, itemsPerPage, filterType]);
-
 
 	useEffect(() => {
 		setCurrentPage(1);

@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -144,7 +150,9 @@ export function BalanceDetailsModal({
 				toast({
 					variant: 'destructive',
 					title: 'Error al eliminar transacción',
-					description: translateError(error) || 'Hubo un problema al eliminar la transacción. Intente nuevamente.',
+					description:
+						translateError(error) ||
+						'Hubo un problema al eliminar la transacción. Intente nuevamente.',
 				});
 				return;
 			}
@@ -260,12 +268,14 @@ export function BalanceDetailsModal({
 							<div className="flex items-center justify-between mb-3">
 								<h4 className="font-semibold">Notas del saldo</h4>
 								{!isEditingNotes && (
-								<button
-									onClick={() => setIsEditingNotes(true)}
-									className="text-sm text-primary hover:underline"
-								>
-									{balance.notes && String(balance.notes).trim() !== '' ? 'Editar notas' : 'Agregar notas'}
-								</button>
+									<button
+										onClick={() => setIsEditingNotes(true)}
+										className="text-sm text-primary hover:underline"
+									>
+										{balance.notes && String(balance.notes).trim() !== ''
+											? 'Editar notas'
+											: 'Agregar notas'}
+									</button>
 								)}
 							</div>
 							{isEditingNotes ? (
@@ -302,9 +312,7 @@ export function BalanceDetailsModal({
 											{balance.notes}
 										</div>
 									) : (
-										<p className="text-sm text-muted-foreground italic">
-											No hay notas agregadas
-										</p>
+										<p className="text-sm text-muted-foreground italic">No hay notas agregadas</p>
 									)}
 								</div>
 							)}

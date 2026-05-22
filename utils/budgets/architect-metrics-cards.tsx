@@ -31,9 +31,7 @@ export function ArchitectMetricsCards({ report }: ArchitectMetricsCardsProps) {
 					</div>
 					<div>
 						<p className="text-sm text-muted-foreground">Top arquitecto</p>
-						<p className="text-lg font-semibold truncate">
-							{report?.topArchitect?.name || 'N/A'}
-						</p>
+						<p className="text-lg font-semibold truncate">{report?.topArchitect?.name || 'N/A'}</p>
 						<p className="text-xs text-muted-foreground">
 							{report?.topArchitect?.totalBudgets || 0} presupuestos
 						</p>
@@ -69,7 +67,9 @@ export function ArchitectMetricsCards({ report }: ArchitectMetricsCardsProps) {
 							{report?.architects?.sort((a, b) => b.soldAmount - a.soldAmount)[0]?.name || 'N/A'}
 						</p>
 						<p className="text-xs text-muted-foreground">
-							{formatCurrency(report?.architects?.sort((a, b) => b.soldAmount - a.soldAmount)[0]?.soldAmount || 0)}
+							{formatCurrency(
+								report?.architects?.sort((a, b) => b.soldAmount - a.soldAmount)[0]?.soldAmount || 0
+							)}
 						</p>
 					</div>
 				</div>

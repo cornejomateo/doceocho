@@ -103,7 +103,8 @@ export function BalanceForm({ clientId, budgets, onSubmit, onCancel }: BalanceFo
 								const budgetType = budget.type || 'Sin tipo';
 								return (
 									<SelectItem key={budget.id} value={String(budget.id)}>
-										{locality} - {address} - {budgetNumber} - {budgetType} (${budget.amount_ars.toLocaleString('es-AR')})
+										{locality} - {address} - {budgetNumber} - {budgetType} ($
+										{budget.amount_ars.toLocaleString('es-AR')})
 									</SelectItem>
 								);
 							})}
@@ -197,11 +198,10 @@ export function BalanceForm({ clientId, budgets, onSubmit, onCancel }: BalanceFo
 						placeholder="0.00"
 					/>
 				</div>
-
 			</div>
 
 			<NotesInput
-				value={formData.notes|| ''}
+				value={formData.notes || ''}
 				onChange={(value) => setFormData((prev) => ({ ...prev, notes: value ? value : null }))}
 				placeholder="Agregar notas sobre este saldo (opcional)"
 				rows={3}

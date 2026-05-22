@@ -51,9 +51,7 @@ export function CalendarDay({ day, events, isToday, isSelected, onClick }: Calen
 											className={`h-2 w-2 rounded-full ${hasOverdue ? 'bg-red-500' : typeInfo.color.split(' ')[0]}`}
 										/>
 										{typeEvents.length > 1 && (
-											<span className="text-[10px] text-muted-foreground">
-												{typeEvents.length}
-											</span>
+											<span className="text-[10px] text-muted-foreground">{typeEvents.length}</span>
 										)}
 									</div>
 								);

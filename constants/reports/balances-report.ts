@@ -23,4 +23,3 @@ export const BALANCE_TYPES = {
 } as const;
 
 export const DEFAULT_FALLBACK = '-';
-

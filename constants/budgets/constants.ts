@@ -2,13 +2,9 @@ import { checklistTypes } from '@/lib/works/checklists.constants';
 
 export const DEFAULT_TYPES = [...Object.values(checklistTypes), 'Otros'];
 
-export const BUDGET_VARIANTS = [
-	'Mínimo',
-	'Estándar',
-	'Óptimo',
-] as const;
+export const BUDGET_VARIANTS = ['Mínimo', 'Estándar', 'Óptimo'] as const;
 
-export type BudgetVariant = typeof BUDGET_VARIANTS[number];
+export type BudgetVariant = (typeof BUDGET_VARIANTS)[number];
 
 export const FORM_DEFAULTS = {
 	type: 'PVC',
@@ -18,11 +14,15 @@ export const FORM_DEFAULTS = {
 	amountUsd: '',
 	usdRate: '',
 	workId: 'none',
-	created_at: new Date().toLocaleDateString('es-AR', { 
-		year: 'numeric', 
-		month: '2-digit', 
-		day: '2-digit' 
-	}).split('/').reverse().join('-'), // YYYY-MM-DD format using local date
+	created_at: new Date()
+		.toLocaleDateString('es-AR', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+		})
+		.split('/')
+		.reverse()
+		.join('-'), // YYYY-MM-DD format using local date
 } as const;
 
 export const TOAST_MESSAGES = {

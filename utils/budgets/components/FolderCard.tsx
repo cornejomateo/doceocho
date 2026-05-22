@@ -47,7 +47,9 @@ export function FolderCard({
 						<button className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left">
 							<div className="min-w-0">
 								<p className="font-semibold text-foreground truncate">{workLabel(folder)}</p>
-								<p className="text-xs text-muted-foreground">{folderBudgetsList.length} presupuesto(s)</p>
+								<p className="text-xs text-muted-foreground">
+									{folderBudgetsList.length} presupuesto(s)
+								</p>
 							</div>
 							<div className="flex items-center gap-2">
 								{chosenCountInFolder > 0 ? (
@@ -58,7 +60,10 @@ export function FolderCard({
 									<Badge variant="secondary">Opciones</Badge>
 								)}
 								<ChevronDown
-									className={cn('h-4 w-4 text-muted-foreground transition-transform', isOpen && 'rotate-180')}
+									className={cn(
+										'h-4 w-4 text-muted-foreground transition-transform',
+										isOpen && 'rotate-180'
+									)}
 								/>
 							</div>
 						</button>

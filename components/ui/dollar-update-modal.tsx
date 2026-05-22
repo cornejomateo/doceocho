@@ -49,17 +49,17 @@ export function DollarUpdateModal({
 			setIsLoading(true);
 			setError(null);
 			const response = await fetch('/api/dollar-rate');
-			
+
 			if (!response.ok) {
 				throw new Error('No se pudo obtener el tipo de cambio');
 			}
-			
+
 			const result = await response.json();
-			
+
 			if (!result.success) {
 				throw new Error(result.error || 'Error en la respuesta');
 			}
-			
+
 			// Transform the API response to match our interface
 			const transformedData: DollarRate = {
 				moneda: result.data.currency,
@@ -69,7 +69,7 @@ export function DollarUpdateModal({
 				venta: result.data.sellRate,
 				fechaActualizacion: result.data.lastUpdated,
 			};
-			
+
 			setCurrentRate(transformedData);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -90,9 +90,8 @@ export function DollarUpdateModal({
 		if (!newValues) return;
 
 		try {
-			
 			setIsUpdating(true);
-			
+
 			const response = await fetch('/api/dollar-rate', {
 				method: 'POST',
 				headers: {
@@ -127,11 +126,11 @@ export function DollarUpdateModal({
 		const budgetInARS = balance.balance_amount_ars || 0;
 		const budgetInUSD = balance.balance_amount_usd || 0;
 		const newBudgetInARS = (budgetInUSD || 0) * currentRate.venta;
-		
+
 		// For paid and remaining, we need to calculate their USD equivalents first
 		const totalPaidInUSD = balance.totalPaidUSD || 0;
 		const totalPaidInARS = balance.totalPaid || 0;
-		
+
 		const remainingInUSD = balance.remainingUSD || 0;
 		const remainingInARS = balance.remaining || 0;
 		const newRemainingInARS = newBudgetInARS - totalPaidInARS;
@@ -193,7 +192,10 @@ export function DollarUpdateModal({
 							</div>
 							<div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
 								<Calendar className="h-3 w-3" />
-								Actualizado: {format(new Date(currentRate.fechaActualizacion), "dd/MM/yyyy HH:mm", { locale: es })}
+								Actualizado:{' '}
+								{format(new Date(currentRate.fechaActualizacion), 'dd/MM/yyyy HH:mm', {
+									locale: es,
+								})}
 							</div>
 						</div>
 
@@ -201,34 +203,34 @@ export function DollarUpdateModal({
 						{balance?.contract_date_usd && newValues && (
 							<div className="space-y-3">
 								<h4 className="text-sm font-medium">Cambios en los valores:</h4>
-								
+
 								<div className="grid gap-2 text-sm">
 									<div className="flex justify-between items-center">
 										<span>Presupuesto:</span>
 										<div className="text-right">
 											<div className="font-medium">
-												${(newValues.budgetInARS || 0).toLocaleString('es-AR')} → ${newValues.newBudgetInARS.toLocaleString('es-AR')}
+												${(newValues.budgetInARS || 0).toLocaleString('es-AR')} → $
+												{newValues.newBudgetInARS.toLocaleString('es-AR')}
 											</div>
 											<div className="text-xs text-muted-foreground">
 												{newValues.budgetInUSD.toFixed(2)} USD (Sin modificación)
 											</div>
 										</div>
 									</div>
-									
+
 									<div className="flex justify-between items-center">
 										<span>Entregado:</span>
 										<div className="text-right">
-											<div className="font-medium">
-												Sin modificación
-											</div>
+											<div className="font-medium">Sin modificación</div>
 										</div>
 									</div>
-									
+
 									<div className="flex justify-between items-center">
 										<span>Saldo restante:</span>
 										<div className="text-right">
 											<div className="font-medium">
-												${(newValues.remainingInARS || 0).toLocaleString('es-AR')} → ${newValues.newRemainingInARS.toLocaleString('es-AR')}
+												${(newValues.remainingInARS || 0).toLocaleString('es-AR')} → $
+												{newValues.newRemainingInARS.toLocaleString('es-AR')}
 											</div>
 											<div className="text-xs text-muted-foreground">
 												{newValues.remainingInUSD.toFixed(2)} USD (Sin modificación)
@@ -243,7 +245,8 @@ export function DollarUpdateModal({
 										<AlertDescription className="text-xs">
 											El tipo de cambio cambiará de ${balance.usd_current} a ${currentRate.venta}
 											<br />
-											El presupuesto en USD se mantendrá fijo, el presupuesto en pesos se ajustará automáticamente.
+											El presupuesto en USD se mantendrá fijo, el presupuesto en pesos se ajustará
+											automáticamente.
 										</AlertDescription>
 									</Alert>
 								)}
@@ -253,17 +256,10 @@ export function DollarUpdateModal({
 				) : null}
 
 				<DialogFooter>
-					<Button
-						variant="outline"
-						onClick={() => onOpenChange(false)}
-						disabled={isUpdating}
-					>
+					<Button variant="outline" onClick={() => onOpenChange(false)} disabled={isUpdating}>
 						Cancelar
 					</Button>
-					<Button
-						onClick={handleUpdate}
-						disabled={!currentRate || isUpdating || isLoading}
-					>
+					<Button onClick={handleUpdate} disabled={!currentRate || isUpdating || isLoading}>
 						{isUpdating ? (
 							<>
 								<Loader2 className="h-4 w-4 mr-2 animate-spin" />

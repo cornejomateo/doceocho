@@ -525,8 +525,8 @@ export function CalendarView() {
 								<DialogHeader>
 									<DialogTitle>¿Eliminar eventos de años anteriores?</DialogTitle>
 									<DialogDescription>
-										Esta acción eliminará todos los eventos (finalizados) anteriores al 1 de enero del
-										presente año. ¿Estás seguro?
+										Esta acción eliminará todos los eventos (finalizados) anteriores al 1 de enero
+										del presente año. ¿Estás seguro?
 									</DialogDescription>
 								</DialogHeader>
 								<DialogFooter>

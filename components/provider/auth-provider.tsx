@@ -46,17 +46,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	async function signIn(username: string, password: string) {
 		setLoading(true);
 		try {
-			
 			const res = await getUser(username, password);
 
 			if (!res.data) {
-				const errorMessage = typeof res.error === 'string' 
-					? res.error 
-					: res.error?.message || 'Usuario o contraseña incorrectos';
+				const errorMessage =
+					typeof res.error === 'string'
+						? res.error
+						: res.error?.message || 'Usuario o contraseña incorrectos';
 				throw new Error(errorMessage);
 			}
 
-			const sessionUser: SessionUser = { username: res.data.username, role: res.data.role as UserRole };
+			const sessionUser: SessionUser = {
+				username: res.data.username,
+				role: res.data.role as UserRole,
+			};
 			setUser(sessionUser);
 
 			if (typeof window !== 'undefined') {

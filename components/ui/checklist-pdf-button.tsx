@@ -16,7 +16,12 @@ type ChecklistPDFButtonProps = {
 	disabled?: boolean;
 };
 
-export function ChecklistPDFButton({ checklists, workId, clientName, disabled }: ChecklistPDFButtonProps) {
+export function ChecklistPDFButton({
+	checklists,
+	workId,
+	clientName,
+	disabled,
+}: ChecklistPDFButtonProps) {
 	const [isGenerating, setIsGenerating] = useState(false);
 
 	const handleDownloadPDF = async () => {
@@ -30,10 +35,10 @@ export function ChecklistPDFButton({ checklists, workId, clientName, disabled }:
 			const { data: work } = await getWorkById(workId || '');
 			const workLocality = work?.locality || '';
 			const workAddress = work?.address || '';
-			
+
 			// Prepare checklist data with calculated progress
 			const preparedChecklists = prepareChecklistData(checklists);
-			
+
 			// Generate and download PDF
 			await generateChecklistPDF(preparedChecklists, clientName, workLocality, workAddress);
 		} catch (error) {

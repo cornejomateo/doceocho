@@ -13,12 +13,12 @@ interface PostItModalProps {
 	isLoading?: boolean;
 }
 
-export function PostItModal({ 
-	isOpen, 
-	onOpenChange, 
-	initialNote, 
-	onSave, 
-	isLoading = false 
+export function PostItModal({
+	isOpen,
+	onOpenChange,
+	initialNote,
+	onSave,
+	isLoading = false,
 }: PostItModalProps) {
 	const [note, setNote] = useState(initialNote || '');
 
@@ -43,15 +43,12 @@ export function PostItModal({
 	if (!isOpen) return null;
 
 	return (
-		<div 
+		<div
 			className={POST_IT_CONSTANTS.CLASSES.MODAL_OVERLAY}
 			onClick={handleClose}
 			onKeyDown={handleKeyDown}
 		>
-			<div 
-				className={POST_IT_CONSTANTS.CLASSES.MODAL_CONTENT}
-				onClick={(e) => e.stopPropagation()}
-			>
+			<div className={POST_IT_CONSTANTS.CLASSES.MODAL_CONTENT} onClick={(e) => e.stopPropagation()}>
 				<div className="p-6">
 					<div className="flex items-center gap-2 mb-4">
 						<POST_IT_CONSTANTS.ICONS.STICKY_NOTE className="h-5 w-5 text-yellow-600" />
@@ -74,19 +71,12 @@ export function PostItModal({
 						<span className="text-sm text-muted-foreground">
 							{note.length}/{POST_IT_CONSTANTS.MAX_LENGTH}
 						</span>
-						
+
 						<div className="flex gap-2">
-							<Button
-								variant="outline"
-								onClick={handleClose}
-								disabled={isLoading}
-							>
+							<Button variant="outline" onClick={handleClose} disabled={isLoading}>
 								{POST_IT_CONSTANTS.LABELS.CANCEL}
 							</Button>
-							<Button
-								onClick={handleSave}
-								disabled={isLoading}
-							>
+							<Button onClick={handleSave} disabled={isLoading}>
 								{isLoading ? 'Guardando...' : POST_IT_CONSTANTS.LABELS.SAVE}
 							</Button>
 						</div>
