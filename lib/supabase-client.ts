@@ -16,7 +16,7 @@ function getSupabaseClient(): SupabaseClient {
 
 	supabase = createClient(url, anonKey, {
 		// Add any global options here
-		auth: { persistSession: false },
+		auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 		global: { headers: { 'x-client-platform': 'web' } },
 	});
 

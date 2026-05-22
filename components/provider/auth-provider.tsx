@@ -2,8 +2,10 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
 import { UserRole } from '@/constants/user-role';
 import { getUser } from '@/lib/users/users';
+import { getSupabaseClient } from '@/lib/supabase-client';
 
 type SessionUser = {
 	username: string;
@@ -25,46 +27,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<SessionUser | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [isMounted, setIsMounted] = useState(false);
+	const supabase = getSupabaseClient();
+
 	const router = useRouter();
 
-	// Restaurar sesión desde localStorage
 	useEffect(() => {
 		setIsMounted(true);
-		try {
-			const raw = typeof window !== 'undefined' ? localStorage.getItem(SESSION_STORAGE_KEY) : null;
-			if (raw) {
-				const parsed: SessionUser = JSON.parse(raw);
-				setUser(parsed);
+
+		const restoreSession = async () => {
+			try {
+				const {
+					data: { session },
+				} = await supabase.auth.getSession();
+
+				if (!session) {
+					localStorage.removeItem(SESSION_STORAGE_KEY);
+					setUser(null);
+					return;
+				}
+
+				const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+
+				if (raw) {
+					const parsed: SessionUser = JSON.parse(raw);
+					setUser(parsed);
+				}
+			} catch (error) {
+				console.error(error);
+				localStorage.removeItem(SESSION_STORAGE_KEY);
+				setUser(null);
+			} finally {
+				setLoading(false);
 			}
-		} catch (_) {
-			// ignore
-		} finally {
-			setLoading(false);
-		}
+		};
+
+		restoreSession();
 	}, []);
 
 	async function signIn(username: string, password: string) {
 		setLoading(true);
+
 		try {
-			const res = await getUser(username, password);
+			// Search user in DB to get email for Supabase login
+			const res = await getUser(username);
 
 			if (!res.data) {
-				const errorMessage =
-					typeof res.error === 'string'
-						? res.error
-						: res.error?.message || 'Usuario o contraseña incorrectos';
-				throw new Error(errorMessage);
+				throw new Error('Usuario no encontrado');
+			}
+
+			// sign in REAL
+			const { error } = await supabase.auth.signInWithPassword({
+				email: res.data.mail || '',
+				password,
+			});
+
+			if (error) {
+				throw new Error('Usuario o contraseña incorrectos');
 			}
 
 			const sessionUser: SessionUser = {
 				username: res.data.username,
 				role: res.data.role as UserRole,
 			};
+
 			setUser(sessionUser);
 
-			if (typeof window !== 'undefined') {
-				localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionUser));
-			}
+			localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionUser));
+
+			router.refresh();
 		} finally {
 			setLoading(false);
 		}
@@ -72,24 +102,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	async function signOutUser() {
 		setLoading(true);
+
 		try {
+			await supabase.auth.signOut();
+
 			setUser(null);
-			if (typeof window !== 'undefined') {
-				localStorage.removeItem(SESSION_STORAGE_KEY);
-			}
+
+			localStorage.removeItem(SESSION_STORAGE_KEY);
+
 			router.push('/login');
+			router.refresh();
 		} finally {
 			setLoading(false);
 		}
 	}
 
 	if (!isMounted) {
-		// Evita desajustes de SSR/CSR durante la hidratación
 		return null;
 	}
 
 	return (
-		<AuthContext.Provider value={{ user, loading, signIn, signOutUser }}>
+		<AuthContext.Provider
+			value={{
+				user,
+				loading,
+				signIn,
+				signOutUser,
+			}}
+		>
 			{children}
 		</AuthContext.Provider>
 	);
@@ -97,6 +137,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
 	const ctx = useContext(AuthContext);
-	if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+
+	if (!ctx) {
+		throw new Error('useAuth must be used within AuthProvider');
+	}
+
 	return ctx;
 }
