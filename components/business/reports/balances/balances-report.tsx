@@ -12,19 +12,18 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { useOptimizedRealtime } from '@/hooks/use-optimized-realtime';
-import { formatCurrency, formatCurrencyUSD } from '@/helpers/format-prices.tsx/formats';
-import { formatShortDate } from '@/helpers/date/formats';
+import { formatCurrency, formatCurrencyUSD } from '@/utils/formats-money';
+import { formatShortDate } from '@/utils/format-date';
 import { calculateBalanceStats } from '@/helpers/balances/stats';
 import {
 	BALANCES_REPORT_COLUMNS,
-	BALANCES_REPORT_TITLE,
 	BALANCE_TYPES,
 	DEFAULT_FALLBACK,
-} from '@/constants/reports/balances-report';
-import { StatsCardsBalances } from '@/utils/balances/stats-cards-balances';
-import { BalanceWithBudgetAndClient, listBalancesForReport } from '@/lib/works/balances';
-import { getLastTransactionUSD } from '@/lib/works/balance_transactions';
-import { getTotalsByBalanceIds } from '@/lib/works/balance_transactions';
+} from '@/constants/balances/balances-report';
+import { StatsCardsBalances } from '@/components/business/balances/stats-cards-balances';
+import { BalanceWithBudgetAndClient, listBalancesForReport } from '@/lib/balances/balances';
+import { getLastTransactionUSD } from '@/lib/balances/balance_transactions';
+import { getTotalsByBalanceIds } from '@/lib/balances/balance_transactions';
 import {
 	Select,
 	SelectContent,
@@ -34,12 +33,12 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
-import { normalizeMoney } from '@/helpers/format-prices.tsx/formats';
+import { normalizeMoney } from '@/utils/formats-money';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { BudgetsReport } from './budgets-report';
+import { BudgetsReport } from '@/components/business/reports/budgets/budgets-report';
 
 type BalanceReportRow = {
-	id: string;
+	id: number;
 	contractDate: string;
 	contractDateRaw: Date;
 	client: string;
@@ -86,13 +85,13 @@ export function BalancesReport() {
 				return;
 			}
 
-			const ids = balances.map((b) => String(b.id));
+			const ids = balances.map((b) => b.id);
 			const { data: totals } = await getTotalsByBalanceIds(ids);
 
 			const next: BalanceReportRow[] = await Promise.all(
 				balances.map(async (b) => {
-					const totalPaid = totals?.[String(b.id)]?.totalAmount ?? 0;
-					const totalPaidUSD = totals?.[String(b.id)]?.totalAmountUSD ?? 0;
+					const totalPaid = totals?.[b.id]?.totalAmount ?? 0;
+					const totalPaidUSD = totals?.[b.id]?.totalAmountUSD ?? 0;
 					const budgetUsd = b.balance_amount_usd ?? 0;
 					const budgetArs = b.balance_amount_ars ?? 0;
 					const remainingUsd = normalizeMoney(budgetUsd - totalPaidUSD);
@@ -128,7 +127,7 @@ export function BalancesReport() {
 					}
 
 					return {
-						id: String(b.id),
+						id: b.id,
 						contractDate: formatShortDate(b.start_date || b.created_at),
 						contractDateRaw,
 						client: clientName,

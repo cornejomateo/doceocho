@@ -66,7 +66,7 @@ export async function deleteClient(id: number): Promise<{ data: null; error: any
 			.list(String(id));
 
 		if (!listError && files && files.length > 0) {
-			const filePaths = files.map((file) => `${id}/${file.name}`);
+			const filePaths = files.map((file) => `${String(id)}/${file.name}`);
 			await supabase.storage.from('clients').remove(filePaths);
 		}
 	} catch (err) {
@@ -81,7 +81,7 @@ export async function deleteClient(id: number): Promise<{ data: null; error: any
 export async function createClientFolder(clientId: number) {
 	const supabase = getSupabaseClient();
 
-	const filePath = `${clientId}/.keep.txt`;
+	const filePath = `${String(clientId)}/.keep.txt`;
 
 	const blob = new Blob(['Cliente creado correctamente'], {
 		type: 'text/plain',
