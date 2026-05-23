@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { getFolderBudgetsByClientId } from '@/lib/budgets/folder_budgets';
 import { getBudgetsByFolderBudgetIds } from '@/lib/budgets/budgets';
-import { BudgetWithWork } from '@/lib/works/balances';
+import { BudgetWithWork } from '@/lib/balances/balances';
 
-export function useClientBudgets(clientId?: string) {
+export function useClientBudgets(clientId?: number) {
 	const [budgets, setBudgets] = useState<BudgetWithWork[]>([]);
 
 	const loadBudgets = async () => {

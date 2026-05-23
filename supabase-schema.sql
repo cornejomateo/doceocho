@@ -41,17 +41,17 @@ ALTER TABLE public.gallery_supplies ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public select gallery_supplies"
 ON public.gallery_supplies
 FOR SELECT
-TO public
+TO authenticated
 USING (true);
 
 CREATE POLICY "Public insert gallery_supplies"
 ON public.gallery_supplies
 FOR INSERT
-TO public
+TO authenticated
 WITH CHECK (true);
 
 CREATE POLICY "Public delete gallery_supplies"
 ON public.gallery_supplies
 FOR DELETE
-TO public
+TO authenticated
 USING (true);

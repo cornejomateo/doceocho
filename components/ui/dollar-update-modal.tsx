@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, TrendingUp, Calendar, DollarSign, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { BalanceWithTotals } from '@/utils/balances/client-balances';
+import { BalanceWithTotals } from '@/components/business/balances/client-balances';
 
 interface DollarRate {
 	moneda: string;
@@ -98,7 +98,7 @@ export function DollarUpdateModal({
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					balanceId: parseInt(balance.id),
+					balanceId: balance.id,
 					newUsdRate: currentRate.venta,
 					newBalanceAmountARS: newValues.newBudgetInARS,
 				}),

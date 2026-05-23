@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { deleteBalance } from '@/lib/works/balances';
-import { BalanceWithTotals } from '@/utils/balances/client-balances';
+import { deleteBalance } from '@/lib/balances/balances';
+import { BalanceWithTotals } from '@/components/business/balances/client-balances';
 import { toast } from '@/components/ui/use-toast';
 import { translateError } from '@/lib/error-translator';
 

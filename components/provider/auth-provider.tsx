@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { UserRole } from '@/constants/user-role';
+import { UserRole } from '@/constants/users/user-role';
 import { getUser } from '@/lib/users/users';
 import { getSupabaseClient } from '@/lib/supabase-client';
 

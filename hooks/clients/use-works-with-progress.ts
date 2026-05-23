@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ChecklistItem } from '@/lib/works/checklists';
-import { getChecklistsByWorkIds } from '@/lib/works/checklists';
+import { ChecklistItem } from '@/lib/checklists/checklists';
+import { getChecklistsByWorkIds } from '@/lib/checklists/checklists';
 import { listWorks } from '@/lib/works/works';
 import { WorkWithProgress } from '@/lib/works/works';
 import { updateWork } from '@/lib/works/works';
@@ -24,8 +24,8 @@ export function useWorksWithProgress() {
 			const workIds = worksData.map((w) => w.id);
 			const { data: allChecklists } = await getChecklistsByWorkIds(workIds);
 
-			const checklistsByWork = new Map<string, ChecklistItem[]>();
-			const hasNotesByWork = new Map<string, boolean>();
+			const checklistsByWork = new Map<number, ChecklistItem[]>();
+			const hasNotesByWork = new Map<number, boolean>();
 
 			for (const cl of allChecklists ?? []) {
 				const wid = cl.work_id;

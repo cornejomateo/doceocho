@@ -1,9 +1,9 @@
 import { Card } from '@/components/ui/card';
-import { useLoadEvents } from '@/hooks/use-load-events';
+import { useLoadEvents } from '@/hooks/calendar/use-load-events';
 import { useEffect, useState } from 'react';
 import { getClientsCount } from '@/lib/clients/clients';
 import { getWorksInProgressCount } from '@/lib/works/works';
-import { getSoldBudgetsCount } from '@/lib/budgets/budgets';
+import { getSoldBudgetsCount } from '@/lib/reports/budgets/methods';
 
 export function DashboardHome() {
 	const { events, isLoading } = useLoadEvents();

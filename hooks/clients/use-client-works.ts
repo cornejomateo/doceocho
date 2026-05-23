@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createWork, deleteWork, getWorksByClientId, updateWork } from '@/lib/works/works';
 import { Work } from '@/lib/works/works';
 
-export function useClientWorks(clientId?: string) {
+export function useClientWorks(clientId?: number) {
 	const [works, setWorks] = useState<Work[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -35,14 +35,14 @@ export function useClientWorks(clientId?: string) {
 		await loadWorks();
 	};
 
-	const remove = async (workId: string) => {
+	const remove = async (workId: number) => {
 		const { error } = await deleteWork(workId);
 		if (error) throw error;
 
 		await loadWorks();
 	};
 
-	const update = async (workId: string, updates: Partial<Work>) => {
+	const update = async (workId: number, updates: Partial<Work>) => {
 		const { data, error } = await updateWork(workId, updates);
 		if (error) throw error;
 

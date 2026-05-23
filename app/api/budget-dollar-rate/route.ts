@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { isBudgetLocked } from '@/constants/budget-status';
+import { isBudgetLocked } from '@/constants/budgets/budget-status';
 
 interface BudgetDollarRateRequest {
-	budgetId?: string;
+	budgetId?: number;
 	clientId?: string;
 	newUsdRate: number;
 }

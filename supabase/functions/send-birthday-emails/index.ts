@@ -88,7 +88,7 @@ serve(async (req) => {
           </div>
           <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
             <p style="color: #64748b; font-size: 12px; margin: 0;">
-              Dlay - AR Aberturas<br />
+              Dlay - Doceocho <br />
               <span style="color:#94a3b8;">
                 Este mensaje fue generado automáticamente. Podés responder este email si necesitás reprogramar.
               </span>
@@ -109,7 +109,7 @@ serve(async (req) => {
           "Authorization": `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          from: "AR Aberturas <onboarding@resend.dev>",
+          from: "Doceocho <onboarding@resend.dev>",
           to: emailTo,
           subject: `Recordatorio: ${event.title || ''}`,
           text: textContent,

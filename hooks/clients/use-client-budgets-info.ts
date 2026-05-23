@@ -48,7 +48,7 @@ export function useClientBudgetsInfo(clients: Client[]) {
 				}
 
 				// Map folders by client
-				const foldersByClientId = new Map<string, string[]>();
+				const foldersByClientId = new Map<number, number[]>();
 
 				folders.forEach((f) => {
 					if (!f.client_id) return;
@@ -58,7 +58,7 @@ export function useClientBudgetsInfo(clients: Client[]) {
 				});
 
 				// Aggregate budgets per folder
-				const budgetsByFolder = new Map<string, ClientBudgetInfo>();
+				const budgetsByFolder = new Map<number, ClientBudgetInfo>();
 
 				budgets.forEach((b) => {
 					const folderId = b.folder_budget?.id;

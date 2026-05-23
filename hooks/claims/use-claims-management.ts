@@ -9,7 +9,7 @@ import {
 	deleteOldClaims,
 } from '@/lib/claims/claims';
 import { useOptimizedRealtime } from '@/hooks/use-optimized-realtime';
-import { paginateAndFilter } from '@/helpers/clients/pagination';
+import { paginateAndFilter } from '@/utils/pagination';
 import { FilterType } from '@/constants/claims/filters';
 import { toast } from '@/components/ui/use-toast';
 

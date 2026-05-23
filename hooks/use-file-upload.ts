@@ -8,12 +8,12 @@ import {
 	MAX_FILE_SIZE_CLIENT,
 	validateFileForUpload,
 } from '@/utils/file-upload-utils';
-import { optimizeFile } from '@/helpers/images/optimization';
+import { optimizeFile } from '@/utils/optimization-images';
 
 interface UseFileUploadOptions {
-	clientId: string;
-	checklistId?: string | null;
-	claimId?: string | null;
+	clientId: number;
+	checklistId?: number | null;
+	claimId?: number | null;
 	allowedFileTypes?: readonly string[];
 	maxFileSize?: number;
 	getDefaultDisplayName?: (file: File) => string;

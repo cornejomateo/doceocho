@@ -1,6 +1,6 @@
 'use client';
 
-import { POST_IT_CONSTANTS, type PostItColor } from '@/constants/works-constants';
+import { POST_IT_CONSTANTS, type PostItColor } from '@/constants/works/works-constants';
 
 interface PostItNoteProps {
 	note?: string | null;

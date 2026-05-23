@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { getClientsCount } from '@/lib/clients/clients';
 import {
-	getBudgetsCount,
 	getSoldBudgetsCount,
 	getChosenBudgetsCount,
 	getSoldBudgetsTotalAmount,
@@ -22,9 +21,10 @@ import {
 	getLostBudgetsCount,
 	getBudgetsTotalAmount,
 	getLostBudgetsTotalAmount,
-} from '@/lib/budgets/budgets';
-import { SalesMetrics, DEFAULT_METRICS } from '@/lib/budgets/types';
-import { normalize } from '@/helpers/budget/normalize';
+} from '@/lib/reports/budgets/methods';
+import { getBudgetsCount } from '@/lib/budgets/budgets';
+import { SalesMetrics, DEFAULT_METRICS } from '@/lib/reports/budgets/types';
+import { normalize } from '@/utils/normalize';
 
 export const useBudgetMetrics = () => {
 	const [metrics, setMetrics] = useState<SalesMetrics>(DEFAULT_METRICS);

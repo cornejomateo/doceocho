@@ -12,7 +12,7 @@ import {
 	BUDGET_STATUS_OPTIONS,
 	BUDGET_STATUS_COLORS,
 	BUDGET_STATUS_LABELS,
-} from '@/constants/budget-status';
+} from '@/constants/budgets/budget-status';
 import { getStatusIcon } from '@/helpers/budgets/status-helpers';
 
 interface BudgetStatusSelectorProps {

@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
-import { getChecklistsByWorkId } from '@/lib/works/checklists';
+import { getChecklistsByWorkId } from '@/lib/checklists/checklists';
 import { Work } from '@/lib/works/works';
 
 export function useWorkChecklists(works: Work[]) {
-	const [workChecklists, setWorkChecklists] = useState<Record<string, boolean>>({});
-	const [loadingChecklists, setLoadingChecklists] = useState<Record<string, boolean>>({});
+	const [workChecklists, setWorkChecklists] = useState<Record<number, boolean>>({});
+	const [loadingChecklists, setLoadingChecklists] = useState<Record<number, boolean>>({});
 
 	useEffect(() => {
 		if (!works.length) return;
 
 		const checkWorkChecklists = async () => {
-			const newWorkChecklists: Record<string, boolean> = {};
-			const newLoadingChecklists: Record<string, boolean> = {};
+			const newWorkChecklists: Record<number, boolean> = {};
+			const newLoadingChecklists: Record<number, boolean> = {};
 
 			works.forEach((work) => {
 				newLoadingChecklists[work.id] = true;

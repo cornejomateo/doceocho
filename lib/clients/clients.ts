@@ -1,7 +1,7 @@
 import { getSupabaseClient } from '../supabase-client';
 
 export type Client = {
-	id: string;
+	id: number;
 	created_at?: string;
 	name?: string | null;
 	last_name?: string | null;
@@ -29,7 +29,7 @@ export async function listClients(): Promise<{ data: Client[] | null; error: any
 	return { data, error };
 }
 
-export async function getClientById(id: string): Promise<{ data: Client | null; error: any }> {
+export async function getClientById(id: number): Promise<{ data: Client | null; error: any }> {
 	const supabase = getSupabaseClient();
 	const { data, error } = await supabase.from(TABLE).select('*').eq('id', id).single();
 	return { data, error };
@@ -48,7 +48,7 @@ export async function createClient(
 }
 
 export async function updateClient(
-	id: string,
+	id: number,
 	changes: Partial<Client>
 ): Promise<{ data: Client | null; error: any }> {
 	const supabase = getSupabaseClient();
@@ -56,12 +56,14 @@ export async function updateClient(
 	return { data, error };
 }
 
-export async function deleteClient(id: string): Promise<{ data: null; error: any }> {
+export async function deleteClient(id: number): Promise<{ data: null; error: any }> {
 	const supabase = getSupabaseClient();
 
 	// First, delete all files in the client's folder
 	try {
-		const { data: files, error: listError } = await supabase.storage.from('clients').list(id);
+		const { data: files, error: listError } = await supabase.storage
+			.from('clients')
+			.list(String(id));
 
 		if (!listError && files && files.length > 0) {
 			const filePaths = files.map((file) => `${id}/${file.name}`);
@@ -76,7 +78,7 @@ export async function deleteClient(id: string): Promise<{ data: null; error: any
 	return { data: null, error };
 }
 
-export async function createClientFolder(clientId: string) {
+export async function createClientFolder(clientId: number) {
 	const supabase = getSupabaseClient();
 
 	const filePath = `${clientId}/.keep.txt`;

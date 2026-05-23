@@ -3,7 +3,7 @@ import { getSupabaseClient } from '../supabase-client';
 export type Claim = {
 	id: number;
 	created_at?: string;
-	client_id?: string | null;
+	client_id?: number | null;
 	client_name?: string | null;
 	client_phone?: string | null;
 	work_zone?: string | null;

@@ -1,6 +1,6 @@
-import { BudgetWithWork } from '@/lib/works/balances';
+import { BudgetWithWork } from '@/lib/balances/balances';
 import { Badge } from '@/components/ui/badge';
-import { BUDGET_STATUS_LABELS, BUDGET_STATUS_COLORS } from '@/constants/budget-status';
+import { BUDGET_STATUS_LABELS, BUDGET_STATUS_COLORS } from '@/constants/budgets/budget-status';
 
 interface LockedBudgetsListProps {
 	lockedBudgets: BudgetWithWork[];

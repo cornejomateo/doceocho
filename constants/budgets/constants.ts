@@ -1,4 +1,4 @@
-import { checklistTypes } from '@/lib/works/checklists.constants';
+import { checklistTypes } from '@/constants/checklists/checklists.constants';
 
 export const DEFAULT_TYPES = [...Object.values(checklistTypes), 'Otros'];
 

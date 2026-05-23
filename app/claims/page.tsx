@@ -1,5 +1,5 @@
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { ClaimsManagement } from '@/components/business/claims-management';
+import { ClaimsManagement } from '@/components/business/claims/claims-management';
 
 export default function ClaimsPage() {
 	return (

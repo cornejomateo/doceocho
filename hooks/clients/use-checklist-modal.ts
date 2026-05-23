@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Work } from '@/lib/works/works';
-import { getItemsForChecklistType, ChecklistType } from '@/lib/works/checklists.constants';
-import { Checklist } from '@/lib/works/checklists';
+import {
+	getItemsForChecklistType,
+	ChecklistType,
+} from '@/constants/checklists/checklists.constants';
+import { Checklist } from '@/lib/checklists/checklists';
 
 export function useChecklistModal() {
 	const [isOpen, setIsOpen] = useState(false);

@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
-import { generateChecklistPDF, prepareChecklistData } from '@/lib/works/checklist-pdf';
-import type { Checklist } from '@/lib/works/checklists';
+import { generateChecklistPDF, prepareChecklistData } from '@/lib/checklists/checklist-pdf';
+import type { Checklist } from '@/lib/checklists/checklists';
 import { getWorkById } from '@/lib/works/works';
 
 type ChecklistPDFButtonProps = {
 	checklists: Checklist[];
-	workId?: string;
+	workId?: number;
 	workLocality?: string;
 	workAddress?: string;
 	clientName?: string;
@@ -32,7 +32,7 @@ export function ChecklistPDFButton({
 		try {
 			setIsGenerating(true);
 
-			const { data: work } = await getWorkById(workId || '');
+			const { data: work } = await getWorkById(workId || -1);
 			const workLocality = work?.locality || '';
 			const workAddress = work?.address || '';
 

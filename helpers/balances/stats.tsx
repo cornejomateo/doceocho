@@ -1,4 +1,4 @@
-import { BALANCE_TYPES } from '@/constants/reports/balances-report';
+import { BALANCE_TYPES } from '@/constants/balances/balances-report';
 
 export interface BalanceStats {
 	totalDebtors: number;

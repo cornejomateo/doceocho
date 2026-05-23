@@ -10,7 +10,7 @@ interface CacheEntry<T> {
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 const DEBOUNCE_DELAY = 300; // 300ms para agrupar actualizaciones
 
-export function useOptimizedRealtime<T extends { id: string }>(
+export function useOptimizedRealtime<T extends { id: number }>(
 	table: string,
 	fetchFromDb: () => Promise<T[]>,
 	cacheKey?: string

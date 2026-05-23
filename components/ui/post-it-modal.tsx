@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { POST_IT_CONSTANTS, type PostItColor } from '@/constants/works-constants';
+import { POST_IT_CONSTANTS, type PostItColor } from '@/constants/works/works-constants';
 
 interface PostItModalProps {
 	isOpen: boolean;

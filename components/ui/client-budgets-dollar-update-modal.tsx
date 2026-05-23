@@ -23,9 +23,9 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { BudgetWithWork } from '@/lib/works/balances';
-import { isBudgetLocked } from '@/constants/budget-status';
-import { BUDGET_STATUS_LABELS, BUDGET_STATUS_COLORS } from '@/constants/budget-status';
+import { BudgetWithWork } from '@/lib/balances/balances';
+import { isBudgetLocked } from '@/constants/budgets/budget-status';
+import { BUDGET_STATUS_LABELS, BUDGET_STATUS_COLORS } from '@/constants/budgets/budget-status';
 import { LockedBudgetsList } from '@/components/ui/locked-budgets-list';
 
 interface DollarRate {
@@ -41,7 +41,7 @@ interface ClientBudgetsDollarUpdateModalProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 	budgets: BudgetWithWork[];
-	clientId: string;
+	clientId: number;
 	onUpdateConfirmed: (newUsdRate: number) => Promise<void>;
 }
 

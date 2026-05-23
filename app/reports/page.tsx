@@ -1,5 +1,5 @@
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { ReportsView } from '@/components/business/reports-view';
+import { ReportsView } from '@/components/business/reports/reports-view';
 
 export default function ReportsPage() {
 	return (
