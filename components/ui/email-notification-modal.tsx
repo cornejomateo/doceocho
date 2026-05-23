@@ -144,7 +144,7 @@ Por favor, asegúrese de que el lugar esté accesible y preparado para la instal
 Si tiene alguna pregunta o necesita coordinar algún detalle adicional, no dude en contactarnos.
 
 Atentamente,
-El equipo de AR Aberturas`;
+El equipo de Doceocho`;
 
 			setFormData((prev) => ({
 				...prev,
@@ -180,7 +180,7 @@ Por favor, asegúrese de que el lugar esté accesible y preparado para la instal
 Si tiene alguna pregunta o necesita coordinar algún detalle adicional, no dude en contactarnos.
 
 Atentamente,
-El equipo de AR Aberturas`;
+El equipo de Doceocho`;
 	};
 
 	const handleInputChange = (field: string, value: string) => {

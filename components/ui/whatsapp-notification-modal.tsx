@@ -132,7 +132,7 @@ export function WhatsAppNotificationModal({
 				}
 			}
 
-			const newMessage = `*AR Aberturas - Notificación de Obra*
+			const newMessage = `*Doceocho - Notificación de Obra*
 
 Estimado/a ${clientName},
 
@@ -144,7 +144,7 @@ Le informamos que nuestro equipo de colocación estará llegando a la obra ubica
 Si tiene alguna pregunta o necesita coordinar algún detalle adicional, no dude en contactarnos.
 
 Atentamente,
-El equipo de AR Aberturas`;
+El equipo de Doceocho`;
 
 			setFormData((prev) => ({
 				...prev,
@@ -168,7 +168,7 @@ El equipo de AR Aberturas`;
 			}
 		}
 
-		return `*AR Aberturas - Notificación de Obra*
+		return `*Doceocho - Notificación de Obra*
 
 Estimado/a ${clientName},
 
@@ -182,7 +182,7 @@ Por favor, asegúrese de que el lugar esté accesible y preparado para la instal
 Si tiene alguna pregunta o necesita coordinar algún detalle adicional, no dude en contactarnos.
 
 Atentamente,
-El equipo de AR Aberturas`;
+El equipo de Doceocho`;
 	};
 
 	const handleInputChange = (field: string, value: string) => {

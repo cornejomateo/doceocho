@@ -36,6 +36,7 @@ alter table public.stock_supplies
   foreign key (image_id) references public.gallery_supplies (id) on update CASCADE on delete SET NULL;
 
 
+
 ALTER TABLE public.gallery_supplies ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Public select gallery_supplies"
@@ -53,5 +54,327 @@ WITH CHECK (true);
 CREATE POLICY "Public delete gallery_supplies"
 ON public.gallery_supplies
 FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update gallery_supplies"
+ON public.gallery_supplies
+FOR UPDATE
+TO authenticated
+USING (true);
+
+
+ALTER TABLE public.works ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select works"
+ON public.works
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert works"
+ON public.works
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete works"
+ON public.works
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update works"
+ON public.works
+FOR UPDATE
+TO authenticated
+USING (true);
+
+
+ALTER TABLE public.claims ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select claims"
+ON public.claims
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert claims"
+ON public.claims
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete claims"
+ON public.claims
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update claims"
+ON public.claims
+FOR UPDATE
+TO authenticated
+USING (true);
+
+ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select clients"
+ON public.clients
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert clients"
+ON public.clients
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete clients"
+ON public.clients
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update clients"
+ON public.clients
+FOR UPDATE
+TO authenticated
+USING (true);
+
+ALTER TABLE public.supplies ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select supplies"
+ON public.supplies
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert supplies"
+ON public.supplies
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete supplies"
+ON public.supplies  
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update supplies"
+ON public.supplies
+FOR UPDATE
+TO authenticated
+USING (true);
+
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select users"
+ON public.users
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert users"
+ON public.users
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete users"
+ON public.users
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update users"
+ON public.users
+FOR UPDATE
+TO authenticated
+USING (true);
+
+ALTER TABLE public.checklists ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select checklists"
+ON public.checklists
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert checklists"
+ON public.checklists
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete checklists"
+ON public.checklists
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update checklists"
+ON public.checklists
+FOR UPDATE
+TO authenticated
+USING (true);
+
+ALTER TABLE public.calendar ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select calendar"
+ON public.calendar
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert calendar"
+ON public.calendar
+FOR INSERT
+TO authenticated  
+WITH CHECK (true);
+
+CREATE POLICY "Public delete calendar"
+ON public.calendar
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update calendar"
+ON public.calendar
+FOR UPDATE
+TO authenticated
+USING (true);
+
+
+ALTER TABLE public.balances ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select balances"
+ON public.balances
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert balances"
+ON public.balances
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete balances"
+ON public.balances
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update balances"
+ON public.balances
+FOR UPDATE
+TO authenticated
+USING (true);
+
+ALTER TABLE public.folder_budgets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select folder_budgets"
+ON public.folder_budgets
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert folder_budgets"
+ON public.folder_budgets
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete folder_budgets"
+ON public.folder_budgets
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update folder_budgets"
+ON public.folder_budgets
+FOR UPDATE
+TO authenticated
+USING (true);
+
+
+ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select budgets"
+ON public.budgets
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert budgets"
+ON public.budgets
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete budgets"
+ON public.budgets
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update budgets"
+ON public.budgets
+FOR UPDATE
+TO authenticated
+USING (true);
+
+ALTER TABLE public.files_client ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select files_client"
+ON public.files_client
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert files_client"
+ON public.files_client
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete files_client"
+ON public.files_client
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update files_client"
+ON public.files_client
+FOR UPDATE
+TO authenticated
+USING (true);
+
+ALTER TABLE public.balance_transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public select balance_transactions"
+ON public.balance_transactions
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public insert balance_transactions"
+ON public.balance_transactions
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Public delete balance_transactions"
+ON public.balance_transactions
+FOR DELETE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Public update balance_transactions"
+ON public.balance_transactions
+FOR UPDATE
 TO authenticated
 USING (true);
