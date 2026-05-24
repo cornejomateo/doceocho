@@ -48,11 +48,15 @@ export async function POST(req: Request) {
 
 		const image_path = filePath;
 
+		const { data: publicUrlData } = supabase.storage.from('stock_supplies').getPublicUrl(filePath);
+
+		const image_url = publicUrlData.publicUrl;
+
 		const { data: imageRow, error: insertError } = await supabase
 			.from(galleryTable)
 			.insert({
 				supply_code: name_code,
-				image_url: null,
+				image_url: image_url,
 				image_path,
 			})
 			.select('id')
@@ -80,6 +84,13 @@ export async function POST(req: Request) {
 
 			if (error) {
 				console.error('Error updating supplies with new image URL:', error);
+
+				// rollback gallery row
+				await supabase.from(galleryTable).delete().eq('id', imageRow.id);
+
+				// rollback storage image
+				await supabase.storage.from('stock_supplies').remove([filePath]);
+
 				throw error;
 			}
 		}
@@ -87,7 +98,7 @@ export async function POST(req: Request) {
 		return NextResponse.json({
 			success: true,
 			image_id: imageRow.id,
-			image_url: null,
+			image_url: image_url,
 			image_path,
 		});
 	} catch (err) {
