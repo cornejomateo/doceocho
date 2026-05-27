@@ -196,7 +196,7 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 		if (mode === 'claim' && !checklist.notes?.trim()) {
 			toast({
 				title: 'No se puede crear el reclamo',
-				description: 'Esta abertura no tiene notas.',
+				description: 'Esta checklist no tiene notas.',
 				variant: 'destructive',
 			});
 			return;
@@ -231,7 +231,6 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 				date: today,
 				daily: mode === 'daily',
 				client_id: clientData?.id || null,
-				alum_pvc: checklist.type_opening || null,
 				attend: null,
 				description,
 				resolved: false,
@@ -250,7 +249,7 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 				title: mode === 'daily' ? 'Actividad diaria creada' : 'Reclamo creado',
 				description: `${
 					mode === 'daily' ? 'Se creó una actividad diaria' : 'Se creó un reclamo'
-				} para ${checklist.name || 'esta abertura'}.`,
+				} para ${checklist.name || 'esta checklist'}.`,
 			});
 
 			// Refresh claims
