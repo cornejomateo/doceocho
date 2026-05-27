@@ -65,6 +65,8 @@ export function TransactionDialog({
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!amount || !category) return;
+		const parsedAmount = Number(amount);
+		if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return;
 
 		setLoading(true);
 		try {
@@ -73,7 +75,7 @@ export function TransactionDialog({
 			const transactionData: any = {
 				cash_box_id: cashBoxId,
 				type,
-				amount: parseFloat(amount),
+				amount: parsedAmount,
 				category,
 				description: description || null,
 				bank_account_id: category === 'transfer' && bankAccountId ? parseInt(bankAccountId) : null,
