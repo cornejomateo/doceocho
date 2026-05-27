@@ -100,7 +100,7 @@ export async function getBankAccountById(
 		.from(BANK_ACCOUNTS_TABLE)
 		.select('*')
 		.eq('id', id)
-		.single();
+		.maybeSingle();
 	return { data, error };
 }
 
