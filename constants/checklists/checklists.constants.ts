@@ -63,6 +63,13 @@ export const checklistTypes = {
 	Puerta: 'Puerta',
 } as const;
 
+export const material_type = {
+	MDF: 'MDF',
+	Aglomerado: 'Aglomerado',
+	Enchapado: 'Enchapado',
+	Madera: 'Madera',
+} as const;
+
 export type ChecklistType = (typeof checklistTypes)[keyof typeof checklistTypes];
 
 export const getItemsForChecklistType = (type: keyof typeof checklistTypes) => {

@@ -13,6 +13,7 @@ export type Work = {
 	architect?: string | null;
 	general_note?: string | null;
 	balance_id?: string | null;
+	furniture?: string | null;
 	clients?: {
 		name: string;
 		last_name: string;
@@ -36,9 +37,9 @@ export async function listWorks(): Promise<{ data: Work[] | null; error: any }> 
 			.from('works')
 			.select(
 				`
-        *,
-        clients:client_id (name, last_name)
-      `
+					*,
+					clients:client_id (name, last_name)
+				`
 			)
 			.order('created_at', { ascending: false });
 
@@ -75,9 +76,9 @@ export async function getWorkById(id: number): Promise<{ data: Work | null; erro
 		.from(TABLE)
 		.select(
 			`
-      *,
-      clients:client_id (name, last_name)
-    `
+				*,
+				clients:client_id (name, last_name)
+			`
 		)
 		.eq('id', id)
 		.single();

@@ -11,12 +11,6 @@ export const BUDGETS_REPORT_COLUMNS = {
 	status: 'ESTADO',
 } as const;
 
-export const BUDGET_TYPES = {
-	STANDARD: 'Estándar',
-	OPTIMAL: 'Óptimo',
-	MINIMAL: 'Mínimo',
-} as const;
-
 export const BUDGET_STATUS = {
 	PENDING: 'Pendiente',
 	ACCEPTED: 'Aceptado',

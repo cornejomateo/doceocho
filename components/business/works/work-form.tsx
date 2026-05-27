@@ -25,6 +25,7 @@ export function WorkForm({ onSubmit, onCancel }: WorkFormProps) {
 		address: '',
 		status: 'pending',
 		architect: '',
+		furniture: '',
 	});
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -67,27 +68,14 @@ export function WorkForm({ onSubmit, onCancel }: WorkFormProps) {
 				</div>
 
 				<div className="space-y-2">
-					<Label htmlFor="status">Estado</Label>
-					<Select
-						name="status"
-						value={formData.status || 'pending'}
-						onValueChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								status: value as 'pending' | 'in_progress' | 'completed',
-							}))
-						}
-						required
-					>
-						<SelectTrigger className="w-full">
-							<SelectValue placeholder="Seleccionar estado" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="pending">Pendiente</SelectItem>
-							<SelectItem value="in_progress">En progreso</SelectItem>
-							<SelectItem value="completed">Finalizada</SelectItem>
-						</SelectContent>
-					</Select>
+					<Label htmlFor="furniture">Mobiliario</Label>
+					<Input
+						id="furniture"
+						name="furniture"
+						value={formData.furniture || ''}
+						onChange={handleChange}
+						placeholder="Descripción del mobiliario"
+					/>
 				</div>
 
 				<div className="space-y-2">
@@ -100,6 +88,30 @@ export function WorkForm({ onSubmit, onCancel }: WorkFormProps) {
 						placeholder="Nombre del arquitecto"
 					/>
 				</div>
+			</div>
+
+			<div className="space-y-2">
+				<Label htmlFor="status">Estado</Label>
+				<Select
+					name="status"
+					value={formData.status || 'pending'}
+					onValueChange={(value) =>
+						setFormData((prev) => ({
+							...prev,
+							status: value as 'pending' | 'in_progress' | 'completed',
+						}))
+					}
+					required
+				>
+					<SelectTrigger className="w-full">
+						<SelectValue placeholder="Seleccionar estado" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="pending">Pendiente</SelectItem>
+						<SelectItem value="in_progress">En progreso</SelectItem>
+						<SelectItem value="completed">Finalizada</SelectItem>
+					</SelectContent>
+				</Select>
 			</div>
 
 			<div className="flex justify-end space-x-2 pt-4">

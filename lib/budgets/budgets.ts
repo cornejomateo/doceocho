@@ -13,7 +13,6 @@ export type Budget = {
 	number?: string | null;
 	amount_ars?: number | null;
 	amount_usd?: number | null;
-	version?: string | null;
 	type?: string | null;
 };
 
@@ -81,7 +80,6 @@ export async function getBudgetsByFolderBudgetIds(
 				pdf_url,
 				pdf_path,
 				number,
-				version,
 				type,
 				folder_budget:folder_budgets!inner (
 					id,
@@ -118,7 +116,6 @@ export async function getBudgetsByFolderBudgetIds(
 				pdf_url: b.pdf_url,
 				pdf_path: b.pdf_path,
 				number: b.number,
-				version: b.version,
 				type: b.type,
 				folder_budget: {
 					id: folderBudget.id,
