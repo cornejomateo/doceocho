@@ -9,6 +9,16 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,6 +56,8 @@ export function BankAccountsDialog({
 	const { toast } = useToast();
 	const [isAdding, setIsAdding] = useState(false);
 	const [editingId, setEditingId] = useState<number | null>(null);
+	const [deletingId, setDeletingId] = useState<number | null>(null);
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [name, setName] = useState('');
 	const [bank, setBank] = useState('');
 	const [accountNumber, setAccountNumber] = useState('');
@@ -122,8 +134,16 @@ export function BankAccountsDialog({
 	};
 
 	const handleDelete = async (id: number) => {
+		setDeletingId(id);
+		setShowDeleteDialog(true);
+	};
+
+	const confirmDelete = async () => {
+		if (!deletingId) return;
+
+		setLoading(true);
 		try {
-			const { error } = await deleteBankAccount(id);
+			const { error } = await deleteBankAccount(deletingId);
 			if (error) throw error;
 			toast({
 				title: 'Cuenta eliminada',
@@ -137,6 +157,10 @@ export function BankAccountsDialog({
 				description: 'No se pudo eliminar la cuenta bancaria.',
 				variant: 'destructive',
 			});
+		} finally {
+			setLoading(false);
+			setDeletingId(null);
+			setShowDeleteDialog(false);
 		}
 	};
 
@@ -272,6 +296,28 @@ export function BankAccountsDialog({
 					</Button>
 				</DialogFooter>
 			</DialogContent>
+
+			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>¿Eliminar cuenta bancaria?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar esta cuenta
+							bancaria?
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={confirmDelete}
+							disabled={loading}
+							className="bg-destructive text-destructive-foreground"
+						>
+							{loading ? 'Eliminando...' : 'Eliminar'}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</Dialog>
 	);
 }
