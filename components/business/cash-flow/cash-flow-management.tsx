@@ -29,11 +29,11 @@ import {
 	listActiveBankAccounts,
 	translateCategory,
 } from '@/lib/cash-flow/cash-flow';
-import { CashBoxSummaryCard } from './cash-box-summary-card';
-import { TransactionDialog } from './transaction-dialog';
-import { CashBoxHistory } from './cash-box-history';
-import { BankAccountsDialog } from './bank-accounts-dialog';
-import { CloseCashBoxDialog } from './close-cash-box-dialog';
+import { CashBoxSummaryCard } from '@/components/business/cash-flow/cash-box-summary-card';
+import { TransactionDialog } from '@/components/business/cash-flow/transaction-dialog';
+import { CashBoxHistory } from '@/components/business/cash-flow/cash-box-history';
+import { BankAccountsDialog } from '@/components/business/cash-flow/bank-accounts-dialog';
+import { CloseCashBoxDialog } from '@/components/business/cash-flow/close-cash-box-dialog';
 import { formatCurrency } from '@/lib/utils';
 
 export function CashFlowManagement() {
