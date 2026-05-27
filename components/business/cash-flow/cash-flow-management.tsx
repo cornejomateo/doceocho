@@ -106,10 +106,18 @@ export function CashFlowManagement() {
 	};
 
 	const loadCashBoxData = async (cashBoxId: number) => {
-		const { data: summary } = await getCashBoxSummary(cashBoxId);
-		const { data: boxWithTransactions } = await getCashBoxWithTransactions(cashBoxId);
-		setCashBoxSummary(summary);
-		setTransactions(boxWithTransactions?.transactions || []);
+		try {
+			const [
+				{ data: summary, error: summaryError },
+				{ data: boxWithTransactions, error: txError },
+			] = await Promise.all([getCashBoxSummary(cashBoxId), getCashBoxWithTransactions(cashBoxId)]);
+			if (summaryError) throw summaryError;
+			if (txError) throw txError;
+			setCashBoxSummary(summary);
+			setTransactions(boxWithTransactions?.transactions || []);
+		} catch (error) {
+			console.error('Error loading cash box data:', error);
+		}
 	};
 
 	const handleCreateCashBox = async () => {
