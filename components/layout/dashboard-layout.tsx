@@ -18,6 +18,7 @@ import {
 	X,
 	Lock,
 	AlertCircle,
+	DollarSign,
 } from 'lucide-react';
 
 import {
@@ -44,6 +45,7 @@ const navigation = [
 	{ name: 'Ajustes y Diario', href: '/claims', icon: AlertCircle, disabled: true },
 	{ name: 'Reportes de Presupuestos', href: '/budgets', icon: FileText, disabled: true },
 	{ name: 'Reportes', href: '/reports', icon: BarChart3, disabled: true },
+	{ name: 'Flujo de Fondos', href: '/flujo-fondos', icon: DollarSign, disabled: false },
 ] as const;
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -54,9 +56,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 	const allowedByRole = useMemo(() => {
 		return {
-			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario'],
+			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos'],
 			Fabrica: ['Insumos'],
-			Ventas: ['Panel', 'Insumos', 'Clientes', 'Calendario'],
+			Ventas: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos'],
 			Marketing: ['Panel', 'Calendario', 'Clientes'],
 			Colocador: ['Clientes'],
 		} as Record<string, string[]>;
