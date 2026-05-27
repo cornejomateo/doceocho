@@ -27,18 +27,20 @@ export function CashBoxHistory({ cashBoxes, loading, onRefresh }: CashBoxHistory
 	useEffect(() => {
 		loadTransactions();
 	}, [cashBoxes]);
-
 	const loadTransactions = async () => {
-		const boxesWithTrans = await Promise.all(
-			cashBoxes.map(async (box) => {
-				if (box.is_closed) {
-					const { data } = await getCashBoxWithTransactions(box.id);
+		try {
+			const boxesWithTrans = await Promise.all(
+				cashBoxes.map(async (box) => {
+					if (!box.is_closed) return { ...box, transactions: [] };
+					const { data, error } = await getCashBoxWithTransactions(box.id);
+					if (error) throw error;
 					return { ...box, transactions: data?.transactions || [] };
-				}
-				return { ...box, transactions: [] };
-			})
-		);
-		setBoxesWithTransactions(boxesWithTrans);
+				})
+			);
+			setBoxesWithTransactions(boxesWithTrans);
+		} catch (error) {
+			console.error('Error loading cash box transactions:', error);
+		}
 	};
 
 	const toggleExpand = (id: number) => {
