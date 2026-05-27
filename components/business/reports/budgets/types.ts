@@ -37,7 +37,6 @@ export interface BudgetDetailModalState {
 
 export interface BudgetFormData {
 	type: string;
-	version: string;
 	number: string;
 	amount: string;
 	amountUsd: string;

@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Work } from '@/lib/works/works';
 import { BudgetWithWork } from '@/lib/balances/balances';
-import { BUDGET_VARIANTS, DEFAULT_TYPES, FORM_DEFAULTS } from '@/constants/budgets/constants';
+import { DEFAULT_TYPES, FORM_DEFAULTS } from '@/constants/budgets/constants';
 import { BudgetFormData } from '@//components/business/reports/budgets/types';
 import { formatNumber, parseArsToNumber } from '@/helpers/budgets/helper-budget';
 
@@ -45,7 +45,6 @@ export function BudgetFormModal({
 }: BudgetFormModalProps) {
 	const [formData, setFormData] = useState<BudgetFormData>({
 		type: FORM_DEFAULTS.type,
-		version: FORM_DEFAULTS.version,
 		number: FORM_DEFAULTS.number,
 		amount: FORM_DEFAULTS.amount,
 		amountUsd: FORM_DEFAULTS.amountUsd,
@@ -73,7 +72,6 @@ export function BudgetFormModal({
 		if (isOpen && mode === 'edit' && budget) {
 			setFormData({
 				type: budget.type || FORM_DEFAULTS.type,
-				version: budget.version || FORM_DEFAULTS.version,
 				number: budget.number || FORM_DEFAULTS.number,
 				amount: budget.amount_ars?.toString() || FORM_DEFAULTS.amount,
 				amountUsd: budget.amount_usd?.toString() || FORM_DEFAULTS.amountUsd,
@@ -140,7 +138,7 @@ export function BudgetFormModal({
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div className="grid gap-2">
-						<Label>Tipo</Label>
+						<Label>Tipo de material</Label>
 						<Select
 							value={formData.type}
 							onValueChange={(value) =>
@@ -154,27 +152,6 @@ export function BudgetFormModal({
 								{DEFAULT_TYPES.map((t: string) => (
 									<SelectItem key={t} value={t}>
 										{t}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-
-					<div className="grid gap-2">
-						<Label>Variante</Label>
-						<Select
-							value={formData.version}
-							onValueChange={(value) =>
-								setFormData((prev: BudgetFormData) => ({ ...prev, version: value }))
-							}
-						>
-							<SelectTrigger className="w-full">
-								<SelectValue placeholder="Seleccionar variante" />
-							</SelectTrigger>
-							<SelectContent>
-								{BUDGET_VARIANTS.map((variant) => (
-									<SelectItem key={variant} value={variant}>
-										{variant}
 									</SelectItem>
 								))}
 							</SelectContent>

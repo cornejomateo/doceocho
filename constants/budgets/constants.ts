@@ -1,14 +1,13 @@
-import { checklistTypes } from '@/constants/checklists/checklists.constants';
+import { material_type } from '@/constants/checklists/checklists.constants';
 
-export const DEFAULT_TYPES = [...Object.values(checklistTypes), 'Otros'];
+export const DEFAULT_TYPES = [...Object.values(material_type), 'Otros'];
 
 export const BUDGET_VARIANTS = ['Mínimo', 'Estándar', 'Óptimo'] as const;
 
 export type BudgetVariant = (typeof BUDGET_VARIANTS)[number];
 
 export const FORM_DEFAULTS = {
-	type: 'PVC',
-	version: '',
+	type: 'MDF',
 	number: '',
 	amount: '',
 	amountUsd: '',

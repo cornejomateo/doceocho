@@ -21,7 +21,6 @@ export function useClientBudgetsState(clientId: number) {
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const [formData, setFormData] = useState<BudgetFormData>({
 		type: FORM_DEFAULTS.type,
-		version: FORM_DEFAULTS.version,
 		number: FORM_DEFAULTS.number,
 		amount: FORM_DEFAULTS.amount,
 		amountUsd: FORM_DEFAULTS.amountUsd,
@@ -157,7 +156,6 @@ export function useClientBudgetsState(clientId: number) {
 	const resetFormData = () => {
 		setFormData({
 			type: FORM_DEFAULTS.type,
-			version: FORM_DEFAULTS.version,
 			number: FORM_DEFAULTS.number,
 			amount: FORM_DEFAULTS.amount,
 			amountUsd: FORM_DEFAULTS.amountUsd,
