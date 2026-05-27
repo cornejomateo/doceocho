@@ -122,7 +122,9 @@ export function CashFlowManagement() {
 
 	const handleCreateCashBox = async () => {
 		try {
-			const today = new Date().toISOString().split('T')[0];
+			const now = new Date();
+			now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+			const today = now.toISOString().split('T')[0];
 			const { data, error } = await createCashBox({
 				date: today,
 				opening_balance: 0,
