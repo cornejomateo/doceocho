@@ -25,7 +25,6 @@ export function PdfPreviewModal({ isOpen, onOpenChange, budget, pdfUrl }: PdfPre
 						Vista previa - Presupuesto {budget?.type} #{budget?.number || 'sin número'}
 					</DialogTitle>
 					<DialogDescription>
-						{budget?.version || 'Sin variante'} -{' '}
 						{budget?.folder_budget?.work
 							? `${budget.folder_budget.work.address} - ${budget.folder_budget.work.locality}`
 							: 'Sin obra'}

@@ -14,11 +14,10 @@ import {
 import { useOptimizedRealtime } from '@/hooks/use-optimized-realtime';
 import { formatCurrency, formatCurrencyUSD } from '@/utils/formats-money';
 import { formatShortDate } from '@/utils/format-date';
-import { formatBudgetType, formatBudgetStatus } from '@/helpers/budgets/formats';
+import { formatBudgetStatus } from '@/helpers/budgets/formats';
 import {
 	BUDGETS_REPORT_COLUMNS,
 	BUDGETS_REPORT_TITLE,
-	BUDGET_TYPES,
 	BUDGET_STATUS,
 } from '@/constants/budgets/budgets-report';
 import { BudgetWithWorkAndClient } from '@/lib/budgets/budgets';
@@ -89,7 +88,7 @@ export function BudgetsReport() {
 					dateRaw,
 					client: clientName,
 					number: b.number || '-',
-					type: formatBudgetType(b.type),
+					type: b.type || '-',
 					work,
 					amountArs: b.amount_ars || 0,
 					amountUsd: b.amount_usd || 0,
@@ -182,18 +181,6 @@ export function BudgetsReport() {
 				</div>
 
 				<div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-					<Select value={typeFilter} onValueChange={setTypeFilter}>
-						<SelectTrigger className="w-full sm:w-[140px]">
-							<SelectValue placeholder="Tipo" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">Todos los tipos</SelectItem>
-							<SelectItem value={BUDGET_TYPES.STANDARD}>{BUDGET_TYPES.STANDARD}</SelectItem>
-							<SelectItem value={BUDGET_TYPES.OPTIMAL}>{BUDGET_TYPES.OPTIMAL}</SelectItem>
-							<SelectItem value={BUDGET_TYPES.MINIMAL}>{BUDGET_TYPES.MINIMAL}</SelectItem>
-						</SelectContent>
-					</Select>
-
 					<Select value={statusFilter} onValueChange={setStatusFilter}>
 						<SelectTrigger className="w-full sm:w-[140px]">
 							<SelectValue placeholder="Estado" />

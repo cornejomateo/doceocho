@@ -141,6 +141,7 @@ export function EventFormModal({ onSave, children }: EventFormModalProps) {
 								<SelectItem value="produccionOK">Producción OK</SelectItem>
 								<SelectItem value="colocacion">Colocación</SelectItem>
 								<SelectItem value="medicion">Medición</SelectItem>
+								<SelectItem value="reuniones">Reuniones</SelectItem>
 								<SelectItem value="otros">Otros</SelectItem>
 							</SelectContent>
 						</Select>

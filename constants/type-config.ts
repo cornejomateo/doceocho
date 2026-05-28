@@ -20,6 +20,12 @@ export const typeConfig = {
 		color: 'bg-chart-3 text-chart-3',
 		backgroundColor: '#f3a40bff',
 	},
+	reuniones: {
+		label: 'Reuniones',
+		icon: MoreHorizontal,
+		color: 'bg-chart-4 text-chart-4',
+		backgroundColor: 'rgb(212, 88, 183)',
+	},
 	otros: {
 		label: 'Otros',
 		icon: MoreHorizontal,
