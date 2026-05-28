@@ -9,6 +9,16 @@ export const formatCurrency = (amount: number | null | undefined) => {
 	}).format(amount);
 };
 
+// This method is similar to formatCurrency but we'll use it when we need to
+// retrieve a number from the database and enter it into an input field
+export const formatCurrencyWithoutSymbol = (amount: number | null | undefined) => {
+	if (!amount) return '0.00';
+	return new Intl.NumberFormat('es-AR', {
+		style: 'decimal',
+		minimumFractionDigits: 2,
+	}).format(amount);
+};
+
 // Similar to formatCurrency but for USD
 export const formatCurrencyUSD = (amount: number | null | undefined) => {
 	if (!amount) return '';
@@ -58,5 +68,6 @@ export const parseArsToNumber = (value: string): number => {
 
 	const normalized = value.replace(/\./g, '').replace(',', '.');
 
-	return Number(normalized);
+	const parsed = Number(normalized);
+	return Number.isFinite(parsed) ? parsed : 0;
 };

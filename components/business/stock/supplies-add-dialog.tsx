@@ -18,7 +18,12 @@ import { STOCK_CONFIGS } from '@/lib/stock/stock-config';
 import { toast } from '@/components/ui/use-toast';
 import { type SupplyItemStock } from '@/lib/stock/supplies-stock';
 import { useAuth } from '@/components/provider/auth-provider';
-import { formatNumber, parseArsToNumber } from '@/utils/formats-money';
+import {
+	formatCurrency,
+	formatCurrencyWithoutSymbol,
+	formatNumber,
+	parseArsToNumber,
+} from '@/utils/formats-money';
 
 type FormData = {
 	category: string;
@@ -93,7 +98,7 @@ export function SupplyFormDialog({
 				site: editItem.supply_site || '',
 				price:
 					editItem.supply_price !== undefined && editItem.supply_price !== null
-						? String(editItem.supply_price)
+						? formatCurrencyWithoutSymbol(editItem.supply_price)
 						: '',
 			});
 		} else {
