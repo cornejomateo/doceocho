@@ -275,7 +275,7 @@ export function SuppliesTable({
 										</td>
 										{isAuthorized && (
 											<td className="px-2 py-2 text-center text-sm text-foreground">
-												{formatCurrency(item.supply_price ?? 0)}
+												{formatCurrency(item.supply_price) || '-'}
 											</td>
 										)}
 										<td className="px-2 py-2 text-center text-sm text-foreground">
