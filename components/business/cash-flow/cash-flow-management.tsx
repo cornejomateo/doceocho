@@ -22,6 +22,7 @@ import {
 	Plus,
 	RefreshCw,
 	Building2,
+	Trash2,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -299,13 +300,13 @@ export function CashFlowManagement() {
 							</div>
 
 							{/* Close Cash Box Button */}
-							<div className="flex justify-end">
+							<div className="flex w-full justify-end">
 								<Button
 									onClick={() => setIsCloseCashBoxDialogOpen(true)}
 									variant="destructive"
-									className="gap-2"
+									className="w-full gap-2 md:w-auto"
 								>
-									<RefreshCw className="h-4 w-4" />
+									<RefreshCw className="" />
 									Cerrar y Reiniciar Caja
 								</Button>
 							</div>
@@ -370,7 +371,7 @@ export function CashFlowManagement() {
 															onClick={() => handleAskDeleteTransaction(transaction)}
 															className="text-destructive hover:text-destructive"
 														>
-															Eliminar
+															<Trash2 className="h-4 w-4" />
 														</Button>
 													</div>
 												</div>
