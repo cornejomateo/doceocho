@@ -513,28 +513,28 @@ create table public.transactions_box (
   constraint chk_amount_non_negative check ((amount >= (0)::numeric))
 ) TABLESPACE pg_default;
 
-ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions_box ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Public select transactions"
-ON public.transactions
+ON public.transactions_box
 FOR SELECT
 TO authenticated
 USING (true);
 
 CREATE POLICY "Public insert transactions"
-ON public.transactions
+ON public.transactions_box
 FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
 CREATE POLICY "Public update transactions"
-ON public.transactions
+ON public.transactions_box
 FOR UPDATE
 TO authenticated
 USING (true);
 
 CREATE POLICY "Public delete transactions"
-ON public.transactions
+ON public.transactions_box
 FOR DELETE
 TO authenticated
 USING (true);

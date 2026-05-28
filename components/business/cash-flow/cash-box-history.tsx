@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { History, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { CashBox, getCashBoxWithTransactions, translateCategory } from '@/lib/cash-flow/cash-flow';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/utils/formats-money';
 import { formatCreatedAt } from '@/utils/format-date';
 
 interface CashBoxHistoryProps {

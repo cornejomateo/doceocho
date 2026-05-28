@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { DollarSign, ArrowUpCircle, ArrowDownCircle, Wallet } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/utils/formats-money';
 
 interface CashBoxSummary {
 	id: number;

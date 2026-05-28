@@ -34,7 +34,7 @@ import { TransactionDialog } from '@/components/business/cash-flow/transaction-d
 import { CashBoxHistory } from '@/components/business/cash-flow/cash-box-history';
 import { BankAccountsDialog } from '@/components/business/cash-flow/bank-accounts-dialog';
 import { CloseCashBoxDialog } from '@/components/business/cash-flow/close-cash-box-dialog';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/utils/formats-money';
 
 export function CashFlowManagement() {
 	const { toast } = useToast();
