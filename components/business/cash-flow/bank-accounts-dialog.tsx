@@ -39,6 +39,7 @@ import {
 	deleteBankAccount,
 } from '@/lib/cash-flow/cash-flow';
 import { useToast } from '@/components/ui/use-toast';
+import { translateError } from '@/lib/error-translator';
 
 interface BankAccountsDialogProps {
 	open: boolean;
@@ -122,7 +123,7 @@ export function BankAccountsDialog({
 			resetForm();
 			onBankAccountsUpdated();
 		} catch (error) {
-			console.error('Error saving bank account:', error);
+			translateError(error);
 			toast({
 				title: 'Error',
 				description: 'No se pudo guardar la cuenta bancaria.',
@@ -151,7 +152,7 @@ export function BankAccountsDialog({
 			});
 			onBankAccountsUpdated();
 		} catch (error) {
-			console.error('Error deleting bank account:', error);
+			translateError(error);
 			toast({
 				title: 'Error',
 				description: 'No se pudo eliminar la cuenta bancaria.',

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { BankAccount } from '@/lib/cash-flow/cash-flow';
+import { translateError } from '@/lib/error-translator';
 
 interface TransactionDialogProps {
 	open: boolean;
@@ -88,7 +89,7 @@ export function TransactionDialog({
 			onTransactionCreated();
 			resetForm();
 		} catch (error) {
-			console.error('Error creating transaction:', error);
+			translateError(error);
 		} finally {
 			setLoading(false);
 		}

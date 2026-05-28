@@ -35,6 +35,7 @@ import { CashBoxHistory } from '@/components/business/cash-flow/cash-box-history
 import { BankAccountsDialog } from '@/components/business/cash-flow/bank-accounts-dialog';
 import { CloseCashBoxDialog } from '@/components/business/cash-flow/close-cash-box-dialog';
 import { formatCurrency } from '@/utils/formats-money';
+import { translateError } from '@/lib/error-translator';
 
 export function CashFlowManagement() {
 	const { toast } = useToast();
@@ -75,7 +76,7 @@ export function CashFlowManagement() {
 			const { data } = await getOpenCashBox();
 			setOpenCashBox(data);
 		} catch (error) {
-			console.error('Error loading open cash box:', error);
+			translateError(error);
 		} finally {
 			setLoadingOpenBox(false);
 		}
@@ -87,7 +88,7 @@ export function CashFlowManagement() {
 			const { data } = await listCashBoxes();
 			setCashBoxes(data || []);
 		} catch (error) {
-			console.error('Error loading cash boxes:', error);
+			translateError(error);
 		} finally {
 			setLoadingCashBoxes(false);
 		}
@@ -99,7 +100,7 @@ export function CashFlowManagement() {
 			const { data } = await listActiveBankAccounts();
 			setBankAccounts(data || []);
 		} catch (error) {
-			console.error('Error loading bank accounts:', error);
+			translateError(error);
 		} finally {
 			setLoadingBankAccounts(false);
 		}
@@ -116,7 +117,7 @@ export function CashFlowManagement() {
 			setCashBoxSummary(summary);
 			setTransactions(boxWithTransactions?.transactions || []);
 		} catch (error) {
-			console.error('Error loading cash box data:', error);
+			translateError(error);
 		}
 	};
 
@@ -141,6 +142,7 @@ export function CashFlowManagement() {
 			await loadOpenCashBox();
 			await loadCashBoxes();
 		} catch (error) {
+			translateError(error);
 			toast({
 				title: 'Error',
 				description: 'No se pudo crear la caja.',
@@ -173,6 +175,7 @@ export function CashFlowManagement() {
 				await loadCashBoxData(openCashBox.id);
 			}
 		} catch (error) {
+			translateError(error);
 			toast({
 				title: 'Error',
 				description: 'No se pudo eliminar la transacción.',
@@ -194,6 +197,7 @@ export function CashFlowManagement() {
 			await loadOpenCashBox();
 			await loadCashBoxes();
 		} catch (error) {
+			translateError(error);
 			toast({
 				title: 'Error',
 				description: 'No se pudo cerrar la caja.',

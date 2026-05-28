@@ -8,6 +8,7 @@ import { History, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { CashBox, getCashBoxWithTransactions, translateCategory } from '@/lib/cash-flow/cash-flow';
 import { formatCurrency } from '@/utils/formats-money';
 import { formatCreatedAt } from '@/utils/format-date';
+import { translateError } from '@/lib/error-translator';
 
 interface CashBoxHistoryProps {
 	cashBoxes: CashBox[];
@@ -39,7 +40,7 @@ export function CashBoxHistory({ cashBoxes, loading, onRefresh }: CashBoxHistory
 			);
 			setBoxesWithTransactions(boxesWithTrans);
 		} catch (error) {
-			console.error('Error loading cash box transactions:', error);
+			translateError(error);
 		}
 	};
 
