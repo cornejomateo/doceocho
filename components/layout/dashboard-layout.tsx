@@ -45,7 +45,7 @@ const navigation = [
 	{ name: 'Ajustes y Diario', href: '/claims', icon: AlertCircle, disabled: false },
 	{ name: 'Reportes de Presupuestos', href: '/budgets', icon: FileText, disabled: false },
 	{ name: 'Reportes', href: '/reports', icon: BarChart3, disabled: false },
-	{ name: 'Flujo de Fondos', href: '/flujo-fondos', icon: DollarSign, disabled: false },
+	{ name: 'Flujo de Fondos', href: '/cash-flow', icon: DollarSign, disabled: false },
 ] as const;
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {

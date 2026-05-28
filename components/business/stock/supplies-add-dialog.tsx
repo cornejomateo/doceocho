@@ -18,6 +18,7 @@ import { STOCK_CONFIGS } from '@/lib/stock/stock-config';
 import { toast } from '@/components/ui/use-toast';
 import { type SupplyItemStock } from '@/lib/stock/supplies-stock';
 import { useAuth } from '@/components/provider/auth-provider';
+import { formatNumber, parseArsToNumber } from '@/utils/formats-money';
 
 type FormData = {
 	category: string;
@@ -30,7 +31,7 @@ type FormData = {
 	lumpCount: number | '';
 	quantity: number | '';
 	site: string;
-	price: number | '';
+	price: string;
 };
 
 interface SupplyFormDialogProps {
@@ -90,7 +91,10 @@ export function SupplyFormDialog({
 				lumpCount: editItem.supply_quantity_lump ?? '',
 				quantity: editItem.supply_quantity ?? '',
 				site: editItem.supply_site || '',
-				price: editItem.supply_price ?? '',
+				price:
+					editItem.supply_price !== undefined && editItem.supply_price !== null
+						? String(editItem.supply_price)
+						: '',
 			});
 		} else {
 			resetForm();
@@ -222,7 +226,7 @@ export function SupplyFormDialog({
 			supply_quantity_lump: Number(formData.lumpCount),
 			supply_quantity: Number(formData.quantity),
 			supply_site: formData.site,
-			supply_price: formData.price === '' ? null : Number(formData.price),
+			supply_price: formData.price === '' ? null : parseArsToNumber(formData.price),
 		};
 
 		onSave(payload);
@@ -382,10 +386,10 @@ export function SupplyFormDialog({
 								<Label htmlFor="price">Precio (opcional)</Label>
 								<Input
 									id="price"
-									type="number"
+									type="text"
 									value={formData.price}
 									onChange={(e) =>
-										updateField('price', e.target.value ? Number(e.target.value) : '')
+										updateField('price', e.target.value ? formatNumber(e.target.value) : '')
 									}
 									className="bg-background"
 								/>
