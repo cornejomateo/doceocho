@@ -52,7 +52,6 @@ export function ClaimsTable({
 					<TableHead className="text-center">Núm. de celular</TableHead>
 					<TableHead className="text-center">Zona/Localidad</TableHead>
 					<TableHead className="text-center">Dirección</TableHead>
-					<TableHead className="text-center">Tipo</TableHead>
 					<TableHead className="lg:table-cell text-center">Descripción</TableHead>
 					{authorizedUser && <TableHead className="text-center">Atendido por</TableHead>}
 					<TableHead className="text-center">Fecha de resolución</TableHead>
@@ -112,9 +111,6 @@ export function ClaimsTable({
 							</TableCell>
 							<TableCell className="text-center">
 								<div className="max-w-xs truncate">{claim.work_address || '-'}</div>
-							</TableCell>
-							<TableCell className="text-center">
-								<Badge variant="outline">{claim.alum_pvc || '-'}</Badge>
 							</TableCell>
 							<TableCell className="lg:table-cell max-w-xs text-center">
 								<div

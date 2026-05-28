@@ -22,7 +22,7 @@ import { Work } from '@/lib/works/works';
 import { BudgetWithWork } from '@/lib/balances/balances';
 import { DEFAULT_TYPES, FORM_DEFAULTS } from '@/constants/budgets/constants';
 import { BudgetFormData } from '@//components/business/reports/budgets/types';
-import { formatNumber, parseArsToNumber } from '@/helpers/budgets/helper-budget';
+import { formatNumber, parseArsToNumber } from '@/utils/formats-money';
 
 interface BudgetFormModalProps {
 	isOpen: boolean;

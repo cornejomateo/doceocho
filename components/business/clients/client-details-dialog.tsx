@@ -278,9 +278,15 @@ export function ClientDetailsDialog({
 								{user?.role !== 'Colocador' && (
 									<>
 										<TabsTrigger value="info">Información</TabsTrigger>
-										<TabsTrigger value="works">Obras</TabsTrigger>
-										<TabsTrigger value="budgets">Presupuestos</TabsTrigger>
-										<TabsTrigger value="balances">Saldos</TabsTrigger>
+										<TabsTrigger value="works" disabled>
+											Obras
+										</TabsTrigger>
+										<TabsTrigger value="budgets" disabled>
+											Presupuestos
+										</TabsTrigger>
+										<TabsTrigger value="balances" disabled>
+											Saldos
+										</TabsTrigger>
 									</>
 								)}
 								<TabsTrigger value="images">Archivos</TabsTrigger>

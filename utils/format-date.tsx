@@ -1,3 +1,4 @@
+// The method we should always use to display timestampz data
 export const formatCreatedAt = (dateValue: unknown) => {
 	if (!dateValue) return 'N/A';
 	const d = new Date(String(dateValue));

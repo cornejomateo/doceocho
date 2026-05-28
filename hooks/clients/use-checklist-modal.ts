@@ -1,9 +1,5 @@
 import { useState } from 'react';
 import { Work } from '@/lib/works/works';
-import {
-	getItemsForChecklistType,
-	ChecklistType,
-} from '@/constants/checklists/checklists.constants';
 import { Checklist } from '@/lib/checklists/checklists';
 
 export function useChecklistModal() {
@@ -23,16 +19,10 @@ export function useChecklistModal() {
 	const [checklist, setChecklist] = useState<{
 		name: string | null;
 		description: string | null;
-		width: number | null;
-		height: number | null;
-		type_opening: ChecklistType | null;
 		items: { name: string; completed: boolean }[];
 	}>({
 		name: null,
 		description: null,
-		width: null,
-		height: null,
-		type_opening: null,
 		items: [],
 	});
 
@@ -40,9 +30,6 @@ export function useChecklistModal() {
 		setChecklist({
 			name: checklistToEdit.name || null,
 			description: checklistToEdit.description || null,
-			width: checklistToEdit.width || null,
-			height: checklistToEdit.height || null,
-			type_opening: (checklistToEdit.type_opening as ChecklistType) || null,
 			items: (checklistToEdit.items || []).map((item) => ({
 				name: item.name,
 				completed: item.done || false,
@@ -54,9 +41,6 @@ export function useChecklistModal() {
 		setChecklist({
 			name: null,
 			description: null,
-			width: null,
-			height: null,
-			type_opening: null,
 			items: [],
 		});
 	};
@@ -66,19 +50,6 @@ export function useChecklistModal() {
 			...prev,
 			[field]: value === '' ? null : value,
 		}));
-
-		if (field === 'type_opening') {
-			const defaultItems = getItemsForChecklistType(value) || [];
-
-			setChecklist((prev) => ({
-				...prev,
-				type_opening: value,
-				items: defaultItems.map((name) => ({
-					name,
-					completed: false,
-				})),
-			}));
-		}
 	};
 
 	const addItem = (name: string) => {

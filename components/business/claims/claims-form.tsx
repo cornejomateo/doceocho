@@ -22,7 +22,6 @@ import {
 } from '@/components/ui/command';
 import { Client } from '@/lib/clients/clients';
 import { Work } from '@/lib/works/works';
-import { checklistTypes } from '@/constants/checklists/checklists.constants';
 
 const NO_WORK_VALUE = '__none__';
 
@@ -53,8 +52,6 @@ export function ClaimsForm({
 }: ClaimsFormProps) {
 	const [open, setOpen] = useState(false);
 	const [selected, setSelected] = useState<Client | null>(null);
-
-	const types = Object.values(checklistTypes);
 
 	useEffect(() => {
 		const match = clients.find((client) => client.id === formData.client_id) ?? null;
@@ -187,29 +184,6 @@ export function ClaimsForm({
 			</div>
 
 			<div className="grid grid-cols-2 gap-4">
-				<div className="grid gap-2">
-					<Label htmlFor="alum_pvc" className="text-foreground">
-						Tipo
-					</Label>
-					<Select
-						value={formData.alum_pvc}
-						onValueChange={(value) => onSelectChange('alum_pvc', value)}
-					>
-						<SelectTrigger className="bg-background">
-							<SelectValue placeholder="Seleccionar tipo" />
-						</SelectTrigger>
-						<SelectContent>
-							{types &&
-								types.map((type) => (
-									<SelectItem key={type} value={type}>
-										{type}
-									</SelectItem>
-								))}
-							<SelectItem value="Otro">Otro</SelectItem>
-						</SelectContent>
-					</Select>
-				</div>
-
 				<div className="grid gap-2">
 					<Label htmlFor="date" className="text-foreground">
 						Fecha

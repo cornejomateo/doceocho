@@ -31,17 +31,14 @@ export async function generateChecklistPDF(
 
 		pdf.setFontSize(9);
 		const headerLines1 = pdf.splitTextToSize(
-			`${checklist.name || ''} - ${checklist.type_opening || ''}`,
+			`${checklist.name || ''}`,
 			col1Width - 2 * cellPadding
 		);
 		const headerLines2 = pdf.splitTextToSize(
 			checklist.description || 'Sin descripción',
 			col2Width - 2 * cellPadding
 		);
-		const headerLines3 = pdf.splitTextToSize(
-			`${checklist.width || '0'} X ${checklist.height || '0'}`,
-			col3Width - 2 * cellPadding
-		);
+		const headerLines3 = pdf.splitTextToSize(`${'Algo'} X ${'algo'}`, col3Width - 2 * cellPadding);
 
 		const headerHeight = Math.max(
 			minRowHeight,
@@ -98,9 +95,7 @@ export async function generateChecklistPDF(
 		pdf.setFont('helvetica', 'bold');
 
 		const headerText1 = pdf.splitTextToSize(
-			checklist.type_opening
-				? `${checklist.name || `PV${checklistIndex + 1}`} - ${checklist.type_opening || ''}`
-				: checklist.name || `PV${checklistIndex + 1}`,
+			checklist.name || `PV${checklistIndex + 1}`,
 			col1Width - 2 * cellPadding
 		);
 
@@ -109,10 +104,7 @@ export async function generateChecklistPDF(
 			col2Width - 2 * cellPadding
 		);
 
-		const headerText3 = pdf.splitTextToSize(
-			`${checklist.width || '0'} X ${checklist.height || '0'}`,
-			col3Width - 2 * cellPadding
-		);
+		const headerText3 = pdf.splitTextToSize(`${'Algo'} X ${'algo'}`, col3Width - 2 * cellPadding);
 
 		const headerHeight = Math.max(
 			minRowHeight,

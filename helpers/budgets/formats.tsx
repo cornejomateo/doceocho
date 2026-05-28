@@ -1,21 +1,4 @@
-import { BUDGET_TYPES, BUDGET_STATUS } from '@/constants/budgets/budgets-report';
-
-export function formatBudgetType(type: string | null | undefined) {
-	if (!type) return BUDGET_TYPES.STANDARD;
-
-	switch (type.toLowerCase()) {
-		case 'optimo':
-		case 'optimal':
-			return BUDGET_TYPES.OPTIMAL;
-		case 'minimo':
-		case 'minimal':
-			return BUDGET_TYPES.MINIMAL;
-		case 'estandar':
-		case 'standard':
-		default:
-			return BUDGET_TYPES.STANDARD;
-	}
-}
+import { BUDGET_STATUS } from '@/constants/budgets/budgets-report';
 
 export function formatBudgetStatus(
 	accepted: boolean | null | undefined,

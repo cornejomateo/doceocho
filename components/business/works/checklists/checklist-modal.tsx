@@ -12,15 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
 import { Plus, Trash2, Loader2, CheckCircle } from 'lucide-react';
-import { checklistTypes, ChecklistType } from '@/constants/checklists/checklists.constants';
 import { Checklist } from '@/lib/checklists/checklists';
 import { toast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -36,9 +28,6 @@ type ChecklistModalProps = {
 	onSave: (checklist: {
 		name?: string | null;
 		description?: string | null;
-		width?: number | null;
-		height?: number | null;
-		type_opening?: ChecklistType | null;
 		items: Array<{ name: string; completed: boolean }>;
 	}) => Promise<void>;
 	onUpdate?: (
@@ -46,9 +35,6 @@ type ChecklistModalProps = {
 		checklist: {
 			name?: string | null;
 			description?: string | null;
-			width?: number | null;
-			height?: number | null;
-			type_opening?: ChecklistType | null;
 			items: Array<{ name: string; done: boolean }>;
 		}
 	) => void;
@@ -70,8 +56,6 @@ export function ChecklistModal({
 	const isControlled = open !== undefined;
 	const modalOpen = isControlled ? open : isOpen;
 	const setModalOpen = isControlled ? onOpenChange || (() => {}) : setIsOpen;
-
-	const types = Object.values(checklistTypes);
 
 	// Reset when modal opens/closes
 	useEffect(() => {
@@ -175,7 +159,7 @@ export function ChecklistModal({
 						<CardHeader className="pb-6 space-y-4">
 							<div className="text-center">
 								<h3 className="text-xl font-semibold text-muted-foreground mb-2">
-									{isEditMode ? 'Editar' : `Abertura ${createdCount + 1}`}
+									{isEditMode ? 'Editar' : `Checklist ${createdCount + 1}`}
 								</h3>
 								<Input
 									placeholder="Identificador"
@@ -195,55 +179,6 @@ export function ChecklistModal({
 										placeholder="Descripción (opcional)"
 										value={checklist.description || ''}
 										onChange={(e) => updateField('description', e.target.value)}
-										className="h-10"
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="opening-type" className="text-sm">
-										Tipo de Abertura
-									</Label>
-									<Select
-										value={checklist.type_opening || ''}
-										onValueChange={(value) => updateField('type_opening', value)}
-									>
-										<SelectTrigger id="opening-type" className="h-10">
-											<SelectValue placeholder="Seleccionar tipo" />
-										</SelectTrigger>
-										<SelectContent>
-											{types.map((type) => (
-												<SelectItem key={type} value={type}>
-													{type}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
-
-							<div className="grid grid-cols-2 gap-4">
-								<div className="space-y-2">
-									<Label htmlFor="width" className="text-sm">
-										Ancho (cm)
-									</Label>
-									<Input
-										id="width"
-										type="number"
-										placeholder="Ancho"
-										value={checklist.width || ''}
-										onChange={(e) => updateField('width', parseFloat(e.target.value) || null)}
-										className="h-10"
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="height" className="text-sm">
-										Alto (cm)
-									</Label>
-									<Input
-										id="height"
-										type="number"
-										placeholder="Alto"
-										value={checklist.height || ''}
-										onChange={(e) => updateField('height', parseFloat(e.target.value) || null)}
 										className="h-10"
 									/>
 								</div>

@@ -14,7 +14,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { formatNumber } from '@/helpers/budgets/helper-budget';
+import { formatNumber } from '@/utils/formats-money';
 
 interface AddTransactionSectionProps {
 	isAddingTransaction: boolean;

@@ -40,7 +40,7 @@ export function CalendarView() {
 	const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [activeFilter, setActiveFilter] = useState<
-		'todos' | 'colocacion' | 'produccionOK' | 'medicion'
+		'todos' | 'colocacion' | 'produccionOK' | 'medicion' | 'reuniones'
 	>('todos');
 	const [searchTerm, setSearchTerm] = useState('');
 	const maxVisibleEvents = 5; // Show only 5 events by default
@@ -268,6 +268,13 @@ export function CalendarView() {
 							>
 								Medición
 							</Button>
+							<Button
+								variant={activeFilter === 'reuniones' ? 'default' : 'outline'}
+								size="sm"
+								onClick={() => setActiveFilter('reuniones')}
+							>
+								Reuniones
+							</Button>
 						</div>
 
 						{/* Calendar header */}
@@ -493,6 +500,10 @@ export function CalendarView() {
 						<span className="text-sm text-muted-foreground">Mediciones</span>
 					</div>
 					<div className="flex items-center gap-2">
+						<div className="h-3 w-3 rounded-full bg-chart-4" />
+						<span className="text-sm text-muted-foreground">Reuniones</span>
+					</div>
+					<div className="flex items-center gap-2">
 						<div className="h-3 w-3 rounded-full bg-gray-400" />
 						<span className="text-sm text-muted-foreground">Otros</span>
 					</div>
@@ -562,7 +573,9 @@ export function CalendarView() {
 					event={{
 						...selectedEvent,
 						title: selectedEvent?.title ?? 'Sin título',
-						type: (selectedEvent?.type as 'produccionOK' | 'colocacion' | 'medicion') ?? 'otros',
+						type:
+							(selectedEvent?.type as 'produccionOK' | 'colocacion' | 'medicion' | 'reuniones') ??
+							'otros',
 						date: selectedEvent?.date ?? '',
 						client: selectedEvent?.client ?? '',
 						location: selectedEvent?.location ?? '',
