@@ -1,3 +1,6 @@
+// Utility function to normalize strings by removing accents,
+// converting to lowercase, and trimming whitespace
+// We use it to group items without taking into account uppercase letters, accents, etc.
 export const normalize = (str: string) =>
 	str
 		.toLowerCase()
