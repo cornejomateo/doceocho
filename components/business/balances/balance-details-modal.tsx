@@ -30,7 +30,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { formatCurrency } from '@/utils/formats-money';
 import { calculateBalanceSummary } from '@/helpers/balances/balance-calculations';
-import { parseArsToNumber } from '@/helpers/budgets/helper-budget';
+import { parseArsToNumber } from '@/utils/formats-money';
 import { AddTransactionSection } from './transactions/add-transaction';
 import { TransactionsTable } from './transactions/transactions-table';
 import { BalanceInformation } from './balance-information';
