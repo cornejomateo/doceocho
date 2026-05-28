@@ -515,25 +515,25 @@ create table public.transactions_box (
 
 ALTER TABLE public.transactions_box ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public select transactions"
+CREATE POLICY "Public select transactions_box"
 ON public.transactions_box
 FOR SELECT
 TO authenticated
 USING (true);
 
-CREATE POLICY "Public insert transactions"
+CREATE POLICY "Public insert transactions_box"
 ON public.transactions_box
 FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Public update transactions"
+CREATE POLICY "Public update transactions_box"
 ON public.transactions_box
 FOR UPDATE
 TO authenticated
 USING (true);
 
-CREATE POLICY "Public delete transactions"
+CREATE POLICY "Public delete transactions_box"
 ON public.transactions_box
 FOR DELETE
 TO authenticated
