@@ -18,6 +18,7 @@ import {
 	X,
 	Lock,
 	AlertCircle,
+	DollarSign,
 } from 'lucide-react';
 
 import {
@@ -39,11 +40,12 @@ const navigation = [
 	{ name: 'Panel', href: '/', icon: LayoutDashboard, disabled: false },
 	{ name: 'Insumos', href: '/supplies', icon: Package, disabled: false },
 	{ name: 'Clientes', href: '/clients', icon: Users, disabled: false },
-	{ name: 'Obras', href: '/works', icon: ClipboardCheck, disabled: true },
+	{ name: 'Obras', href: '/works', icon: ClipboardCheck, disabled: false },
 	{ name: 'Calendario', href: '/calendar', icon: Calendar, disabled: false },
-	{ name: 'Ajustes y Diario', href: '/claims', icon: AlertCircle, disabled: true },
-	{ name: 'Reportes de Presupuestos', href: '/budgets', icon: FileText, disabled: true },
-	{ name: 'Reportes', href: '/reports', icon: BarChart3, disabled: true },
+	{ name: 'Ajustes y Diario', href: '/claims', icon: AlertCircle, disabled: false },
+	{ name: 'Reportes de Presupuestos', href: '/budgets', icon: FileText, disabled: false },
+	{ name: 'Reportes', href: '/reports', icon: BarChart3, disabled: false },
+	{ name: 'Flujo de Fondos', href: '/cash-flow', icon: DollarSign, disabled: false },
 ] as const;
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -54,9 +56,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 	const allowedByRole = useMemo(() => {
 		return {
-			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario'],
+			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos'],
 			Fabrica: ['Insumos'],
-			Ventas: ['Panel', 'Insumos', 'Clientes', 'Calendario'],
+			Ventas: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos'],
 			Marketing: ['Panel', 'Calendario', 'Clientes'],
 			Colocador: ['Clientes'],
 		} as Record<string, string[]>;

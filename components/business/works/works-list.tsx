@@ -12,6 +12,7 @@ import {
 	ChevronDown,
 	Search,
 	CheckSquare,
+	BrickWall,
 } from 'lucide-react';
 import { ChecklistModal } from '@/components/business/works/checklists/checklist-modal';
 import { format } from 'date-fns';
@@ -219,6 +220,15 @@ export function WorksList({
 									value={work.architect || ''}
 									onSave={async (newValue) => {
 										await handleUpdateWork(work.id, { architect: newValue });
+									}}
+								/>
+							</div>
+							<div className="flex items-center gap-2 w-full">
+								<BrickWall className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+								<EditableField
+									value={work.furniture || ''}
+									onSave={async (newValue) => {
+										await handleUpdateWork(work.id, { furniture: newValue });
 									}}
 								/>
 							</div>

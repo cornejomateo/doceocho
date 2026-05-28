@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateBalance } from '@/lib/balances/balances';
-import { formatNumber, parseArsToNumber } from '@/helpers/budgets/helper-budget';
+import { formatNumber, parseArsToNumber } from '@/utils/formats-money';
 import { toast } from '@/components/ui/use-toast';
 import { translateError } from '@/lib/error-translator';
 

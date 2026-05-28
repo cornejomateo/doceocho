@@ -50,7 +50,6 @@ export type BudgetWithWork = {
 	pdf_url?: string | null;
 	pdf_path?: string | null;
 	number?: string | null;
-	version?: string | null;
 	type?: string | null;
 	folder_budget: {
 		id: number;

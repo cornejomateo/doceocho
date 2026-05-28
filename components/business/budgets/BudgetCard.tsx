@@ -64,14 +64,6 @@ export function BudgetCard({
 					<Trash2 className="h-4 w-4" />
 				</Button>
 			</div>
-			<div className="flex items-start justify-between gap-2">
-				<div className="min-w-0">
-					<p className="font-semibold text-foreground truncate">
-						{budget.version || 'Sin variante'}
-					</p>
-					<p className="text-xs text-muted-foreground truncate">{workLabel(folder)}</p>
-				</div>
-			</div>
 
 			<div className="mt-3 space-y-2">
 				<div className="space-y-1">

@@ -332,7 +332,6 @@ export const budgetHandlers: BudgetHandlers = {
 				editingBudget.id,
 				{
 					type: formData.type,
-					version: formData.version.trim() || null,
 					number: number,
 					amount_ars: amount,
 					amount_usd: amountUsd,
@@ -443,7 +442,6 @@ export const budgetHandlers: BudgetHandlers = {
 					sold: false,
 					lost: false,
 					type: formData.type,
-					version: formData.version.trim() || null,
 					number: number,
 					amount_ars: amount,
 					amount_usd: amountUsd,

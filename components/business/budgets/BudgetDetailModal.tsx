@@ -59,10 +59,6 @@ export function BudgetDetailModal({
 							<p className="text-sm font-semibold">{budget.type}</p>
 						</div>
 						<div>
-							<Label className="text-sm font-medium text-muted-foreground">Variante</Label>
-							<p className="text-sm font-semibold">{budget.version || 'Sin variante'}</p>
-						</div>
-						<div>
 							<Label className="text-sm font-medium text-muted-foreground">Número</Label>
 							<p className="text-sm font-semibold">#{budget.number || 'Sin número'}</p>
 						</div>

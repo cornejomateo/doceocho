@@ -75,7 +75,7 @@ export function ChecklistCard({
 				<div className="flex items-start justify-between gap-2">
 					<div className="space-y-3 flex-1">
 						<h3 className="text-xl font-bold text-foreground">
-							{checklist.name || `Abertura ${index + 1}`}
+							{checklist.name || `Paso ${index + 1}`}
 						</h3>
 
 						{checklist.description && (
@@ -110,26 +110,6 @@ export function ChecklistCard({
 						</div>
 					)}
 				</div>
-				<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-					{checklist.type_opening && (
-						<div className="space-y-1">
-							<Label className="text-xs text-muted-foreground">Tipo</Label>
-							<div className="font-medium text-foreground capitalize">{checklist.type_opening}</div>
-						</div>
-					)}
-					{checklist.width && (
-						<div className="space-y-1">
-							<Label className="text-xs text-muted-foreground">Ancho</Label>
-							<div className="font-medium text-foreground">{checklist.width} cm</div>
-						</div>
-					)}
-					{checklist.height && (
-						<div className="space-y-1">
-							<Label className="text-xs text-muted-foreground">Alto</Label>
-							<div className="font-medium text-foreground">{checklist.height} cm</div>
-						</div>
-					)}
-				</div>
 
 				<div className="space-y-2 pt-2">
 					<div className="flex items-center justify-between">
@@ -156,7 +136,7 @@ export function ChecklistCard({
 					<Textarea
 						value={checklist.notes || ''}
 						onChange={(e) => onUpdateNotes(checklist.id, e.target.value)}
-						placeholder="Escribí una nota para esta abertura (ej: falta sellador, revisar nivel, etc.)"
+						placeholder="Escribí una nota para esta checklist (ej: falta sellador, revisar nivel, etc.)"
 						className="text-sm"
 						disabled={loading}
 					/>
