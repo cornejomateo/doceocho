@@ -326,7 +326,7 @@ export function CashFlowManagement() {
 											{transactions.map((transaction) => (
 												<div
 													key={transaction.id}
-													className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+													className="flex flex-col gap-3 p-4 rounded-lg bg-secondary/50 sm:flex-row sm:items-center sm:justify-between"
 												>
 													<div className="flex items-center gap-4">
 														<div
@@ -343,20 +343,17 @@ export function CashFlowManagement() {
 															)}
 														</div>
 														<div>
-															<p className="font-medium text-foreground">
-																{transaction.description || translateCategory(transaction.category)}
-															</p>
 															<p className="text-sm text-muted-foreground">
-																{translateCategory(transaction.category)}
+																{transaction.category
+																	? translateCategory(transaction.category)
+																	: ''}
 															</p>
-															{transaction.bank_account_id && (
-																<p className="text-xs text-muted-foreground mt-1">
-																	Transferencia a cuenta
-																</p>
-															)}
+															<p className="font-medium text-foreground">
+																{transaction.description ? transaction.description : ''}
+															</p>
 														</div>
 													</div>
-													<div className="flex items-center gap-4">
+													<div className="flex items-center justify-between w-full sm:w-auto gap-4">
 														<p
 															className={`font-semibold ${
 																transaction.type === 'income' ? 'text-green-500' : 'text-red-500'
