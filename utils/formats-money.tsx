@@ -5,7 +5,19 @@ export const formatCurrency = (amount: number | null | undefined) => {
 	return new Intl.NumberFormat('es-AR', {
 		style: 'currency',
 		currency: 'ARS',
-		minimumFractionDigits: 2,
+		minimumFractionDigits: 3,
+		maximumFractionDigits: 3,
+	}).format(amount);
+};
+
+// This method is similar to formatCurrency but we'll use it when we need to
+// retrieve a number from the database and enter it into an input field
+export const formatCurrencyWithoutSymbol = (amount: number | null | undefined) => {
+	if (!amount) return '0.00';
+	return new Intl.NumberFormat('es-AR', {
+		style: 'decimal',
+		minimumFractionDigits: 3,
+		maximumFractionDigits: 3,
 	}).format(amount);
 };
 
@@ -15,13 +27,14 @@ export const formatCurrencyUSD = (amount: number | null | undefined) => {
 	return new Intl.NumberFormat('es-AR', {
 		style: 'currency',
 		currency: 'USD',
-		minimumFractionDigits: 2,
+		minimumFractionDigits: 3,
+		maximumFractionDigits: 3,
 	}).format(amount);
 };
 
-// Normalizes a number to have at most 2 decimal places, and avoids -0
+// Normalizes a number to have at most 3 decimal places, and avoids -0
 export const normalizeMoney = (value: number): number => {
-	const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
+	const rounded = Math.round((value + Number.EPSILON) * 1000) / 1000;
 	return Object.is(rounded, -0) ? 0 : rounded;
 };
 
@@ -58,5 +71,6 @@ export const parseArsToNumber = (value: string): number => {
 
 	const normalized = value.replace(/\./g, '').replace(',', '.');
 
-	return Number(normalized);
+	const parsed = Number(normalized);
+	return Number.isFinite(parsed) ? parsed : 0;
 };

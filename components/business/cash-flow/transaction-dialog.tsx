@@ -19,9 +19,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { BankAccount } from '@/lib/cash-flow/cash-flow';
 import { translateError } from '@/lib/error-translator';
+import { formatNumber, parseArsToNumber } from '@/utils/formats-money';
+import { createTransaction } from '@/lib/cash-flow/cash-flow';
 
 interface TransactionDialogProps {
 	open: boolean;
@@ -66,13 +67,11 @@ export function TransactionDialog({
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!amount || !category) return;
-		const parsedAmount = Number(amount);
+		const parsedAmount = parseArsToNumber(amount);
 		if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return;
 
 		setLoading(true);
 		try {
-			const { createTransaction } = await import('@/lib/cash-flow/cash-flow');
-
 			const transactionData: any = {
 				cash_box_id: cashBoxId,
 				type,
@@ -122,12 +121,12 @@ export function TransactionDialog({
 							<Label htmlFor="amount">Monto</Label>
 							<Input
 								id="amount"
-								type="number"
+								type="text"
 								step="0.01"
 								min="0"
 								placeholder="0.00"
 								value={amount}
-								onChange={(e) => setAmount(e.target.value)}
+								onChange={(e) => setAmount(formatNumber(e.target.value))}
 								required
 							/>
 						</div>

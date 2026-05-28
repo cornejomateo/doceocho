@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { SupplyFormDialog } from '@/components/business/stock/supplies-add-dialog';
+import { formatNumber, parseArsToNumber } from '@/utils/formats-money';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/components/provider/auth-provider';
 
@@ -76,7 +77,10 @@ describe('SupplyFormDialog', () => {
 		fireEvent.change(screen.getByLabelText('Cantidad de bultos'), { target: { value: '3' } });
 		fireEvent.change(screen.getByLabelText('Cantidad total'), { target: { value: '30' } });
 		fireEvent.change(screen.getByLabelText('Ubicación'), { target: { value: 'Depósito' } });
-		fireEvent.change(screen.getByLabelText('Precio (opcional)'), { target: { value: '1200' } });
+		// simulate the formatted input as the component does via `formatNumber`
+		fireEvent.change(screen.getByLabelText('Precio (opcional)'), {
+			target: { value: formatNumber('1200') },
+		});
 
 		fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
 
@@ -94,7 +98,7 @@ describe('SupplyFormDialog', () => {
 					supply_quantity: 30,
 					supply_site: 'Depósito',
 					supply_material: 'Aluminio',
-					supply_price: 1200,
+					supply_price: parseArsToNumber(formatNumber('1200')),
 					created_at: expect.any(String),
 				})
 			);
