@@ -1,32 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useOptimizedRealtime } from '@/hooks/use-optimized-realtime';
 import {
 	DollarSign,
 	ArrowUpCircle,
 	ArrowDownCircle,
 	Plus,
 	RefreshCw,
-	History,
 	Building2,
+	Trash2,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
 	CashBox,
+	CashBoxSummary,
 	Transaction,
+	TransactionWithBankAccount,
 	BankAccount,
-	getOpenCashBox,
 	listCashBoxes,
-	getCashBoxWithTransactions,
-	getCashBoxSummary,
 	createCashBox,
 	closeCashBox,
-	createTransaction,
 	deleteTransaction,
 	listActiveBankAccounts,
+	listTransactions,
 	translateCategory,
 } from '@/lib/cash-flow/cash-flow';
 import { CashBoxSummaryCard } from '@/components/business/cash-flow/cash-box-summary-card';
@@ -37,89 +47,102 @@ import { CloseCashBoxDialog } from '@/components/business/cash-flow/close-cash-b
 import { formatCurrency } from '@/utils/formats-money';
 import { translateError } from '@/lib/error-translator';
 
+function CashFlowTransactionsRealtime({
+	cashBoxId,
+	onTransactionsChange,
+	onRefreshReady,
+}: {
+	cashBoxId: number;
+	onTransactionsChange: (transactions: TransactionWithBankAccount[]) => void;
+	onRefreshReady?: (refresh: (() => Promise<void>) | null) => void;
+}) {
+	const { data, refresh } = useOptimizedRealtime<TransactionWithBankAccount>(
+		'transactions_box',
+		async () => {
+			const { data } = await listTransactions(cashBoxId);
+			return data ?? [];
+		},
+		`cash-flow-transactions_${cashBoxId}`
+	);
+
+	useEffect(() => {
+		onTransactionsChange(data);
+	}, [data, onTransactionsChange]);
+
+	useEffect(() => {
+		onRefreshReady?.(refresh);
+		return () => onRefreshReady?.(null);
+	}, [refresh, onRefreshReady]);
+
+	return null;
+}
+
 export function CashFlowManagement() {
 	const { toast } = useToast();
 	const [activeTab, setActiveTab] = useState('current');
 
 	const [openCashBox, setOpenCashBox] = useState<CashBox | null>(null);
-	const [cashBoxes, setCashBoxes] = useState<CashBox[]>([]);
-	const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
-	const [loadingOpenBox, setLoadingOpenBox] = useState(false);
-	const [loadingCashBoxes, setLoadingCashBoxes] = useState(false);
-	const [loadingBankAccounts, setLoadingBankAccounts] = useState(false);
+	const {
+		data: cashBoxes,
+		loading: loadingCashBoxes,
+		refresh: refreshCashBoxes,
+	} = useOptimizedRealtime<CashBox>(
+		'cash_boxes',
+		async () => {
+			const { data } = await listCashBoxes();
+			return data ?? [];
+		},
+		'cash_boxes_cache'
+	);
+	const {
+		data: bankAccounts,
+		loading: loadingBankAccounts,
+		refresh: refreshBankAccounts,
+	} = useOptimizedRealtime<BankAccount>(
+		'bank_accounts',
+		async () => {
+			const { data } = await listActiveBankAccounts();
+			return data ?? [];
+		},
+		'active_bank_accounts_cache'
+	);
 
-	const [cashBoxSummary, setCashBoxSummary] = useState<any>(null);
-	const [transactions, setTransactions] = useState<Transaction[]>([]);
+	const [transactions, setTransactions] = useState<TransactionWithBankAccount[]>([]);
+	const refreshTransactionsRef = useRef<(() => Promise<void>) | null>(null);
 	const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
 	const [isBankAccountsDialogOpen, setIsBankAccountsDialogOpen] = useState(false);
 	const [isCloseCashBoxDialogOpen, setIsCloseCashBoxDialogOpen] = useState(false);
+	const [isDeleteTransactionDialogOpen, setIsDeleteTransactionDialogOpen] = useState(false);
+	const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
 	const [transactionType, setTransactionType] = useState<'income' | 'expense'>('income');
 
 	useEffect(() => {
-		loadOpenCashBox();
-		loadCashBoxes();
-		loadBankAccounts();
-	}, []);
+		const nextOpenCashBox = cashBoxes.find((cashBox) => !cashBox.is_closed) ?? null;
+		setOpenCashBox(nextOpenCashBox);
+	}, [cashBoxes]);
 
-	useEffect(() => {
-		if (openCashBox?.id) {
-			loadCashBoxData(openCashBox.id);
-		} else {
-			setCashBoxSummary(null);
-			setTransactions([]);
-		}
-	}, [openCashBox]);
+	const cashBoxSummary = useMemo<CashBoxSummary | null>(() => {
+		if (!openCashBox) return null;
 
-	const loadOpenCashBox = async () => {
-		setLoadingOpenBox(true);
-		try {
-			const { data } = await getOpenCashBox();
-			setOpenCashBox(data);
-		} catch (error) {
-			translateError(error);
-		} finally {
-			setLoadingOpenBox(false);
-		}
-	};
+		const totalIncome = transactions
+			.filter((transaction) => transaction.type === 'income')
+			.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+		const totalExpense = transactions
+			.filter((transaction) => transaction.type === 'expense')
+			.reduce((sum, transaction) => sum + Number(transaction.amount), 0);
 
-	const loadCashBoxes = async () => {
-		setLoadingCashBoxes(true);
-		try {
-			const { data } = await listCashBoxes();
-			setCashBoxes(data || []);
-		} catch (error) {
-			translateError(error);
-		} finally {
-			setLoadingCashBoxes(false);
-		}
-	};
-
-	const loadBankAccounts = async () => {
-		setLoadingBankAccounts(true);
-		try {
-			const { data } = await listActiveBankAccounts();
-			setBankAccounts(data || []);
-		} catch (error) {
-			translateError(error);
-		} finally {
-			setLoadingBankAccounts(false);
-		}
-	};
-
-	const loadCashBoxData = async (cashBoxId: number) => {
-		try {
-			const [
-				{ data: summary, error: summaryError },
-				{ data: boxWithTransactions, error: txError },
-			] = await Promise.all([getCashBoxSummary(cashBoxId), getCashBoxWithTransactions(cashBoxId)]);
-			if (summaryError) throw summaryError;
-			if (txError) throw txError;
-			setCashBoxSummary(summary);
-			setTransactions(boxWithTransactions?.transactions || []);
-		} catch (error) {
-			translateError(error);
-		}
-	};
+		return {
+			id: openCashBox.id,
+			date: openCashBox.date,
+			opening_balance: Number(openCashBox.opening_balance),
+			total_income: totalIncome,
+			total_expense: totalExpense,
+			current_balance: Number(openCashBox.opening_balance) + totalIncome - totalExpense,
+			closing_balance: openCashBox.closing_balance ? Number(openCashBox.closing_balance) : null,
+			is_closed: openCashBox.is_closed,
+			transaction_count: transactions.length,
+		};
+	}, [openCashBox, transactions]);
 
 	const handleCreateCashBox = async () => {
 		try {
@@ -139,13 +162,11 @@ export function CashFlowManagement() {
 				title: 'Caja creada',
 				description: 'Se ha creado una nueva caja para hoy.',
 			});
-			await loadOpenCashBox();
-			await loadCashBoxes();
+			await refreshCashBoxes();
 		} catch (error) {
-			translateError(error);
 			toast({
 				title: 'Error',
-				description: 'No se pudo crear la caja.',
+				description: translateError(error) || 'No se pudo crear la caja.',
 				variant: 'destructive',
 			});
 		}
@@ -158,27 +179,30 @@ export function CashFlowManagement() {
 
 	const handleTransactionCreated = async () => {
 		setIsTransactionDialogOpen(false);
-		if (openCashBox?.id) {
-			await loadCashBoxData(openCashBox.id);
-		}
+		await refreshTransactionsRef.current?.();
 	};
 
-	const handleDeleteTransaction = async (id: number) => {
+	const handleAskDeleteTransaction = (transaction: Transaction) => {
+		setTransactionToDelete(transaction);
+		setIsDeleteTransactionDialogOpen(true);
+	};
+
+	const handleDeleteTransaction = async () => {
+		if (!transactionToDelete) return;
 		try {
-			const { error } = await deleteTransaction(id);
+			const { error } = await deleteTransaction(transactionToDelete.id);
 			if (error) throw error;
 			toast({
 				title: 'Transacción eliminada',
 				description: 'La transacción ha sido eliminada correctamente.',
 			});
-			if (openCashBox?.id) {
-				await loadCashBoxData(openCashBox.id);
-			}
+			setIsDeleteTransactionDialogOpen(false);
+			setTransactionToDelete(null);
+			await refreshTransactionsRef.current?.();
 		} catch (error) {
-			translateError(error);
 			toast({
 				title: 'Error',
-				description: 'No se pudo eliminar la transacción.',
+				description: translateError(error) || 'No se pudo eliminar la transacción.',
 				variant: 'destructive',
 			});
 		}
@@ -194,13 +218,11 @@ export function CashFlowManagement() {
 				description: 'La caja ha sido cerrada correctamente.',
 			});
 			setIsCloseCashBoxDialogOpen(false);
-			await loadOpenCashBox();
-			await loadCashBoxes();
+			await refreshCashBoxes();
 		} catch (error) {
-			translateError(error);
 			toast({
 				title: 'Error',
-				description: 'No se pudo cerrar la caja.',
+				description: translateError(error) || 'No se pudo cerrar la caja.',
 				variant: 'destructive',
 			});
 		}
@@ -208,7 +230,7 @@ export function CashFlowManagement() {
 
 	const handleBankAccountsUpdated = async () => {
 		setIsBankAccountsDialogOpen(false);
-		await loadBankAccounts();
+		await refreshBankAccounts();
 	};
 
 	return (
@@ -278,13 +300,13 @@ export function CashFlowManagement() {
 							</div>
 
 							{/* Close Cash Box Button */}
-							<div className="flex justify-end">
+							<div className="flex w-full justify-end">
 								<Button
 									onClick={() => setIsCloseCashBoxDialogOpen(true)}
 									variant="destructive"
-									className="gap-2"
+									className="w-full gap-2 md:w-auto"
 								>
-									<RefreshCw className="h-4 w-4" />
+									<RefreshCw className="" />
 									Cerrar y Reiniciar Caja
 								</Button>
 							</div>
@@ -304,7 +326,7 @@ export function CashFlowManagement() {
 											{transactions.map((transaction) => (
 												<div
 													key={transaction.id}
-													className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+													className="flex flex-col gap-3 p-4 rounded-lg bg-secondary/50 sm:flex-row sm:items-center sm:justify-between"
 												>
 													<div className="flex items-center gap-4">
 														<div
@@ -321,20 +343,17 @@ export function CashFlowManagement() {
 															)}
 														</div>
 														<div>
-															<p className="font-medium text-foreground">
-																{transaction.description || translateCategory(transaction.category)}
-															</p>
 															<p className="text-sm text-muted-foreground">
-																{translateCategory(transaction.category)}
+																{transaction.category
+																	? translateCategory(transaction.category)
+																	: ''}
 															</p>
-															{transaction.bank_account_id && (
-																<p className="text-xs text-muted-foreground mt-1">
-																	Transferencia a cuenta
-																</p>
-															)}
+															<p className="font-medium text-foreground">
+																{transaction.description ? transaction.description : ''}
+															</p>
 														</div>
 													</div>
-													<div className="flex items-center gap-4">
+													<div className="flex items-center justify-between w-full sm:w-auto gap-4">
 														<p
 															className={`font-semibold ${
 																transaction.type === 'income' ? 'text-green-500' : 'text-red-500'
@@ -346,10 +365,10 @@ export function CashFlowManagement() {
 														<Button
 															variant="ghost"
 															size="sm"
-															onClick={() => handleDeleteTransaction(transaction.id)}
+															onClick={() => handleAskDeleteTransaction(transaction)}
 															className="text-destructive hover:text-destructive"
 														>
-															Eliminar
+															<Trash2 className="h-4 w-4" />
 														</Button>
 													</div>
 												</div>
@@ -366,7 +385,7 @@ export function CashFlowManagement() {
 					<CashBoxHistory
 						cashBoxes={cashBoxes}
 						loading={loadingCashBoxes}
-						onRefresh={loadCashBoxes}
+						onRefresh={refreshCashBoxes}
 					/>
 				</TabsContent>
 			</Tabs>
@@ -381,6 +400,17 @@ export function CashFlowManagement() {
 				onTransactionCreated={handleTransactionCreated}
 			/>
 
+			{openCashBox?.id && (
+				<CashFlowTransactionsRealtime
+					key={openCashBox.id}
+					cashBoxId={openCashBox.id}
+					onTransactionsChange={setTransactions}
+					onRefreshReady={(refresh) => {
+						refreshTransactionsRef.current = refresh;
+					}}
+				/>
+			)}
+
 			<BankAccountsDialog
 				open={isBankAccountsDialogOpen}
 				onOpenChange={setIsBankAccountsDialogOpen}
@@ -394,6 +424,40 @@ export function CashFlowManagement() {
 				currentBalance={cashBoxSummary?.current_balance || 0}
 				onCloseCashBox={handleCloseCashBox}
 			/>
+
+			<AlertDialog
+				open={isDeleteTransactionDialogOpen}
+				onOpenChange={(open) => {
+					setIsDeleteTransactionDialogOpen(open);
+					if (!open) setTransactionToDelete(null);
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>¿Eliminar transacción?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Esta acción no se puede deshacer. Se eliminará permanentemente la transacción
+							{transactionToDelete && (
+								<>
+									{' '}
+									{transactionToDelete.description ||
+										translateCategory(transactionToDelete.category)}
+								</>
+							)}
+							.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleDeleteTransaction}
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+						>
+							Eliminar
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

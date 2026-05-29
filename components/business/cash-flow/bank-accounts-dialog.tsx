@@ -123,10 +123,9 @@ export function BankAccountsDialog({
 			resetForm();
 			onBankAccountsUpdated();
 		} catch (error) {
-			translateError(error);
 			toast({
 				title: 'Error',
-				description: 'No se pudo guardar la cuenta bancaria.',
+				description: translateError(error) || 'No se pudo guardar la cuenta bancaria.',
 				variant: 'destructive',
 			});
 		} finally {
@@ -152,10 +151,9 @@ export function BankAccountsDialog({
 			});
 			onBankAccountsUpdated();
 		} catch (error) {
-			translateError(error);
 			toast({
 				title: 'Error',
-				description: 'No se pudo eliminar la cuenta bancaria.',
+				description: translateError(error) || 'No se pudo eliminar la cuenta bancaria.',
 				variant: 'destructive',
 			});
 		} finally {
