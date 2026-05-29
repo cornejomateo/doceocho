@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { History, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { History, Eye, ChevronUp } from 'lucide-react';
 import { CashBox, getCashBoxWithTransactions, translateCategory } from '@/lib/cash-flow/cash-flow';
 import { formatCurrency } from '@/utils/formats-money';
 import { formatCreatedAt } from '@/utils/format-date';
 import { translateError } from '@/lib/error-translator';
+import { toast } from '@/components/ui/use-toast';
 
 interface CashBoxHistoryProps {
 	cashBoxes: CashBox[];
@@ -40,7 +41,11 @@ export function CashBoxHistory({ cashBoxes, loading, onRefresh }: CashBoxHistory
 			);
 			setBoxesWithTransactions(boxesWithTrans);
 		} catch (error) {
-			translateError(error);
+			toast({
+				title: 'Error',
+				description: translateError(error) || 'No se pudieron cargar las transacciones.',
+				variant: 'destructive',
+			});
 		}
 	};
 
