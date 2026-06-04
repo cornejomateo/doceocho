@@ -297,7 +297,8 @@ export async function getTransactionById(
 		.from(TRANSACTIONS_TABLE)
 		.select('*, bank_account:bank_accounts(*)')
 		.eq('id', id)
-		.single();
+		.maybeSingle();
+
 	return { data, error };
 }
 
