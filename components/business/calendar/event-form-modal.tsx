@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
 	Dialog,
 	DialogContent,
@@ -29,17 +29,21 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { Bell } from 'lucide-react';
 import { validateDate } from '@/helpers/calendar/validateDate';
+import { EventType, getEventTypeOptions } from '@/lib/calendar/event-types';
 
 interface EventFormModalProps {
 	onSave: (data: any) => void;
 	children: React.ReactNode;
+	eventTypes?: EventType[];
 }
 
-export function EventFormModal({ onSave, children }: EventFormModalProps) {
+export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormModalProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 	const [isMobile, setIsMobile] = useState(false);
 	const { toast } = useToast();
+	const eventTypeOptions = useMemo(() => getEventTypeOptions(eventTypes), [eventTypes]);
+	const defaultEventType = eventTypeOptions[0]?.value || 'otros';
 
 	useEffect(() => {
 		const checkMobile = () => {
@@ -49,9 +53,22 @@ export function EventFormModal({ onSave, children }: EventFormModalProps) {
 		window.addEventListener('resize', checkMobile);
 		return () => window.removeEventListener('resize', checkMobile);
 	}, []);
+
+	useEffect(() => {
+		setFormData((previous) => {
+			if (
+				previous.type === defaultEventType ||
+				eventTypeOptions.some((option) => option.value === previous.type)
+			) {
+				return previous;
+			}
+
+			return { ...previous, type: defaultEventType };
+		});
+	}, [defaultEventType, eventTypeOptions]);
 	const [formData, setFormData] = useState({
 		title: '',
-		type: 'produccionOK',
+		type: defaultEventType,
 		date: undefined as Date | undefined,
 		client: '',
 		location: '',
@@ -95,7 +112,7 @@ export function EventFormModal({ onSave, children }: EventFormModalProps) {
 	const resetForm = () => {
 		setFormData({
 			title: '',
-			type: 'produccionOK',
+			type: defaultEventType,
 			date: undefined,
 			client: '',
 			location: '',
@@ -138,11 +155,11 @@ export function EventFormModal({ onSave, children }: EventFormModalProps) {
 								<SelectValue placeholder="Selecciona un tipo de evento" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="produccionOK">Producción OK</SelectItem>
-								<SelectItem value="colocacion">Colocación</SelectItem>
-								<SelectItem value="medicion">Medición</SelectItem>
-								<SelectItem value="reuniones">Reuniones</SelectItem>
-								<SelectItem value="otros">Otros</SelectItem>
+								{eventTypeOptions.map((eventType) => (
+									<SelectItem key={eventType.value} value={eventType.value}>
+										{eventType.label}
+									</SelectItem>
+								))}
 							</SelectContent>
 						</Select>
 					</div>
