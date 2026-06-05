@@ -1,6 +1,6 @@
 export const CONTACT_METHODS = [
 	{ value: 'CLIENTE', label: 'Cliente' },
-	{ value: 'CONTACTO_REHAU', label: 'Contacto Rehau' },
+	{ value: 'CONTACTO_SCARPATTI', label: 'Contacto Scarpatti' },
 	{ value: 'GMAIL', label: 'Gmail' },
 	{ value: 'INSTAGRAM', label: 'Instagram' },
 	{ value: 'REFERIDO', label: 'Referido' },

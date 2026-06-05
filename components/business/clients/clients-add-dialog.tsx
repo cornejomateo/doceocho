@@ -35,6 +35,7 @@ interface ClientsAddDialogProps {
 		phone_number?: string | null;
 		locality?: string | null;
 		contact_method?: string | null;
+		referred_to?: string | null;
 	};
 	onUpdateClient?: (client: any) => Promise<void>;
 }
@@ -55,6 +56,7 @@ export function ClientsAddDialog({
 		phone_number: clientToEdit?.phone_number || '',
 		locality: clientToEdit?.locality || '',
 		contact_method: clientToEdit?.contact_method || '',
+		referred_to: clientToEdit?.referred_to || '',
 	});
 
 	const resetForm = () => {
@@ -65,6 +67,7 @@ export function ClientsAddDialog({
 			phone_number: '',
 			locality: '',
 			contact_method: '',
+			referred_to: '',
 		});
 	};
 
@@ -92,9 +95,9 @@ export function ClientsAddDialog({
 		setFormData((prev) => ({
 			...prev,
 			contact_method: value,
+			referred_to: value === 'REFERIDO' ? prev.referred_to : '',
 		}));
 	};
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
@@ -106,6 +109,7 @@ export function ClientsAddDialog({
 				phone_number: formData.phone_number || null,
 				locality: formData.locality || null,
 				contact_method: formData.contact_method || null,
+				referred_to: formData.contact_method === 'REFERIDO' ? formData.referred_to || null : null,
 			};
 
 			if (clientToEdit && onUpdateClient) {
@@ -119,6 +123,7 @@ export function ClientsAddDialog({
 					description: `${payload.name} ${payload.last_name} ha sido actualizado correctamente.`,
 				});
 				onOpenChange(false);
+				resetForm();
 			} else {
 				// Create new client
 				console.log('Creating client with payload:', payload);
@@ -152,6 +157,20 @@ export function ClientsAddDialog({
 			setIsLoading(false);
 		}
 	};
+
+	useEffect(() => {
+		if (clientToEdit) {
+			setFormData({
+				name: clientToEdit.name || '',
+				last_name: clientToEdit.last_name || '',
+				email: clientToEdit.email || '',
+				phone_number: clientToEdit.phone_number || '',
+				locality: clientToEdit.locality || '',
+				contact_method: clientToEdit.contact_method || '',
+				referred_to: clientToEdit.referred_to || '',
+			});
+		}
+	}, [clientToEdit]);
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -245,10 +264,31 @@ export function ClientsAddDialog({
 								</SelectContent>
 							</Select>
 						</div>
+						{formData.contact_method === 'REFERIDO' && (
+							<div className="grid gap-2 col-span-2">
+								<Label htmlFor="referred_to" className="text-foreground">
+									Cliente que lo refirió
+								</Label>
+
+								<Input
+									id="referred_to"
+									value={formData.referred_to}
+									onChange={handleInputChange}
+									placeholder="Nombre del cliente que dio la referencia"
+									className="bg-background"
+								/>
+							</div>
+						)}
 					</div>
 
 					<DialogFooter>
-						<Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+						<Button
+							variant="outline"
+							type="button"
+							onClick={() => {
+								onOpenChange(false);
+							}}
+						>
 							Cancelar
 						</Button>
 						<Button type="submit" disabled={isLoading}>

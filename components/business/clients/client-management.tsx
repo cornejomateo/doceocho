@@ -225,6 +225,7 @@ export function ClientManagement() {
 										phone_number: selectedClient.phone_number || '',
 										locality: selectedClient.locality || '',
 										contact_method: selectedClient.contact_method || '',
+										referred_to: selectedClient.referred_to || '',
 									}
 								: undefined
 						}
