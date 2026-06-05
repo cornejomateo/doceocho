@@ -13,6 +13,17 @@ jest.mock('@/hooks/calendar/use-load-events', () => ({
 	}),
 }));
 
+jest.mock('@/hooks/calendar/use-load-event-types', () => ({
+	useLoadEventTypes: () => ({
+		eventTypes: [
+			{ id: 1, name: 'reuniones', color: '#7c3aed' },
+			{ id: 2, name: 'colocacion', color: '#0ea5e9' },
+		],
+		isLoading: false,
+		refresh: jest.fn(),
+	}),
+}));
+
 jest.mock('@/components/ui/use-toast', () => ({ useToast: jest.fn() }));
 jest.mock('@/components/provider/auth-provider', () => ({
 	useAuth: () => ({ user: { role: 'Admin' } }),
@@ -56,6 +67,10 @@ jest.mock('@/components/business/calendar/event-details-modal', () => ({
 	EventDetailsModal: ({ isOpen, event }: any) => (isOpen ? <div>{event?.title}</div> : null),
 }));
 
+jest.mock('@/components/business/calendar/event-types-dialog', () => ({
+	EventTypesDialog: () => <div>Ajustes de eventos</div>,
+}));
+
 describe('CalendarView', () => {
 	const toast = jest.fn();
 
@@ -79,15 +94,29 @@ describe('CalendarView', () => {
 
 		render(<CalendarView />);
 
-		// click the destructive button to open dialog (mock renders dialog content)
-		fireEvent.click(screen.getByText('Eliminar eventos del año pasado'));
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'Eliminar eventos del año pasado',
+			})
+		);
 
-		// click 'Eliminar' button inside dialog footer
-		fireEvent.click(screen.getByText('Eliminar'));
+		const deleteButtons = screen.getAllByRole('button', {
+			name: 'Eliminar',
+		});
+
+		fireEvent.click(deleteButtons[0]);
 
 		await waitFor(() => {
 			expect(deleteLastYearEvents).toHaveBeenCalled();
 			expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Eventos eliminados' }));
 		});
+	});
+
+	test('renders custom event type labels', () => {
+		render(<CalendarView />);
+
+		expect(screen.getByRole('button', { name: 'reuniones' })).toBeInTheDocument();
+
+		expect(screen.getByRole('button', { name: 'colocacion' })).toBeInTheDocument();
 	});
 });

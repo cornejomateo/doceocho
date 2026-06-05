@@ -49,16 +49,26 @@ describe('EventDetailsModal', () => {
 			address: 'Calle 1',
 			description: 'Desc',
 			type: 'reuniones',
+			type_id: 1,
 			is_overdue: false,
 			remember: false,
 		} as any;
 
+		const eventTypes = [
+			{
+				id: 1,
+				name: 'reuniones',
+				color: '#7c3aed',
+			},
+		];
+
 		render(
 			<EventDetailsModal
-				isOpen={true}
+				isOpen
 				onClose={onClose}
 				event={event}
 				onEventUpdated={onEventUpdated}
+				eventTypes={eventTypes}
 			/>
 		);
 
@@ -66,16 +76,72 @@ describe('EventDetailsModal', () => {
 		expect(screen.getByText('05-05-2025')).toBeInTheDocument();
 		expect(screen.getByText('ACME')).toBeInTheDocument();
 
+		// Badge del tipo
+		expect(screen.getAllByText('reuniones').length).toBeGreaterThan(0);
+
 		const buttons = screen.getAllByRole('button');
-		// first is Cerrar, second is remember toggle
+
+		// Botón del recordatorio
 		fireEvent.click(buttons[1]);
 
 		await waitFor(() => {
 			const { updateEvent } = require('@/lib/calendar/events');
-			expect(updateEvent).toHaveBeenCalledWith(33, { remember: true });
+
+			expect(updateEvent).toHaveBeenCalledWith(33, {
+				remember: true,
+			});
+
 			expect(toast).toHaveBeenCalledWith(
-				expect.objectContaining({ title: 'Recordatorio actualizado' })
+				expect.objectContaining({
+					title: 'Recordatorio actualizado',
+				})
 			);
+
+			expect(onEventUpdated).toHaveBeenCalled();
+		});
+	});
+	test('updates event status', async () => {
+		const onEventUpdated = jest.fn();
+
+		const event = {
+			id: 33,
+			title: 'Prueba evento',
+			date: '05-05-2025',
+			type: 'reuniones',
+			type_id: 1,
+			status: 'Pendiente',
+			remember: false,
+		} as any;
+
+		render(
+			<EventDetailsModal
+				isOpen
+				onClose={jest.fn()}
+				event={event}
+				onEventUpdated={onEventUpdated}
+				eventTypes={[
+					{
+						id: 1,
+						name: 'reuniones',
+						color: '#7c3aed',
+					},
+				]}
+			/>
+		);
+
+		fireEvent.change(screen.getByDisplayValue('Pendiente'), {
+			target: {
+				value: 'completed',
+			},
+		});
+
+		await waitFor(() => {
+			const { updateEvent } = require('@/lib/calendar/events');
+
+			expect(updateEvent).toHaveBeenCalledWith(33, {
+				status: 'completed',
+			});
+
 			expect(onEventUpdated).toHaveBeenCalled();
 		});
 	});

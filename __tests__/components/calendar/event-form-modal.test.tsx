@@ -36,15 +36,22 @@ describe('EventFormModal', () => {
 		const onSave = jest.fn();
 
 		render(
-			<EventFormModal onSave={onSave}>
+			<EventFormModal
+				onSave={onSave}
+				eventTypes={[
+					{
+						id: 1,
+						name: 'reuniones',
+						color: '#7c3aed',
+					},
+				]}
+			>
 				<button type="button">Open modal</button>
 			</EventFormModal>
 		);
 
-		// Open modal
 		await user.click(screen.getByRole('button', { name: /open modal/i }));
 
-		// Submit form without date
 		await user.click(screen.getByRole('button', { name: /guardar/i }));
 
 		expect(toast).toHaveBeenCalledWith(
