@@ -26,12 +26,19 @@ describe('clients lib', () => {
 		jest.clearAllMocks();
 	});
 
-	it('creates a client with an injected created_at value', async () => {
+	it('creates a referred client', async () => {
 		const { supabase, chain } = createSupabaseMock();
+
 		chain.single = jest.fn().mockResolvedValue({
-			data: { id: 10, name: 'Juan', last_name: 'Pérez' },
+			data: {
+				id: 10,
+				name: 'Juan',
+				last_name: 'Pérez',
+				referred_to: 'María Gómez',
+			},
 			error: null,
 		});
+
 		(getSupabaseClient as jest.Mock).mockReturnValue(supabase);
 
 		const payload = {
@@ -40,33 +47,50 @@ describe('clients lib', () => {
 			email: 'juan@example.com',
 			phone_number: '123456',
 			locality: 'Rosario',
-			contact_method: 'WhatsApp',
+			contact_method: 'REFERIDO',
+			referred_to: 'María Gómez',
 		};
 
 		const result = await createClient(payload);
 
 		expect(supabase.from).toHaveBeenCalledWith('clients');
+
 		expect(chain.insert).toHaveBeenCalledWith(
 			expect.objectContaining({
 				...payload,
 				created_at: expect.any(String),
 			})
 		);
-		expect(result.data).toEqual({ id: 10, name: 'Juan', last_name: 'Pérez' });
+
+		expect(result.data).toEqual({
+			id: 10,
+			name: 'Juan',
+			last_name: 'Pérez',
+			referred_to: 'María Gómez',
+		});
 	});
 
-	it('updates a client by id', async () => {
+	it('updates a referred client', async () => {
 		const { supabase, chain } = createSupabaseMock();
+
 		chain.single = jest.fn().mockResolvedValue({
-			data: { id: 10, name: 'Juan', last_name: 'García' },
+			data: {
+				id: 10,
+				name: 'Juan',
+				last_name: 'García',
+				referred_to: 'Pedro López',
+			},
 			error: null,
 		});
+
 		(getSupabaseClient as jest.Mock).mockReturnValue(supabase);
 
 		const changes = {
 			name: 'Juan',
 			last_name: 'García',
 			email: 'juan@example.com',
+			contact_method: 'REFERIDO',
+			referred_to: 'Pedro López',
 		};
 
 		const result = await updateClient(10, changes);
@@ -74,6 +98,12 @@ describe('clients lib', () => {
 		expect(supabase.from).toHaveBeenCalledWith('clients');
 		expect(chain.update).toHaveBeenCalledWith(changes);
 		expect(chain.eq).toHaveBeenCalledWith('id', 10);
-		expect(result.data).toEqual({ id: 10, name: 'Juan', last_name: 'García' });
+
+		expect(result.data).toEqual({
+			id: 10,
+			name: 'Juan',
+			last_name: 'García',
+			referred_to: 'Pedro López',
+		});
 	});
 });
