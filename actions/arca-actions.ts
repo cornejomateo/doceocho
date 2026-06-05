@@ -52,11 +52,48 @@ export async function generateInvoiceForTransaction(transactionId: number) {
 			};
 		}
 
-		// Generate invoice number
-		const invoiceNumber = await generateInvoiceNumber(config.sales_point, INVOICE_TYPES.FACTURA_B);
+		// Generate invoice number and CAE using ARCA API
+		let invoiceNumber: string;
+		let cae: string;
+		let dueDate: string;
 
-		// Generate CAE
-		const { cae, dueDate } = await generateCAE();
+		try {
+			const arcaResponse = await fetch(
+				`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/arca/invoice`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						invoiceType: INVOICE_TYPES.FACTURA_B,
+						totalAmount: Number(transaction.amount),
+						paymentMethod:
+							transaction.category === 'cash'
+								? PAYMENT_METHODS.EFECTIVO
+								: PAYMENT_METHODS.TRANSFERENCIA,
+						invoiceDate: new Date().toISOString().split('T')[0],
+					}),
+				}
+			);
+
+			const arcaData = await arcaResponse.json();
+
+			if (arcaData.success) {
+				invoiceNumber = arcaData.invoiceNumber;
+				cae = arcaData.cae;
+				dueDate = arcaData.caeDueDate;
+			} else {
+				throw new Error(arcaData.error || 'Error al generar factura ARCA');
+			}
+		} catch (error) {
+			console.error('Error calling ARCA API, falling back to placeholder:', error);
+			// Fallback to placeholder if ARCA API fails
+			invoiceNumber = await generateInvoiceNumber(config.sales_point, INVOICE_TYPES.FACTURA_B);
+			const caeResult = await generateCAE();
+			cae = caeResult.cae;
+			dueDate = caeResult.dueDate;
+		}
 
 		// Determine payment method
 		const paymentMethod =

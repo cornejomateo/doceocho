@@ -224,9 +224,15 @@ export function ArcaConfigDialog({ open, onOpenChange, onConfigUpdated }: ArcaCo
 							<>
 								<div className="space-y-2">
 									<Label htmlFor="certificate">Certificado Digital *</Label>
+									<p className="text-xs text-muted-foreground">
+										Formato PEM: debe incluir -----BEGIN CERTIFICATE----- y -----END
+										CERTIFICATE-----
+									</p>
 									<Textarea
 										id="certificate"
-										placeholder="Pegue aquí el contenido del certificado .crt o .pem"
+										placeholder="-----BEGIN CERTIFICATE-----
+MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiIMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+..."
 										value={certificate}
 										onChange={(e) => setCertificate(e.target.value)}
 										required
@@ -236,9 +242,15 @@ export function ArcaConfigDialog({ open, onOpenChange, onConfigUpdated }: ArcaCo
 
 								<div className="space-y-2">
 									<Label htmlFor="privateKey">Clave Privada *</Label>
+									<p className="text-xs text-muted-foreground">
+										Formato PEM: debe incluir -----BEGIN PRIVATE KEY----- y -----END PRIVATE
+										KEY-----
+									</p>
 									<Textarea
 										id="privateKey"
-										placeholder="Pegue aquí el contenido de la clave privada .key"
+										placeholder="-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDZ8K5yL5qV9Q2
+..."
 										value={privateKey}
 										onChange={(e) => setPrivateKey(e.target.value)}
 										required
