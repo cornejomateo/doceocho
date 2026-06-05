@@ -72,6 +72,47 @@ export async function updateArcaConfig(
 	return { data, error };
 }
 
+// Update ARCA configuration non-sensitive fields only (for client-side updates)
+export async function updateArcaConfigNonSensitive(
+	id: number,
+	changes: Pick<
+		ArcaConfig,
+		'cuit' | 'sales_point' | 'wsfe_service' | 'company_name' | 'company_address' | 'is_active'
+	>
+): Promise<{ data: ArcaConfig | null; error: any }> {
+	const supabase = getSupabaseClient();
+	const { data, error } = await supabase
+		.from(ARCA_CONFIG_TABLE)
+		.update(changes)
+		.eq('id', id)
+		.select()
+		.single();
+	return { data, error };
+}
+
+// Get ARCA config without sensitive fields (for client-side display)
+export async function getArcaConfigPublic(): Promise<{
+	data: Pick<
+		ArcaConfig,
+		| 'id'
+		| 'cuit'
+		| 'sales_point'
+		| 'wsfe_service'
+		| 'company_name'
+		| 'company_address'
+		| 'is_active'
+	> | null;
+	error: any;
+}> {
+	const supabase = getSupabaseClient();
+	const { data, error } = await supabase
+		.from(ARCA_CONFIG_TABLE)
+		.select('id, cuit, sales_point, wsfe_service, company_name, company_address, is_active')
+		.eq('is_active', true)
+		.maybeSingle();
+	return { data, error };
+}
+
 // Generate invoice number (simplified version - in production this should use ARCA WSFE)
 export async function generateInvoiceNumber(
 	salesPoint: string,
@@ -129,8 +170,7 @@ export async function getInvoiceByTransactionId(
 		.from(INVOICES_TABLE)
 		.select('*')
 		.eq('transaction_id', transactionId)
-		.limit(1)
-		.single();
+		.maybeSingle();
 
 	return { data, error };
 }
@@ -141,6 +181,15 @@ export async function getAllInvoices(): Promise<{ data: Invoice[] | null; error:
 	const { data, error } = await supabase.from(INVOICES_TABLE).select('*');
 
 	return { data, error };
+}
+
+// Get all invoice transaction IDs (for client-side indexing)
+export async function getInvoiceTransactionIds(): Promise<{ data: number[] | null; error: any }> {
+	const supabase = getSupabaseClient();
+	const { data, error } = await supabase.from(INVOICES_TABLE).select('transaction_id');
+
+	const transactionIds = data?.map((inv: { transaction_id: number }) => inv.transaction_id) || null;
+	return { data: transactionIds, error };
 }
 
 // Update invoice
@@ -154,7 +203,7 @@ export async function updateInvoice(
 		.update(changes)
 		.eq('id', id)
 		.select()
-		.single();
+		.maybeSingle();
 	return { data, error };
 }
 

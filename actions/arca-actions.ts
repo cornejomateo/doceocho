@@ -8,6 +8,7 @@ import {
 	generateQRCodeData,
 	INVOICE_TYPES,
 	PAYMENT_METHODS,
+	getInvoiceByTransactionId,
 } from '@/lib/arca/arca-service';
 import { generateInvoicePDF } from '@/lib/arca/pdf-generator';
 import { getTransactionById } from '@/lib/cash-flow/cash-flow';
@@ -133,9 +134,9 @@ export async function downloadInvoicePDF(transactionId: number) {
 			m.getAllInvoices()
 		);
 
-		const invoice = invoices?.find((inv) => inv.transaction_id === transactionId);
+		const { data: invoice, error } = await getInvoiceByTransactionId(transactionId);
 
-		if (!invoice || !invoice.pdf_url) {
+		if (error || !invoice || !invoice.pdf_url) {
 			return {
 				success: false,
 				error: 'No se encontró la factura o el PDF.',

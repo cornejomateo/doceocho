@@ -128,21 +128,19 @@ export function CashFlowManagement() {
 		setOpenCashBox(nextOpenCashBox);
 	}, [cashBoxes]);
 
+	const reloadInvoiceIndex = async () => {
+		try {
+			const { getInvoiceTransactionIds } = await import('@/lib/arca/arca-service');
+			const { data: transactionIds } = await getInvoiceTransactionIds();
+			setTransactionsWithInvoices(new Set(transactionIds ?? []));
+		} catch (error) {
+			console.error('Error loading invoices:', error);
+		}
+	};
+
 	// Load existing invoices to know which transactions have invoices
 	useEffect(() => {
-		const loadInvoices = async () => {
-			try {
-				const { getAllInvoices } = await import('@/lib/arca/arca-service');
-				const { data: invoices } = await getAllInvoices();
-				if (invoices) {
-					const transactionIds = new Set(invoices.map((inv) => inv.transaction_id));
-					setTransactionsWithInvoices(transactionIds);
-				}
-			} catch (error) {
-				console.error('Error loading invoices:', error);
-			}
-		};
-		loadInvoices();
+		void reloadInvoiceIndex();
 	}, []);
 
 	const cashBoxSummary = useMemo<CashBoxSummary | null>(() => {
@@ -204,6 +202,7 @@ export function CashFlowManagement() {
 	const handleTransactionCreated = async () => {
 		setIsTransactionDialogOpen(false);
 		await refreshTransactionsRef.current?.();
+		await reloadInvoiceIndex();
 	};
 
 	const handleAskDeleteTransaction = (transaction: Transaction) => {

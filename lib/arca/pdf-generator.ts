@@ -24,6 +24,12 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
 	const textColor: [number, number, number] = [51, 51, 51];
 	const grayColor: [number, number, number] = [128, 128, 128];
 
+	// Format invoice date
+	const invoiceDate = invoice.created_at ? new Date(invoice.created_at) : new Date();
+	const formattedDate = isNaN(invoiceDate.getTime())
+		? new Date().toLocaleDateString('es-AR')
+		: invoiceDate.toLocaleDateString('es-AR');
+
 	// Header section
 	doc.setFillColor(...primaryColor);
 	doc.rect(0, 0, pageWidth, 40, 'F');
@@ -96,11 +102,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
 	yPosition += 7;
 	doc.setFont('helvetica', 'normal');
 	doc.setFontSize(9);
-	doc.text(
-		`Fecha: ${new Date(invoice.created_at || '').toLocaleDateString('es-AR')}`,
-		margin,
-		yPosition
-	);
+	doc.text(`Fecha: ${formattedDate}`, margin, yPosition);
 	yPosition += 5;
 	doc.text(`CAE: ${invoice.cae}`, margin, yPosition);
 	yPosition += 5;

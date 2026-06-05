@@ -15,7 +15,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { ArcaConfig } from '@/lib/arca/arca-service';
-import { getActiveArcaConfig, createArcaConfig, updateArcaConfig } from '@/lib/arca/arca-service';
+import {
+	getArcaConfigPublic,
+	createArcaConfig,
+	updateArcaConfigNonSensitive,
+} from '@/lib/arca/arca-service';
 
 interface ArcaConfigDialogProps {
 	open: boolean;
@@ -26,7 +30,16 @@ interface ArcaConfigDialogProps {
 export function ArcaConfigDialog({ open, onOpenChange, onConfigUpdated }: ArcaConfigDialogProps) {
 	const { toast } = useToast();
 	const [loading, setLoading] = useState(false);
-	const [existingConfig, setExistingConfig] = useState<ArcaConfig | null>(null);
+	const [existingConfig, setExistingConfig] = useState<Pick<
+		ArcaConfig,
+		| 'id'
+		| 'cuit'
+		| 'sales_point'
+		| 'wsfe_service'
+		| 'company_name'
+		| 'company_address'
+		| 'is_active'
+	> | null>(null);
 
 	const [cuit, setCuit] = useState('');
 	const [salesPoint, setSalesPoint] = useState('');
@@ -39,23 +52,25 @@ export function ArcaConfigDialog({ open, onOpenChange, onConfigUpdated }: ArcaCo
 
 	useEffect(() => {
 		if (open) {
-			loadConfig();
+			void loadConfig();
+		} else {
+			resetForm();
 		}
 	}, [open]);
 
 	const loadConfig = async () => {
 		setLoading(true);
 		try {
-			const { data } = await getActiveArcaConfig();
+			const { data } = await getArcaConfigPublic();
 			if (data) {
 				setExistingConfig(data);
 				setCuit(data.cuit);
 				setSalesPoint(data.sales_point);
-				setCertificate(data.certificate);
-				setPrivateKey(data.private_key);
 				setWsfeService(data.wsfe_service);
 				setCompanyName(data.company_name);
 				setCompanyAddress(data.company_address || '');
+			} else {
+				resetForm();
 			}
 		} catch (error) {
 			console.error('Error loading ARCA config:', error);
@@ -67,7 +82,7 @@ export function ArcaConfigDialog({ open, onOpenChange, onConfigUpdated }: ArcaCo
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		if (!cuit || !salesPoint || !certificate || !privateKey || !wsfeService || !companyName) {
+		if (!cuit || !salesPoint || !wsfeService || !companyName) {
 			toast({
 				title: 'Error',
 				description: 'Por favor complete todos los campos requeridos.',
@@ -76,25 +91,43 @@ export function ArcaConfigDialog({ open, onOpenChange, onConfigUpdated }: ArcaCo
 			return;
 		}
 
+		if (!existingConfig && (!certificate || !privateKey)) {
+			toast({
+				title: 'Error',
+				description:
+					'Por favor complete el certificado y la clave privada para la configuración inicial.',
+				variant: 'destructive',
+			});
+			return;
+		}
+
 		setLoading(true);
 		try {
-			const configData = {
-				cuit,
-				sales_point: salesPoint,
-				certificate,
-				private_key: privateKey,
-				wsfe_service: wsfeService,
-				company_name: companyName,
-				company_address: companyAddress || null,
-				company_logo_url: companyLogoUrl || null,
-				is_active: true,
-			};
-
 			let error;
 			if (existingConfig) {
-				const result = await updateArcaConfig(existingConfig.id, configData);
+				// Update non-sensitive fields only when updating existing config
+				const nonSensitiveData = {
+					cuit,
+					sales_point: salesPoint,
+					wsfe_service: wsfeService,
+					company_name: companyName,
+					company_address: companyAddress || null,
+					is_active: true,
+				};
+				const result = await updateArcaConfigNonSensitive(existingConfig.id, nonSensitiveData);
 				error = result.error;
 			} else {
+				// Create new config with all fields (including sensitive ones)
+				const configData = {
+					cuit,
+					sales_point: salesPoint,
+					certificate,
+					private_key: privateKey,
+					wsfe_service: wsfeService,
+					company_name: companyName,
+					company_address: companyAddress || null,
+					is_active: true,
+				};
 				const result = await createArcaConfig(configData);
 				error = result.error;
 			}
@@ -187,29 +220,42 @@ export function ArcaConfigDialog({ open, onOpenChange, onConfigUpdated }: ArcaCo
 							/>
 						</div>
 
-						<div className="space-y-2">
-							<Label htmlFor="certificate">Certificado Digital *</Label>
-							<Textarea
-								id="certificate"
-								placeholder="Pegue aquí el contenido del certificado .crt o .pem"
-								value={certificate}
-								onChange={(e) => setCertificate(e.target.value)}
-								required
-								className="min-h-[100px] font-mono text-xs"
-							/>
-						</div>
+						{!existingConfig && (
+							<>
+								<div className="space-y-2">
+									<Label htmlFor="certificate">Certificado Digital *</Label>
+									<Textarea
+										id="certificate"
+										placeholder="Pegue aquí el contenido del certificado .crt o .pem"
+										value={certificate}
+										onChange={(e) => setCertificate(e.target.value)}
+										required
+										className="min-h-[100px] font-mono text-xs"
+									/>
+								</div>
 
-						<div className="space-y-2">
-							<Label htmlFor="privateKey">Clave Privada *</Label>
-							<Textarea
-								id="privateKey"
-								placeholder="Pegue aquí el contenido de la clave privada .key"
-								value={privateKey}
-								onChange={(e) => setPrivateKey(e.target.value)}
-								required
-								className="min-h-[100px] font-mono text-xs"
-							/>
-						</div>
+								<div className="space-y-2">
+									<Label htmlFor="privateKey">Clave Privada *</Label>
+									<Textarea
+										id="privateKey"
+										placeholder="Pegue aquí el contenido de la clave privada .key"
+										value={privateKey}
+										onChange={(e) => setPrivateKey(e.target.value)}
+										required
+										className="min-h-[100px] font-mono text-xs"
+									/>
+								</div>
+							</>
+						)}
+
+						{existingConfig && (
+							<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+								<p className="text-sm text-blue-700">
+									Las credenciales (certificado y clave privada) ya están configuradas y no se
+									muestran por seguridad. Para actualizarlas, contacte al administrador del sistema.
+								</p>
+							</div>
+						)}
 
 						<div className="space-y-2">
 							<Label htmlFor="companyAddress">Dirección de la Empresa (opcional)</Label>

@@ -25,6 +25,7 @@ import { translateError } from '@/lib/error-translator';
 import { formatNumber, parseArsToNumber } from '@/utils/formats-money';
 import { createTransaction } from '@/lib/cash-flow/cash-flow';
 import { FileText } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface TransactionDialogProps {
 	open: boolean;
@@ -66,6 +67,7 @@ export function TransactionDialog({
 	const [reference, setReference] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [generateInvoice, setGenerateInvoice] = useState(false);
+	const { toast } = useToast();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -93,7 +95,11 @@ export function TransactionDialog({
 				const { generateInvoiceForTransaction } = await import('@/actions/arca-actions');
 				const invoiceResult = await generateInvoiceForTransaction(transaction.id);
 				if (!invoiceResult.success) {
-					console.error('Error generating invoice:', invoiceResult.error);
+					toast({
+						title: 'Error',
+						description: invoiceResult.error || 'No se pudo generar la factura.',
+						variant: 'destructive',
+					});
 				}
 			}
 
