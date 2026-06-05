@@ -23,6 +23,9 @@ import {
 	RefreshCw,
 	Building2,
 	Trash2,
+	FileText,
+	Download,
+	Settings,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -44,6 +47,7 @@ import { TransactionDialog } from '@/components/business/cash-flow/transaction-d
 import { CashBoxHistory } from '@/components/business/cash-flow/cash-box-history';
 import { BankAccountsDialog } from '@/components/business/cash-flow/bank-accounts-dialog';
 import { CloseCashBoxDialog } from '@/components/business/cash-flow/close-cash-box-dialog';
+import { ArcaConfigDialog } from '@/components/business/cash-flow/arca-config-dialog';
 import { formatCurrency } from '@/utils/formats-money';
 import { translateError } from '@/lib/error-translator';
 
@@ -115,11 +119,29 @@ export function CashFlowManagement() {
 	const [isDeleteTransactionDialogOpen, setIsDeleteTransactionDialogOpen] = useState(false);
 	const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
 	const [transactionType, setTransactionType] = useState<'income' | 'expense'>('income');
+	const [transactionsWithInvoices, setTransactionsWithInvoices] = useState<Set<number>>(new Set());
+	const [generatingInvoice, setGeneratingInvoice] = useState<number | null>(null);
+	const [isArcaConfigDialogOpen, setIsArcaConfigDialogOpen] = useState(false);
 
 	useEffect(() => {
 		const nextOpenCashBox = cashBoxes.find((cashBox) => !cashBox.is_closed) ?? null;
 		setOpenCashBox(nextOpenCashBox);
 	}, [cashBoxes]);
+
+	const reloadInvoiceIndex = async () => {
+		try {
+			const { getInvoiceTransactionIds } = await import('@/lib/arca/arca-service');
+			const { data: transactionIds } = await getInvoiceTransactionIds();
+			setTransactionsWithInvoices(new Set(transactionIds ?? []));
+		} catch (error) {
+			console.error('Error loading invoices:', error);
+		}
+	};
+
+	// Load existing invoices to know which transactions have invoices
+	useEffect(() => {
+		void reloadInvoiceIndex();
+	}, []);
 
 	const cashBoxSummary = useMemo<CashBoxSummary | null>(() => {
 		if (!openCashBox) return null;
@@ -180,6 +202,7 @@ export function CashFlowManagement() {
 	const handleTransactionCreated = async () => {
 		setIsTransactionDialogOpen(false);
 		await refreshTransactionsRef.current?.();
+		await reloadInvoiceIndex();
 	};
 
 	const handleAskDeleteTransaction = (transaction: Transaction) => {
@@ -233,6 +256,66 @@ export function CashFlowManagement() {
 		await refreshBankAccounts();
 	};
 
+	const handleArcaConfigUpdated = async () => {
+		setIsArcaConfigDialogOpen(false);
+	};
+
+	const handleGenerateInvoice = async (transactionId: number) => {
+		setGeneratingInvoice(transactionId);
+		try {
+			const { generateInvoiceForTransaction } = await import('@/actions/arca-actions');
+			const result = await generateInvoiceForTransaction(transactionId);
+			if (result.success) {
+				toast({
+					title: 'Factura generada',
+					description: 'La factura ARCA se ha generado correctamente.',
+				});
+				setTransactionsWithInvoices((prev) => new Set(prev).add(transactionId));
+			} else {
+				toast({
+					title: 'Error',
+					description: result.error || 'No se pudo generar la factura.',
+					variant: 'destructive',
+				});
+			}
+		} catch (error) {
+			toast({
+				title: 'Error',
+				description: 'No se pudo generar la factura.',
+				variant: 'destructive',
+			});
+		} finally {
+			setGeneratingInvoice(null);
+		}
+	};
+
+	const handleDownloadInvoice = async (transactionId: number) => {
+		try {
+			const { downloadInvoicePDF } = await import('@/actions/arca-actions');
+			const result = await downloadInvoicePDF(transactionId);
+			if (result.success && result.pdfData) {
+				const link = document.createElement('a');
+				link.href = result.pdfData;
+				link.download = `factura-${transactionId}.pdf`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+			} else {
+				toast({
+					title: 'Error',
+					description: 'No se pudo descargar la factura.',
+					variant: 'destructive',
+				});
+			}
+		} catch (error) {
+			toast({
+				title: 'Error',
+				description: 'No se pudo descargar la factura.',
+				variant: 'destructive',
+			});
+		}
+	};
+
 	return (
 		<div className="space-y-6">
 			{/* Header */}
@@ -242,6 +325,14 @@ export function CashFlowManagement() {
 					<p className="text-muted-foreground mt-1">Gestión de ingresos, egresos y cajas diarias</p>
 				</div>
 				<div className="flex gap-2">
+					<Button
+						variant="outline"
+						onClick={() => setIsArcaConfigDialogOpen(true)}
+						className="gap-2"
+					>
+						<Settings className="h-4 w-4" />
+						Configurar ARCA
+					</Button>
 					<Button
 						variant="outline"
 						onClick={() => setIsBankAccountsDialogOpen(true)}
@@ -362,14 +453,46 @@ export function CashFlowManagement() {
 															{transaction.type === 'income' ? '+' : '-'}
 															{formatCurrency(Number(transaction.amount))}
 														</p>
-														<Button
-															variant="ghost"
-															size="sm"
-															onClick={() => handleAskDeleteTransaction(transaction)}
-															className="text-destructive hover:text-destructive"
-														>
-															<Trash2 className="h-4 w-4" />
-														</Button>
+														<div className="flex items-center gap-2">
+															{transaction.type === 'income' && (
+																<>
+																	{transactionsWithInvoices.has(transaction.id) ? (
+																		<Button
+																			variant="ghost"
+																			size="sm"
+																			onClick={() => handleDownloadInvoice(transaction.id)}
+																			className="text-blue-500 hover:text-blue-600"
+																			title="Descargar factura"
+																		>
+																			<Download className="h-4 w-4" />
+																		</Button>
+																	) : (
+																		<Button
+																			variant="ghost"
+																			size="sm"
+																			onClick={() => handleGenerateInvoice(transaction.id)}
+																			disabled={generatingInvoice === transaction.id}
+																			className="text-blue-500 hover:text-blue-600"
+																			title="Generar factura"
+																		>
+																			{generatingInvoice === transaction.id ? (
+																				<RefreshCw className="h-4 w-4 animate-spin" />
+																			) : (
+																				<FileText className="h-4 w-4" />
+																			)}
+																		</Button>
+																	)}
+																</>
+															)}
+															<Button
+																variant="ghost"
+																size="sm"
+																onClick={() => handleAskDeleteTransaction(transaction)}
+																className="text-destructive hover:text-destructive"
+															>
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
 													</div>
 												</div>
 											))}
@@ -416,6 +539,12 @@ export function CashFlowManagement() {
 				onOpenChange={setIsBankAccountsDialogOpen}
 				bankAccounts={bankAccounts}
 				onBankAccountsUpdated={handleBankAccountsUpdated}
+			/>
+
+			<ArcaConfigDialog
+				open={isArcaConfigDialogOpen}
+				onOpenChange={setIsArcaConfigDialogOpen}
+				onConfigUpdated={handleArcaConfigUpdated}
 			/>
 
 			<CloseCashBoxDialog

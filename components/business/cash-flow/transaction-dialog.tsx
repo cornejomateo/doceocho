@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
 	Select,
 	SelectContent,
@@ -23,6 +24,8 @@ import { BankAccount } from '@/lib/cash-flow/cash-flow';
 import { translateError } from '@/lib/error-translator';
 import { formatNumber, parseArsToNumber } from '@/utils/formats-money';
 import { createTransaction } from '@/lib/cash-flow/cash-flow';
+import { FileText } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface TransactionDialogProps {
 	open: boolean;
@@ -63,6 +66,8 @@ export function TransactionDialog({
 	const [bankAccountId, setBankAccountId] = useState<string>('');
 	const [reference, setReference] = useState('');
 	const [loading, setLoading] = useState(false);
+	const [generateInvoice, setGenerateInvoice] = useState(false);
+	const { toast } = useToast();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -82,8 +87,21 @@ export function TransactionDialog({
 				reference: reference || null,
 			};
 
-			const { error } = await createTransaction(transactionData);
+			const { data: transaction, error } = await createTransaction(transactionData);
 			if (error) throw error;
+
+			// Generate invoice if requested and it's an income
+			if (generateInvoice && type === 'income' && transaction) {
+				const { generateInvoiceForTransaction } = await import('@/actions/arca-actions');
+				const invoiceResult = await generateInvoiceForTransaction(transaction.id);
+				if (!invoiceResult.success) {
+					toast({
+						title: 'Error',
+						description: invoiceResult.error || 'No se pudo generar la factura.',
+						variant: 'destructive',
+					});
+				}
+			}
 
 			onTransactionCreated();
 			resetForm();
@@ -100,6 +118,7 @@ export function TransactionDialog({
 		setDescription('');
 		setBankAccountId('');
 		setReference('');
+		setGenerateInvoice(false);
 	};
 
 	const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
@@ -184,6 +203,23 @@ export function TransactionDialog({
 									value={reference}
 									onChange={(e) => setReference(e.target.value)}
 								/>
+							</div>
+						)}
+
+						{type === 'income' && (
+							<div className="flex items-center space-x-2 pt-2">
+								<Checkbox
+									id="generateInvoice"
+									checked={generateInvoice}
+									onCheckedChange={(checked) => setGenerateInvoice(checked as boolean)}
+								/>
+								<Label
+									htmlFor="generateInvoice"
+									className="flex items-center gap-2 cursor-pointer text-sm font-normal"
+								>
+									<FileText className="h-4 w-4" />
+									Generar factura ARCA
+								</Label>
 							</div>
 						)}
 					</div>
