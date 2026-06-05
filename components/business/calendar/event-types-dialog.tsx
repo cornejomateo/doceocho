@@ -42,7 +42,7 @@ export function EventTypesDialog({
 }: EventTypesDialogProps) {
 	const [name, setName] = useState('');
 	const [color, setColor] = useState('#3b82f6');
-
+	const [isSaving, setIsSaving] = useState(false);
 	const [editingId, setEditingId] = useState<number | null>(null);
 
 	const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -61,6 +61,7 @@ export function EventTypesDialog({
 	};
 
 	const handleSave = async () => {
+		if (isSaving) return;
 		if (!name.trim()) {
 			toast({
 				title: 'Campo requerido',
@@ -71,6 +72,7 @@ export function EventTypesDialog({
 		}
 
 		try {
+			setIsSaving(true);
 			if (editingId) {
 				const { error } = await updateEventType(editingId, {
 					name,
@@ -107,6 +109,8 @@ export function EventTypesDialog({
 				description: translateError(error) || 'No se pudo guardar el tipo de evento.',
 				variant: 'destructive',
 			});
+		} finally {
+			setIsSaving(false);
 		}
 	};
 	const handleEdit = (eventType: EventType) => {
@@ -188,7 +192,7 @@ export function EventTypesDialog({
 						</div>
 
 						<div className="flex gap-2">
-							<Button onClick={handleSave} className="flex-1">
+							<Button onClick={handleSave} className="flex-1" disabled={isSaving}>
 								<Plus className="h-4 w-4 mr-2" />
 
 								{editingId ? 'Actualizar tipo de evento' : 'Agregar tipo de evento'}
@@ -204,7 +208,9 @@ export function EventTypesDialog({
 
 					<div className="space-y-3 max-h-[450px] overflow-y-auto">
 						{eventTypes.length === 0 ? (
-							<p className="text-sm text-muted-foreground">No hay tipos de eventos creados.</p>
+							<p className="text-sm text-center text-muted-foreground">
+								No hay tipos de eventos creados.
+							</p>
 						) : (
 							eventTypes.map((type) => (
 								<div

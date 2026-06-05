@@ -11,10 +11,10 @@ export function useLoadEvents() {
 	} = useRealtimeEvents<Event>(
 		'events',
 		async () => {
-			const [{ data: events }, { data: eventTypes }] = await Promise.all([
-				listEvents(),
-				listEventTypes(),
-			]);
+			const [{ data: events, error: eventsError }, { data: eventTypes, error: eventTypesError }] =
+				await Promise.all([listEvents(), listEventTypes()]);
+			if (eventsError) throw eventsError;
+			if (eventTypesError) throw eventTypesError;
 
 			// Get event types in a map for easy lookup
 			const eventTypeById = new Map(

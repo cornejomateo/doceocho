@@ -100,11 +100,11 @@ describe('CalendarView', () => {
 			})
 		);
 
-		const deleteButtons = screen.getAllByRole('button', {
-			name: 'Eliminar',
-		});
-
-		fireEvent.click(deleteButtons[0]);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: /^Eliminar$/i,
+			})
+		);
 
 		await waitFor(() => {
 			expect(deleteLastYearEvents).toHaveBeenCalled();

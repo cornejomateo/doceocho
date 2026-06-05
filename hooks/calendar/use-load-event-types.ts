@@ -10,7 +10,8 @@ export function useLoadEventTypes() {
 	} = useOptimizedRealtime<EventType>(
 		'events_types',
 		async () => {
-			const { data } = await listEventTypes();
+			const { data, error } = await listEventTypes();
+			if (error) throw error;
 			return data ?? [];
 		},
 		'event_types_cache'

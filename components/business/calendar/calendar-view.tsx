@@ -590,7 +590,7 @@ export function CalendarView() {
 					event={{
 						...selectedEvent,
 						title: selectedEvent?.title ?? 'Sin título',
-						type: selectedEvent?.type ?? 'otros',
+						type: selectedEvent?.type,
 						date: selectedEvent?.date ?? '',
 						client: selectedEvent?.client ?? '',
 						location: selectedEvent?.location ?? '',

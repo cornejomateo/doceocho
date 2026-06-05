@@ -43,7 +43,7 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 	const [isMobile, setIsMobile] = useState(false);
 	const { toast } = useToast();
 	const eventTypeOptions = useMemo(() => getEventTypeOptions(eventTypes), [eventTypes]);
-	const defaultEventType = eventTypeOptions[0]?.value || 'otros';
+	const defaultEventType = eventTypeOptions[0]?.value;
 
 	useEffect(() => {
 		const checkMobile = () => {
@@ -147,21 +147,28 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 
 					<div className="grid gap-2">
 						<Label htmlFor="type">Tipo de evento</Label>
-						<Select
-							value={formData.type}
-							onValueChange={(value) => setFormData((prev) => ({ ...prev, type: value }))}
-						>
-							<SelectTrigger className="w-full">
-								<SelectValue placeholder="Selecciona un tipo de evento" />
-							</SelectTrigger>
-							<SelectContent>
-								{eventTypeOptions.map((eventType) => (
-									<SelectItem key={eventType.value} value={eventType.value}>
-										{eventType.label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+						{eventTypeOptions.length === 0 ? (
+							<p className="text-sm text-muted-foreground">
+								No hay tipos de eventos disponibles. Agrega tipos de eventos para seleccionarlos
+								aquí.
+							</p>
+						) : (
+							<Select
+								value={formData.type}
+								onValueChange={(value) => setFormData((prev) => ({ ...prev, type: value }))}
+							>
+								<SelectTrigger className="w-full">
+									<SelectValue placeholder="Selecciona un tipo de evento" />
+								</SelectTrigger>
+								<SelectContent>
+									{eventTypeOptions.map((eventType) => (
+										<SelectItem key={eventType.value} value={eventType.value}>
+											{eventType.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						)}
 					</div>
 
 					<div className="grid gap-2">
