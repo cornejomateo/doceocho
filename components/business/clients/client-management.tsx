@@ -49,7 +49,7 @@ import { paginateAndFilter } from '@/utils/pagination';
 export function ClientManagement() {
 	const { toast } = useToast();
 	const { user } = useAuth();
-	const colocador = user?.role === 'Colocador';
+	const notIsAuthorized = user?.role === 'Armador' || user?.role === 'Jefe taller';
 
 	const {
 		data: clients,
@@ -200,7 +200,7 @@ export function ClientManagement() {
 					<h2 className="text-2xl font-bold text-foreground text-balance">Gestión de Clientes</h2>
 					<p className="text-muted-foreground mt-1">Administración de clientes y contactos</p>
 				</div>
-				{!colocador && (
+				{!notIsAuthorized && (
 					<Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
 						<Plus className="h-4 w-4" />
 						Nuevo cliente
@@ -296,7 +296,7 @@ export function ClientManagement() {
 												</h3>
 											</div>
 										</div>
-										{!colocador && (
+										{!notIsAuthorized && (
 											<button
 												onClick={() => handleDeleteClick(client)}
 												className="text-muted-foreground hover:text-destructive transition-colors p-0.1 -mt-13 -mr-3"
@@ -307,7 +307,7 @@ export function ClientManagement() {
 										)}
 									</div>
 
-									{!colocador && (
+									{!notIsAuthorized && (
 										<div className="space-y-2 text-sm pt-2">
 											<div className="flex items-center gap-2 text-muted-foreground">
 												<Mail className="h-4 w-4" />
@@ -325,7 +325,7 @@ export function ClientManagement() {
 									)}
 
 									{/* Budget information */}
-									{!colocador && (
+									{!notIsAuthorized && (
 										<div className="border-t pt-3 mt-3">
 											<div className="flex items-center justify-between text-xs">
 												<div className="flex items-center gap-1">
@@ -358,7 +358,7 @@ export function ClientManagement() {
 											<Eye className="h-4 w-4" />
 											Ver
 										</Button>
-										{!colocador && (
+										{!notIsAuthorized && (
 											<Button
 												variant="outline"
 												size="sm"

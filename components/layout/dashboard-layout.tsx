@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/provider/auth-provider';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { cn } from '@/lib/utils';
+import type { UserRole } from '@/constants/users/user-role';
 
 const navigation = [
 	{ name: 'Panel', href: '/', icon: LayoutDashboard, disabled: false },
@@ -50,18 +51,24 @@ const navigation = [
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
-	const pathname = usePathname();
+	const pathname = usePathname() || '/';
 	const router = useRouter();
 	const { user, loading, signOutUser } = useAuth();
 
 	const allowedByRole = useMemo(() => {
 		return {
 			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos'],
-			Fabrica: ['Insumos'],
-			Ventas: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos'],
-			Marketing: ['Panel', 'Calendario', 'Clientes'],
-			Colocador: ['Clientes'],
-		} as Record<string, string[]>;
+			'Jefe taller': ['Insumos', 'Clientes', 'Calendario'],
+			Armador: ['Calendario', 'Clientes', 'Insumos'],
+		} as Record<UserRole, string[]>;
+	}, []);
+
+	const homeRouteByRole = useMemo(() => {
+		return {
+			Admin: '/',
+			'Jefe taller': '/supplies',
+			Armador: '/supplies',
+		} as Record<UserRole, string>;
 	}, []);
 
 	const filteredNavigation = useMemo(() => {
@@ -77,35 +84,34 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 		return Boolean(mainItem && allowedNames.includes(mainItem.name));
 	};
 
+	const getHomeRoute = useMemo(() => {
+		if (!user?.role) return '/login';
+		return homeRouteByRole[user.role] || '/';
+	}, [user?.role, homeRouteByRole]);
+
 	useEffect(() => {
-		if (!loading && typeof window !== 'undefined') {
-			if (!user) {
-				router.push('/login');
-				return;
-			}
+		if (loading) return;
 
-			if (pathname === '/' && user.role === 'Fabrica') {
-				router.replace('/supplies');
-				return;
-			}
-
-			if (pathname === '/' && user.role === 'Colocador') {
-				router.replace('/works');
-			}
+		// 1. Redirect to login if not authenticated
+		if (!user) {
+			if (pathname !== '/login') router.replace('/login');
+			return;
 		}
-	}, [loading, user, pathname, router]);
 
-	useEffect(() => {
-		if (loading || !user?.role) return;
+		// 2. If user is at root '/', redirect to their specific home route
+		// This prevents Armador/Jefe Taller from seeing a blank 'Panel'
+		if (pathname === '/') {
+			if (getHomeRoute !== '/') {
+				router.replace(getHomeRoute);
+			}
+			return;
+		}
 
+		// 3. Prevent unauthorized access to restricted routes
 		if (!isRouteAllowed(pathname)) {
-			const allowedNames = allowedByRole[user.role] ?? [];
-			const firstAllowed = navigation.find((item) => allowedNames.includes(item.name));
-			if (firstAllowed) {
-				router.replace(firstAllowed.href);
-			}
+			router.replace(getHomeRoute);
 		}
-	}, [loading, user?.role, pathname, router, allowedByRole]);
+	}, [loading, user, pathname, router, getHomeRoute, isRouteAllowed]);
 
 	if (loading || !user) {
 		return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
