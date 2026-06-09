@@ -59,7 +59,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 		return {
 			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos'],
 			'Jefe taller': ['Insumos', 'Clientes', 'Calendario'],
-			Armador: ['Calendario', 'Clientes'],
+			Armador: ['Calendario', 'Clientes', 'Insumos'],
 		} as Record<UserRole, string[]>;
 	}, []);
 
@@ -67,7 +67,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 		return {
 			Admin: '/',
 			'Jefe taller': '/supplies',
-			Armador: '/calendar',
+			Armador: '/supplies',
 		} as Record<UserRole, string>;
 	}, []);
 

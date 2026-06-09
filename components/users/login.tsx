@@ -21,7 +21,7 @@ export default function LoginPage() {
 		const map: Record<UserRole, string> = {
 			Admin: '/',
 			'Jefe taller': '/supplies',
-			Armador: '/calendar',
+			Armador: '/supplies',
 		};
 		return map[role];
 	};
