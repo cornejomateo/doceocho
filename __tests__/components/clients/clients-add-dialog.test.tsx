@@ -94,6 +94,7 @@ describe('ClientsAddDialog', () => {
 				phone_number: '123456',
 				locality: 'Rosario',
 				contact_method: null,
+				referred_to: null,
 			});
 		});
 
@@ -148,6 +149,56 @@ describe('ClientsAddDialog', () => {
 		expect(createClient).not.toHaveBeenCalled();
 		expect(createClientFolder).not.toHaveBeenCalled();
 		expect(onOpenChange).toHaveBeenCalledWith(false);
+		expect(toast).toHaveBeenCalledWith(
+			expect.objectContaining({
+				title: 'Cliente actualizado',
+			})
+		);
+	});
+	it('updates referred client information', async () => {
+		const onUpdateClient = jest.fn().mockResolvedValue(undefined);
+		const onOpenChange = jest.fn();
+
+		render(
+			<ClientsAddDialog
+				open
+				onOpenChange={onOpenChange}
+				clientToEdit={{
+					id: 55,
+					name: 'Ana',
+					last_name: 'Lopez',
+					email: 'ana@example.com',
+					phone_number: '999',
+					locality: 'Córdoba',
+					contact_method: 'REFERIDO',
+					referred_to: 'Pedro García',
+				}}
+				onUpdateClient={onUpdateClient}
+			/>
+		);
+
+		expect(screen.getByDisplayValue('Pedro García')).toBeInTheDocument();
+
+		fireEvent.change(screen.getByPlaceholderText('Nombre del cliente que dio la referencia'), {
+			target: { value: 'Juan Pérez' },
+		});
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'Actualizar cliente',
+			})
+		);
+
+		await waitFor(() => {
+			expect(onUpdateClient).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 55,
+					contact_method: 'REFERIDO',
+					referred_to: 'Juan Pérez',
+				})
+			);
+		});
+
 		expect(toast).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: 'Cliente actualizado',

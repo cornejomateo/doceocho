@@ -141,6 +141,7 @@ create table public.clients (
   email character varying null,
   cover text null,
   contact_method text null,
+  referred_to text null,
   constraint clients_pkey primary key (id)
 ) TABLESPACE pg_default;
 
