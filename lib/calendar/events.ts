@@ -13,6 +13,7 @@ export type Event = {
 	status?: string | null;
 	is_overdue?: boolean;
 	remember?: boolean;
+	type_id: number | null;
 };
 
 const TABLE = 'events';
@@ -55,7 +56,7 @@ export async function createEvent(
 	try {
 		const payload: any = {
 			title: event.title,
-			type: event.type,
+			type_id: event.type_id,
 			description: event.description,
 			client: event.client,
 			location: event.location,

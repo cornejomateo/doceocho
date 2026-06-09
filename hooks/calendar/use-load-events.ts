@@ -1,4 +1,5 @@
 import { listEvents, Event } from '@/lib/calendar/events';
+import { listEventTypes } from '@/lib/calendar/event-types';
 import { useRealtimeEvents } from '@/hooks/calendar/use-realtime-events';
 
 export function useLoadEvents() {
@@ -10,32 +11,44 @@ export function useLoadEvents() {
 	} = useRealtimeEvents<Event>(
 		'events',
 		async () => {
-			const { data } = await listEvents();
-			return data ?? [];
+			const [{ data: events, error: eventsError }, { data: eventTypes, error: eventTypesError }] =
+				await Promise.all([listEvents(), listEventTypes()]);
+			if (eventsError) throw eventsError;
+			if (eventTypesError) throw eventTypesError;
+
+			// Get event types in a map for easy lookup
+			const eventTypeById = new Map(
+				(eventTypes ?? []).map((eventType) => [eventType.id, eventType])
+			);
+
+			return (events ?? []).map((event) => {
+				const eventType = event.type_id ? eventTypeById.get(event.type_id) : null;
+
+				const [year, month, day] = (event.date || '').split('-');
+				const formattedDate = event.date
+					? `${day}-${month}-${year}`
+					: new Date().toISOString().split('T')[0];
+
+				return {
+					id: event.id,
+					date: formattedDate,
+					title: event.title || 'Sin título',
+					description: event.description || '',
+					client: event.client || 'Sin cliente',
+					location: event.location || 'Sin ubicación',
+					address: event.address || 'Sin dirección',
+					status: event.status,
+					is_overdue: event.is_overdue || false,
+					remember: event.remember || false,
+					type_id: event.type_id,
+					type: eventType?.name || 'otros',
+				};
+			});
 		},
 		'events_cache'
 	);
 
-	const events = rawEvents.map((event) => {
-		const [year, month, day] = (event.date || '').split('-');
-		const formattedDate = event.date
-			? `${day}-${month}-${year}`
-			: new Date().toISOString().split('T')[0];
-
-		return {
-			id: event.id,
-			date: formattedDate,
-			type: (event.type as 'produccionOK' | 'colocacion' | 'medicion') || 'otros',
-			title: event.title || 'Sin título',
-			description: event.description || '',
-			client: event.client || 'Sin cliente',
-			location: event.location || 'Sin ubicación',
-			address: event.address || 'Sin dirección',
-			status: event.status,
-			is_overdue: event.is_overdue || false,
-			remember: event.remember || false,
-		};
-	});
+	const events = rawEvents;
 
 	return { events, isLoading, refresh };
 }

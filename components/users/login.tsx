@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/components/provider/auth-provider';
+import type { UserRole } from '@/constants/users/user-role';
 import { Lock, User } from 'lucide-react';
 import Image from 'next/image';
 
@@ -15,6 +16,15 @@ export default function LoginPage() {
 	const [contraseña, setContraseña] = useState('');
 	const [error, setError] = useState<string | null>(null);
 	const [isRedirecting, setIsRedirecting] = useState(false);
+
+	const getHomeByRole = (role: UserRole) => {
+		const map: Record<UserRole, string> = {
+			Admin: '/',
+			'Jefe taller': '/supplies',
+			Armador: '/supplies',
+		};
+		return map[role];
+	};
 
 	// Redirect to dashboard after auth state resolved
 	React.useEffect(() => {
@@ -32,9 +42,16 @@ export default function LoginPage() {
 				setError('Por favor, complete todos los campos.');
 				return;
 			}
-			await signIn(usuario, contraseña);
-			setIsRedirecting(true);
-			router.push('/');
+
+			// Wait for sign in to complete
+			const userData = await signIn(usuario, contraseña);
+
+			// Redirect based on the role received from auth
+			if (userData?.role) {
+				router.replace(getHomeByRole(userData.role));
+			} else {
+				router.replace('/');
+			}
 		} catch (err: any) {
 			setError(err?.message || 'Error al iniciar sesión');
 		}

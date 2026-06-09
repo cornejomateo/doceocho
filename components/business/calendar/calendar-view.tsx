@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EventFormModal } from '@/components/business/calendar/event-form-modal';
 import { EventDetailsModal } from '@/components/business/calendar/event-details-modal';
 import { CalendarDay } from '@/components/business/calendar/calendar-days';
+import { EventTypesDialog } from '@/components/business/calendar/event-types-dialog';
 import { createEvent, deleteEvent } from '@/lib/calendar/events';
+import { getEventTypeOptions, resolveEventType } from '@/lib/calendar/event-types';
 import {
 	Calendar as CalendarIcon,
 	ChevronLeft,
@@ -16,7 +18,6 @@ import {
 	Trash2,
 } from 'lucide-react';
 import { monthNames, dayNames } from '@/constants/date';
-import { typeConfig } from '@/constants/type-config';
 import { Event } from '@/lib/calendar/events';
 import { useLoadEvents } from '@/hooks/calendar/use-load-events';
 import { useToast } from '@/components/ui/use-toast';
@@ -31,20 +32,39 @@ import {
 } from '@/components/ui/dialog';
 import { useAuth } from '@/components/provider/auth-provider';
 import { translateError } from '@/lib/error-translator';
+import { useLoadEventTypes } from '@/hooks/calendar/use-load-event-types';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function CalendarView() {
 	const { toast } = useToast();
 	const { events, isLoading, refresh } = useLoadEvents();
+	const { eventTypes } = useLoadEventTypes();
+	const eventTypeOptions = getEventTypeOptions(eventTypes);
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 	const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
-	const [activeFilter, setActiveFilter] = useState<
-		'todos' | 'colocacion' | 'produccionOK' | 'medicion' | 'reuniones'
-	>('todos');
+	const [activeFilter, setActiveFilter] = useState<string>('todos');
 	const [searchTerm, setSearchTerm] = useState('');
 	const maxVisibleEvents = 5; // Show only 5 events by default
 	const [showAllEvents, setShowAllEvents] = useState(false);
+
+	const [openEventTypesDialog, setOpenEventTypesDialog] = useState(false);
+	const [deleteEventId, setDeleteEventId] = useState<number | null>(null);
+	const [isDeletingEvent, setIsDeletingEvent] = useState(false);
+
+	useEffect(() => {
+		console.log('eventTypes actualizados', eventTypes);
+	}, [eventTypes]);
 
 	const { user } = useAuth();
 
@@ -81,29 +101,44 @@ export function CalendarView() {
 		return eventsByType;
 	};
 
-	const handleDeleteEvent = async (eventId: number, e: React.MouseEvent) => {
+	const handleDeleteEvent = (eventId: number, e: React.MouseEvent) => {
 		e.stopPropagation();
-		if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
-			const { error } = await deleteEvent(eventId);
-			if (!error) {
-				toast({
-					title: 'Evento eliminado',
-					description: 'El evento ha sido eliminado correctamente.',
-				});
-				await refresh();
-				if (selectedEvent?.id === eventId) {
-					setIsDetailsModalOpen(false);
-					setSelectedEvent(null);
-				}
-			} else {
-				const errorMesagge = translateError(error);
-				toast({
-					title: 'Error',
-					description: errorMesagge || 'No se pudo eliminar el evento.',
-					variant: 'destructive',
-				});
-				console.error('Error al eliminar el evento:', error);
+		setDeleteEventId(eventId);
+	};
+
+	const confirmDeleteEvent = async () => {
+		if (!deleteEventId) return;
+
+		try {
+			setIsDeletingEvent(true);
+
+			const { error } = await deleteEvent(deleteEventId);
+
+			if (error) throw error;
+
+			toast({
+				title: 'Evento eliminado',
+				description: 'El evento ha sido eliminado correctamente.',
+			});
+
+			await refresh();
+
+			if (selectedEvent?.id === deleteEventId) {
+				setIsDetailsModalOpen(false);
+				setSelectedEvent(null);
 			}
+
+			setDeleteEventId(null);
+		} catch (error) {
+			const errorMessage = translateError(error);
+
+			toast({
+				title: 'Error',
+				description: errorMessage || 'No se pudo eliminar el evento.',
+				variant: 'destructive',
+			});
+		} finally {
+			setIsDeletingEvent(false);
 		}
 	};
 
@@ -173,66 +208,81 @@ export function CalendarView() {
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
 					<h2 className="text-2xl font-bold text-foreground text-balance">Calendario</h2>
-					<p className="text-muted-foreground mt-1">Colocaciones, mediciones y más.</p>
+					<p className="text-muted-foreground mt-1">Eventos y tipos configurables.</p>
 				</div>
 
-				<EventFormModal
-					onSave={async (eventData) => {
-						try {
-							const dateStr =
-								typeof eventData.date === 'string'
-									? eventData.date
-									: eventData.date instanceof Date
-										? `${eventData.date.getDate()}-${eventData.date.getMonth() + 1}-${eventData.date.getFullYear()}`
-										: '';
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+					<Button variant="outline" size="sm" onClick={() => setOpenEventTypesDialog(true)}>
+						Ajustes de eventos
+					</Button>
+					<EventTypesDialog
+						open={openEventTypesDialog}
+						onOpenChange={setOpenEventTypesDialog}
+						eventTypes={eventTypes}
+						refresh={refresh}
+					/>
+					<EventFormModal
+						eventTypes={eventTypes}
+						onSave={async (eventData) => {
+							try {
+								const selectedEventType = eventTypes.find(
+									(eventType) => eventType.name === eventData.type
+								);
+								const dateStr =
+									typeof eventData.date === 'string'
+										? eventData.date
+										: eventData.date instanceof Date
+											? `${eventData.date.getDate()}-${eventData.date.getMonth() + 1}-${eventData.date.getFullYear()}`
+											: '';
 
-							const [day, month, year] = dateStr.split('-').map(Number);
-							const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+								const [day, month, year] = dateStr.split('-').map(Number);
+								const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 
-							const { data: newEvent, error } = await createEvent({
-								title: eventData.title || 'Sin título',
-								type: eventData.type,
-								description: eventData.description,
-								client: eventData.client,
-								location: eventData.location,
-								address: eventData.address,
-								date: formattedDate,
-								remember: eventData.remember,
-							});
+								const { data: newEvent, error } = await createEvent({
+									title: eventData.title || 'Sin título',
+									type_id: selectedEventType?.id ?? null,
+									description: eventData.description,
+									client: eventData.client,
+									location: eventData.location,
+									address: eventData.address,
+									date: formattedDate,
+									remember: eventData.remember,
+								});
 
-							if (error) {
-								console.error('Error al crear el evento:', error);
+								if (error) {
+									console.error('Error al crear el evento:', error);
+									toast({
+										title: 'Error',
+										description: translateError(error) || 'No se pudo crear el evento.',
+										variant: 'destructive',
+									});
+									return false;
+								}
+
+								if (newEvent) {
+									await refresh();
+									setShowAllEvents(false);
+									return true;
+								}
+
+								return false;
+							} catch (error) {
+								console.error('Error inesperado al crear el evento:', error);
 								toast({
 									title: 'Error',
-									description: 'No se pudo crear el evento.',
+									description: translateError(error) || 'No se pudo crear el evento.',
 									variant: 'destructive',
 								});
 								return false;
 							}
-
-							if (newEvent) {
-								await refresh();
-								setShowAllEvents(false);
-								return true;
-							}
-
-							return false;
-						} catch (error) {
-							console.error('Error inesperado al crear el evento:', error);
-							toast({
-								title: 'Error',
-								description: 'No se pudo crear el evento.',
-								variant: 'destructive',
-							});
-							return false;
-						}
-					}}
-				>
-					<Button className="gap-2">
-						<CalendarIcon className="h-4 w-4" />
-						Nuevo evento
-					</Button>
-				</EventFormModal>
+						}}
+					>
+						<Button className="gap-2">
+							<CalendarIcon className="h-4 w-4" />
+							Agregar evento
+						</Button>
+					</EventFormModal>
+				</div>
 			</div>
 
 			<div className="grid gap-6 lg:grid-cols-3">
@@ -247,34 +297,16 @@ export function CalendarView() {
 							>
 								Todos
 							</Button>
-							<Button
-								variant={activeFilter === 'colocacion' ? 'default' : 'outline'}
-								size="sm"
-								onClick={() => setActiveFilter('colocacion')}
-							>
-								Colocación
-							</Button>
-							<Button
-								variant={activeFilter === 'produccionOK' ? 'default' : 'outline'}
-								size="sm"
-								onClick={() => setActiveFilter('produccionOK')}
-							>
-								Producción OK
-							</Button>
-							<Button
-								variant={activeFilter === 'medicion' ? 'default' : 'outline'}
-								size="sm"
-								onClick={() => setActiveFilter('medicion')}
-							>
-								Medición
-							</Button>
-							<Button
-								variant={activeFilter === 'reuniones' ? 'default' : 'outline'}
-								size="sm"
-								onClick={() => setActiveFilter('reuniones')}
-							>
-								Reuniones
-							</Button>
+							{eventTypeOptions.map((eventType) => (
+								<Button
+									key={eventType.value}
+									variant={activeFilter === eventType.value ? 'default' : 'outline'}
+									size="sm"
+									onClick={() => setActiveFilter(eventType.value)}
+								>
+									{eventType.label}
+								</Button>
+							))}
 						</div>
 
 						{/* Calendar header */}
@@ -342,6 +374,7 @@ export function CalendarView() {
 										isToday={isToday}
 										isSelected={selectedDate === dateStr}
 										onClick={() => setSelectedDate(selectedDate === dateStr ? null : dateStr)}
+										eventTypes={eventTypes}
 									/>
 								);
 							})}
@@ -383,8 +416,7 @@ export function CalendarView() {
 						{currentEvents.length > 0 ? (
 							<>
 								{currentEvents.map((event) => {
-									const typeInfo =
-										typeConfig[(event.type ?? 'produccionOK') as keyof typeof typeConfig];
+									const typeInfo = resolveEventType(event.type, eventTypes);
 									const isOverdue = event.is_overdue || false;
 
 									return (
@@ -399,11 +431,10 @@ export function CalendarView() {
 										>
 											<div className="flex items-start justify-between gap-2">
 												<div className="flex items-start gap-2 min-w-0">
-													<div
-														className={`p-1.5 rounded ${typeInfo.color.split(' ')[0]}/10 mt-0.5 flex-shrink-0`}
-													>
+													<div className="p-1.5 rounded bg-secondary/70 mt-0.5 flex-shrink-0">
 														<div
-															className={`h-2 w-2 rounded-full ${isOverdue ? 'bg-red-500' : typeInfo.color.split(' ')[0]}`}
+															className="h-2 w-2 rounded-full"
+															style={{ backgroundColor: isOverdue ? '#ef4444' : typeInfo.color }}
 														/>
 													</div>
 													<div className="min-w-0 flex-1">
@@ -487,26 +518,12 @@ export function CalendarView() {
 			{/* Legend */}
 			<Card className="p-4 bg-card border-border">
 				<div className="flex flex-wrap gap-4">
-					<div className="flex items-center gap-2">
-						<div className="h-3 w-3 rounded-full bg-chart-1" />
-						<p className="text-sm text-muted-foreground">Producción OK</p>
-					</div>
-					<div className="flex items-center gap-2">
-						<div className="h-3 w-3 rounded-full bg-chart-2" />
-						<span className="text-sm text-muted-foreground">Colocaciones</span>
-					</div>
-					<div className="flex items-center gap-2">
-						<div className="h-3 w-3 rounded-full bg-chart-3" />
-						<span className="text-sm text-muted-foreground">Mediciones</span>
-					</div>
-					<div className="flex items-center gap-2">
-						<div className="h-3 w-3 rounded-full bg-chart-4" />
-						<span className="text-sm text-muted-foreground">Reuniones</span>
-					</div>
-					<div className="flex items-center gap-2">
-						<div className="h-3 w-3 rounded-full bg-gray-400" />
-						<span className="text-sm text-muted-foreground">Otros</span>
-					</div>
+					{eventTypeOptions.map((eventType) => (
+						<div key={eventType.value} className="flex items-center gap-2">
+							<div className="h-3 w-3 rounded-full" style={{ backgroundColor: eventType.color }} />
+							<span className="text-sm text-muted-foreground">{eventType.label}</span>
+						</div>
+					))}
 					<div className="flex items-center gap-2">
 						<div className="h-3 w-3 rounded-full bg-red-500" />
 						<span className="text-sm text-muted-foreground">Vencidos</span>
@@ -573,9 +590,7 @@ export function CalendarView() {
 					event={{
 						...selectedEvent,
 						title: selectedEvent?.title ?? 'Sin título',
-						type:
-							(selectedEvent?.type as 'produccionOK' | 'colocacion' | 'medicion' | 'reuniones') ??
-							'otros',
+						type: selectedEvent?.type,
 						date: selectedEvent?.date ?? '',
 						client: selectedEvent?.client ?? '',
 						location: selectedEvent?.location ?? '',
@@ -584,8 +599,38 @@ export function CalendarView() {
 						remember: selectedEvent?.remember ?? false,
 					}}
 					onEventUpdated={refresh}
+					eventTypes={eventTypes}
 				/>
 			)}
+			<AlertDialog
+				open={deleteEventId !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setDeleteEventId(null);
+					}
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Eliminar evento</AlertDialogTitle>
+
+						<AlertDialogDescription>
+							¿Estás seguro de que deseas eliminar este evento?
+							<br />
+							<br />
+							Esta acción no se puede deshacer.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={isDeletingEvent}>Cancelar</AlertDialogCancel>
+
+						<AlertDialogAction onClick={confirmDeleteEvent} disabled={isDeletingEvent}>
+							Eliminar
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }
