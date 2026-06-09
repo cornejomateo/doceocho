@@ -101,7 +101,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 		// 2. If user is at root '/', redirect to their specific home route
 		// This prevents Armador/Jefe Taller from seeing a blank 'Panel'
 		if (pathname === '/') {
-			router.replace(getHomeRoute);
+			if (getHomeRoute !== '/') {
+				router.replace(getHomeRoute);
+			}
 			return;
 		}
 
