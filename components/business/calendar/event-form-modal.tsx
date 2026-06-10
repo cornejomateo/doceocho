@@ -30,6 +30,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Bell } from 'lucide-react';
 import { validateDate } from '@/helpers/calendar/validateDate';
 import { EventType, getEventTypeOptions } from '@/lib/calendar/event-types';
+import { ClientSelect } from '@/components/ui/client-select';
 
 interface EventFormModalProps {
 	onSave: (data: any) => Promise<boolean>;
@@ -70,7 +71,9 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 		title: '',
 		type: defaultEventType,
 		date: undefined as Date | undefined,
-		client: '',
+		client_id: null as number | null,
+		client_name: '' as string,
+		isManualClient: false,
 		location: '',
 		address: '',
 		description: '',
@@ -80,6 +83,24 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { id, value } = e.target;
 		setFormData((prev) => ({ ...prev, [id]: value }));
+	};
+
+	const handleClientSelect = (clientId: number | null, clientName: string | null) => {
+		setFormData((prev) => ({
+			...prev,
+			client_id: clientId,
+			client_name: clientName || '',
+			isManualClient: false,
+		}));
+	};
+
+	const handleManualClient = () => {
+		setFormData((prev) => ({
+			...prev,
+			client_id: null,
+			client_name: '',
+			isManualClient: true,
+		}));
 	};
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -114,7 +135,9 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 			title: '',
 			type: defaultEventType,
 			date: undefined,
-			client: '',
+			client_id: null,
+			client_name: '',
+			isManualClient: false,
 			location: '',
 			address: '',
 			description: '',
@@ -209,12 +232,32 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 
 					<div className="grid gap-2">
 						<Label htmlFor="client">Cliente</Label>
-						<Input
-							id="client"
-							value={formData.client}
-							onChange={handleInputChange}
-							placeholder="Nombre del cliente"
-						/>
+						{!formData.isManualClient ? (
+							<ClientSelect
+								value={formData.client_id}
+								onValueChange={handleClientSelect}
+								onManualInput={handleManualClient}
+								placeholder="Seleccionar cliente..."
+							/>
+						) : (
+							<div className="space-y-2">
+								<Input
+									id="client_name"
+									value={formData.client_name}
+									onChange={handleInputChange}
+									placeholder="Nombre del cliente manual"
+								/>
+								<Button
+									type="button"
+									variant="ghost"
+									size="sm"
+									onClick={() => setFormData((prev) => ({ ...prev, isManualClient: false }))}
+									className="text-xs"
+								>
+									← Volver a seleccionar cliente
+								</Button>
+							</div>
+						)}
 					</div>
 
 					<div className="grid gap-2">

@@ -156,7 +156,7 @@ export function CalendarView() {
 				const matchesSearch =
 					searchTerm === '' ||
 					event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					event.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+					event.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 					event.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 					event.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 					event.address?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -168,7 +168,7 @@ export function CalendarView() {
 					const matchesSearch =
 						searchTerm === '' ||
 						event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-						event.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+						event.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 						event.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 						event.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 						event.address?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -244,7 +244,8 @@ export function CalendarView() {
 									title: eventData.title || 'Sin título',
 									type_id: selectedEventType?.id ?? null,
 									description: eventData.description,
-									client: eventData.client,
+									client_id: eventData.client_id,
+									client_name: eventData.client_name,
 									location: eventData.location,
 									address: eventData.address,
 									date: formattedDate,
@@ -455,9 +456,9 @@ export function CalendarView() {
 																</div>
 															)}
 														</div>
-														{event.client && (
+														{event.client_name && (
 															<p className="text-xs text-muted-foreground break-words">
-																{event.client}
+																{event.client_name}
 															</p>
 														)}
 													</div>
@@ -596,7 +597,7 @@ export function CalendarView() {
 						title: selectedEvent?.title ?? 'Sin título',
 						type: selectedEvent?.type,
 						date: selectedEvent?.date ?? '',
-						client: selectedEvent?.client ?? '',
+						client_name: selectedEvent?.client_name ?? '',
 						location: selectedEvent?.location ?? '',
 						address: selectedEvent?.address ?? '',
 						description: selectedEvent?.description ?? '',
