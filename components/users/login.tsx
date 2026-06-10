@@ -22,7 +22,7 @@ export default function LoginPage() {
 			Admin: '/',
 			Taller: '/supplies',
 		};
-		return map[role];
+		return map[role] || '/';
 	};
 
 	// Redirect to dashboard after auth state resolved
