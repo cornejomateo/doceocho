@@ -53,6 +53,7 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 	const notesDebounceTimersRef = useRef<Record<string, number>>({});
 
 	const { user } = useAuth();
+	const isAuthorized = user?.role === 'Admin';
 
 	// Load checklists when modal opens
 	useEffect(() => {
@@ -439,7 +440,7 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 								<div className="md:hidden">
 									<div className="flex items-center justify-between mb-2">
 										<h3 className="text-sm font-medium text-foreground">Nota general de la obra</h3>
-										{(user?.role === 'Admin' || user?.role === 'Ventas') && (
+										{isAuthorized && (
 											<Button
 												variant="ghost"
 												size="sm"

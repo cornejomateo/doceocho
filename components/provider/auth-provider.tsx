@@ -15,7 +15,7 @@ type SessionUser = {
 type AuthContextType = {
 	user: SessionUser | null;
 	loading: boolean;
-	signIn: (username: string, password: string) => Promise<void>;
+	signIn: (username: string, password: string) => Promise<SessionUser>;
 	signOutUser: () => Promise<void>;
 };
 
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		restoreSession();
 	}, []);
 
-	async function signIn(username: string, password: string) {
+	async function signIn(username: string, password: string): Promise<SessionUser> {
 		setLoading(true);
 
 		try {
@@ -95,6 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionUser));
 
 			router.refresh();
+
+			return sessionUser;
 		} finally {
 			setLoading(false);
 		}

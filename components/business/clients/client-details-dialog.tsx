@@ -52,6 +52,8 @@ export function ClientDetailsDialog({
 	const [balancesKey, setBalancesKey] = useState(0);
 	const { user } = useAuth();
 
+	const isAuthorized = user?.role === 'Admin';
+
 	// Auto-save hook for cover field
 	const {
 		isSaving,
@@ -243,13 +245,15 @@ export function ClientDetailsDialog({
 							{clientData.last_name} {clientData.name}
 						</h3>
 						<div className="flex flex-wrap justify-center gap-6">
-							{user?.role !== 'Colocador' && (
-								<>
+							<>
+								{clientData.email && (
 									<div className="flex items-center justify-center">
 										<EmailLink email={clientData.email || ''} className="text-sm hover:underline">
 											{clientData.email}
 										</EmailLink>
 									</div>
+								)}
+								{clientData.phone_number && (
 									<div className="flex items-center justify-center">
 										<WhatsAppLink
 											phone={clientData.phone_number || ''}
@@ -259,8 +263,8 @@ export function ClientDetailsDialog({
 											{clientData.phone_number}
 										</WhatsAppLink>
 									</div>
-								</>
-							)}
+								)}
+							</>
 							<div className="flex items-center justify-center gap-1 text-sm">
 								<MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
 								<span className="text-xs">{clientData.locality}</span>
@@ -275,21 +279,19 @@ export function ClientDetailsDialog({
 							onValueChange={handleTabChange}
 						>
 							<TabsList>
-								{user?.role !== 'Colocador' && (
-									<>
-										<TabsTrigger value="info">Información</TabsTrigger>
-										<TabsTrigger value="works" disabled>
-											Obras
-										</TabsTrigger>
-										<TabsTrigger value="budgets" disabled>
-											Presupuestos
-										</TabsTrigger>
-										<TabsTrigger value="balances" disabled>
-											Saldos
-										</TabsTrigger>
-									</>
-								)}
-								<TabsTrigger value="images">Archivos</TabsTrigger>
+								<>
+									<TabsTrigger value="info">Información</TabsTrigger>
+									{isAuthorized && (
+										<>
+											<TabsTrigger value="works">Obras</TabsTrigger>
+											<TabsTrigger value="budgets">Presupuestos</TabsTrigger>
+											<TabsTrigger value="balances" disabled>
+												Saldos
+											</TabsTrigger>
+										</>
+									)}
+									<TabsTrigger value="images">Archivos</TabsTrigger>
+								</>
 							</TabsList>
 
 							<div className="mt-2">

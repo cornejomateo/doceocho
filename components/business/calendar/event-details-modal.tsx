@@ -10,18 +10,20 @@ import {
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, MapPin, User, FileText, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { typeConfig, statusOptions } from '@/constants/type-config';
+import { statusOptionsEvents } from '@/constants/calendar/status';
 import { Event, updateEvent } from '@/lib/calendar/events';
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Bell } from 'lucide-react';
 import { translateError } from '@/lib/error-translator';
+import { EventType, resolveEventType } from '@/lib/calendar/event-types';
 
 interface EventDetailsModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	event: Event;
 	onEventUpdated?: () => void;
+	eventTypes?: EventType[];
 }
 
 export function EventDetailsModal({
@@ -29,8 +31,9 @@ export function EventDetailsModal({
 	onClose,
 	event,
 	onEventUpdated,
+	eventTypes = [],
 }: EventDetailsModalProps) {
-	const typeInfo = typeConfig[(event.type ?? 'otros') as keyof typeof typeConfig];
+	const typeInfo = resolveEventType(event.type, eventTypes);
 	const { toast } = useToast();
 	const [currentStatus, setCurrentStatus] = useState(event.status || 'Pendiente');
 
@@ -74,17 +77,16 @@ export function EventDetailsModal({
 
 			onEventUpdated?.();
 			const statusLabel =
-				statusOptions.find((option) => option.value === newStatus)?.label ?? newStatus;
+				statusOptionsEvents.find((option) => option.value === newStatus)?.label ?? newStatus;
 			toast({
 				title: 'Estado actualizado',
 				description: `El evento ha sido marcado como ${statusLabel}`,
 			});
 		} catch (error) {
-			console.error('Error al actualizar el estado:', error);
 			setCurrentStatus(event.status || 'Pendiente');
 			toast({
 				title: 'Error',
-				description: 'No se pudo actualizar el estado del evento',
+				description: translateError(error) || 'No se pudo actualizar el estado del evento',
 				variant: 'destructive',
 			});
 		}
@@ -104,7 +106,7 @@ export function EventDetailsModal({
 								onChange={(e) => handleStatusChange(e.target.value)}
 								className="bg-transparent border-none focus:ring-0 focus:ring-offset-0 p-1 pr-6 appearance-none focus:outline-none cursor-pointer hover:bg-muted rounded-md"
 							>
-								{statusOptions.map((option) => (
+								{statusOptionsEvents.map((option) => (
 									<option key={option.value} value={option.value}>
 										{option.label}
 									</option>
@@ -173,7 +175,7 @@ export function EventDetailsModal({
 				<div className="flex items-center justify-between gap-2 mb-4">
 					<Badge
 						className="px-2 py-1 text-sm flex items-center gap-1"
-						style={{ backgroundColor: typeInfo.backgroundColor }}
+						style={{ backgroundColor: typeInfo.color }}
 					>
 						{typeInfo.label}
 					</Badge>

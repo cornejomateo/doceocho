@@ -1,5 +1,5 @@
 import { Event } from '@/lib/calendar/events';
-import { typeConfig } from '@/constants/type-config';
+import { EventType, resolveEventType } from '@/lib/calendar/event-types';
 
 interface CalendarDayProps {
 	day: number;
@@ -7,9 +7,17 @@ interface CalendarDayProps {
 	isToday: boolean;
 	isSelected: boolean;
 	onClick: () => void;
+	eventTypes?: EventType[];
 }
 
-export function CalendarDay({ day, events, isToday, isSelected, onClick }: CalendarDayProps) {
+export function CalendarDay({
+	day,
+	events,
+	isToday,
+	isSelected,
+	onClick,
+	eventTypes = [],
+}: CalendarDayProps) {
 	return (
 		<div
 			onClick={onClick}
@@ -33,11 +41,7 @@ export function CalendarDay({ day, events, isToday, isSelected, onClick }: Calen
 					<div className="hidden sm:flex flex-1 items-center justify-center mt-1">
 						<div className="flex flex-wrap gap-1">
 							{Object.entries(events).map(([type, typeEvents]) => {
-								const safeType =
-									type && typeConfig[type as keyof typeof typeConfig]
-										? (type as keyof typeof typeConfig)
-										: 'otros';
-								const typeInfo = typeConfig[safeType];
+								const typeInfo = resolveEventType(type, eventTypes);
 
 								const hasOverdue = typeEvents.some((ev) => ev.is_overdue);
 
@@ -48,7 +52,8 @@ export function CalendarDay({ day, events, isToday, isSelected, onClick }: Calen
 										title={`${typeEvents.length} ${typeInfo.label.toLowerCase()}${typeEvents.length > 1 ? 's' : ''}`}
 									>
 										<div
-											className={`h-2 w-2 rounded-full ${hasOverdue ? 'bg-red-500' : typeInfo.color.split(' ')[0]}`}
+											className="h-2 w-2 rounded-full"
+											style={{ backgroundColor: hasOverdue ? '#ef4444' : typeInfo.color }}
 										/>
 										{typeEvents.length > 1 && (
 											<span className="text-[10px] text-muted-foreground">{typeEvents.length}</span>

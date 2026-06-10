@@ -48,10 +48,9 @@ export function WorkCard({
 	const statusLabel = statusInfo?.label || 'Pendiente';
 	const statusColor = statusInfo?.color || 'text-gray-400 bg-gray-400/10';
 
-	const canSendNotifications =
-		user?.role === 'Admin' || user?.role === 'Ventas' || user?.role === 'Colocador';
-	const canEditNotes =
-		user?.role === 'Admin' || user?.role === 'Ventas' || user?.role === 'Colocador';
+	const isAuthorized = user?.role === 'Admin';
+	const canSendNotifications = isAuthorized;
+	const canEditNotes = isAuthorized;
 
 	const handleSaveGeneralNote = async (note: string) => {
 		if (!onUpdateGeneralNote) return;
@@ -129,7 +128,7 @@ export function WorkCard({
 							</Button>
 						</ChecklistCompletionModal>
 
-						{(user?.role === 'Admin' || user?.role === 'Ventas') && (
+						{isAuthorized && (
 							<Button
 								variant="outline"
 								size="sm"

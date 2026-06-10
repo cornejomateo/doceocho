@@ -43,7 +43,7 @@ export function SuppliesTable({
 	onUpdateQuantity,
 }: SuppliesTableProps) {
 	const { user } = useAuth();
-	const isAuthorized = user?.role === 'Admin' || user?.role === 'Ventas';
+	const isAuthorized = user?.role === 'Admin';
 	const [showQuantityDialog, setShowQuantityDialog] = useState(false);
 	const [quantityDialogType, setQuantityDialogType] = useState<'increase' | 'decrease' | null>(
 		null
