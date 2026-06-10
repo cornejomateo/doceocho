@@ -67,7 +67,7 @@ export function CalendarView() {
 	}, [eventTypes]);
 
 	const { user } = useAuth();
-
+	const isAuthorized = user?.role === 'Admin';
 	const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
 	const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
 
@@ -212,9 +212,11 @@ export function CalendarView() {
 				</div>
 
 				<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-					<Button variant="outline" size="sm" onClick={() => setOpenEventTypesDialog(true)}>
-						Ajustes de eventos
-					</Button>
+					{isAuthorized && (
+						<Button variant="outline" size="sm" onClick={() => setOpenEventTypesDialog(true)}>
+							Ajustes de eventos
+						</Button>
+					)}
 					<EventTypesDialog
 						open={openEventTypesDialog}
 						onOpenChange={setOpenEventTypesDialog}
@@ -277,10 +279,12 @@ export function CalendarView() {
 							}
 						}}
 					>
-						<Button className="gap-2">
-							<CalendarIcon className="h-4 w-4" />
-							Agregar evento
-						</Button>
+						{isAuthorized && (
+							<Button className="gap-2">
+								<CalendarIcon className="h-4 w-4" />
+								Agregar evento
+							</Button>
+						)}
 					</EventFormModal>
 				</div>
 			</div>

@@ -17,6 +17,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Bell } from 'lucide-react';
 import { translateError } from '@/lib/error-translator';
 import { EventType, resolveEventType } from '@/lib/calendar/event-types';
+import { useAuth } from '@/components/provider/auth-provider';
 
 interface EventDetailsModalProps {
 	isOpen: boolean;
@@ -38,6 +39,9 @@ export function EventDetailsModal({
 	const [currentStatus, setCurrentStatus] = useState(event.status || 'Pendiente');
 
 	const [currentRemember, setCurrentRemember] = useState(event.remember || false);
+
+	const { user } = useAuth();
+	const isAuthorized = user?.role === 'Admin';
 
 	const handleRememberChange = async () => {
 		try {
@@ -186,14 +190,17 @@ export function EventDetailsModal({
 						<Button variant="outline" onClick={onClose}>
 							Cerrar
 						</Button>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={handleRememberChange}
-							className={`justify-start ${currentRemember ? 'bg-yellow-200' : ''}`}
-						>
-							<Bell className={`w-6 h-6 ${currentRemember ? 'text-red-600' : 'text-gray-700'}`} />
-						</Button>
+
+						{isAuthorized && (
+							<Button
+								type="button"
+								variant="outline"
+								onClick={handleRememberChange}
+								className={`justify-start ${currentRemember ? 'bg-yellow-200' : ''}`}
+							>
+								<Bell className={`w-6 h-6 ${currentRemember ? 'text-red-600' : 'text-gray-700'}`} />
+							</Button>
+						)}
 					</div>
 				</div>
 			</DialogContent>
