@@ -245,6 +245,8 @@ create table public.events (
   description character varying null,
   title character varying null,
   client character varying null,
+  client_id bigint null,
+  client_name character varying null,
   location character varying null,
   date date null,
   address character varying null,

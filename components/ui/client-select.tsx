@@ -23,6 +23,10 @@ interface ClientSelectProps {
 	disabled?: boolean;
 }
 
+const formatClientName = (client: Client): string => {
+	return [client.last_name, client.name].filter(Boolean).join(' ');
+};
+
 export function ClientSelect({
 	value,
 	onValueChange,
@@ -33,13 +37,17 @@ export function ClientSelect({
 	const [open, setOpen] = useState(false);
 	const [clients, setClients] = useState<Client[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 	const [searchTerm, setSearchTerm] = useState('');
 
 	useEffect(() => {
 		const loadClients = async () => {
 			setLoading(true);
+			setError(null);
 			const { data, error } = await listClients();
-			if (!error && data) {
+			if (error) {
+				setError('Error al cargar clientes');
+			} else if (data) {
 				setClients(data);
 			}
 			setLoading(false);
@@ -65,7 +73,7 @@ export function ClientSelect({
 					className="w-full justify-between"
 					disabled={disabled}
 				>
-					{selectedClient ? `${selectedClient.last_name} ${selectedClient.name}` : placeholder}
+					{selectedClient ? formatClientName(selectedClient) : placeholder}
 					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
 			</PopoverTrigger>
@@ -75,6 +83,8 @@ export function ClientSelect({
 					<CommandList>
 						{loading ? (
 							<CommandEmpty>Cargando clientes...</CommandEmpty>
+						) : error ? (
+							<CommandEmpty>{error}</CommandEmpty>
 						) : filteredClients.length === 0 ? (
 							<CommandEmpty>
 								{searchTerm ? 'No se encontraron clientes' : 'No hay clientes disponibles'}
@@ -87,11 +97,11 @@ export function ClientSelect({
 											key={client.id}
 											value={client.id.toString()}
 											onSelect={() => {
-												onValueChange(client.id, `${client.last_name} ${client.name}`);
+												onValueChange(client.id, formatClientName(client));
 												setOpen(false);
 											}}
 										>
-											{client.last_name} {client.name}
+											{formatClientName(client)}
 											<Check
 												className={cn(
 													'ml-auto h-4 w-4',
