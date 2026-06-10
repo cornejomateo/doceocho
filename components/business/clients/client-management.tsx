@@ -307,22 +307,26 @@ export function ClientManagement() {
 										)}
 									</div>
 
-									{!notIsAuthorized && (
-										<div className="space-y-2 text-sm pt-2">
+									<div className="space-y-2 text-sm pt-2">
+										{client.email && (
 											<div className="flex items-center gap-2 text-muted-foreground">
 												<Mail className="h-4 w-4" />
 												<span className="truncate">{client.email}</span>
 											</div>
+										)}
+										{client.phone_number && (
 											<div className="flex items-center gap-2 text-muted-foreground">
 												<Phone className="h-4 w-4" />
 												<span>{client.phone_number}</span>
 											</div>
+										)}
+										{client.locality && (
 											<div className="flex items-center gap-2 text-muted-foreground">
 												<MapPin className="h-4 w-4" />
 												<span>{client.locality}</span>
 											</div>
-										</div>
-									)}
+										)}
+									</div>
 
 									{/* Budget information */}
 									{!notIsAuthorized && (

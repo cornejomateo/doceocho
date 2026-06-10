@@ -32,7 +32,7 @@ import { validateDate } from '@/helpers/calendar/validateDate';
 import { EventType, getEventTypeOptions } from '@/lib/calendar/event-types';
 
 interface EventFormModalProps {
-	onSave: (data: any) => void;
+	onSave: (data: any) => Promise<boolean>;
 	children: React.ReactNode;
 	eventTypes?: EventType[];
 }

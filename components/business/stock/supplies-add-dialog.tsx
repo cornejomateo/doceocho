@@ -81,7 +81,7 @@ export function SupplyFormDialog({
 	const [changeQuantityFlag, setChangeQuantityFlag] = useState(false);
 
 	const { user } = useAuth();
-	const isAuthorized = user?.role === 'Admin' || user?.role === 'Ventas';
+	const isAuthorized = user?.role === 'Admin';
 
 	useEffect(() => {
 		if (editItem) {
