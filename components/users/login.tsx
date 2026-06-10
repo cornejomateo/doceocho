@@ -36,22 +36,24 @@ export default function LoginPage() {
 	async function onSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		setError(null);
-		try {
-			if (usuario.trim() === '' || contraseña.trim() === '') {
-				setError('Por favor, complete todos los campos.');
-				return;
-			}
 
-			// Wait for sign in to complete
+		if (usuario.trim() === '' || contraseña.trim() === '') {
+			setError('Por favor, complete todos los campos.');
+			return;
+		}
+
+		setIsRedirecting(true);
+
+		try {
 			const userData = await signIn(usuario, contraseña);
 
-			// Redirect based on the role received from auth
 			if (userData?.role) {
 				router.replace(getHomeByRole(userData.role));
 			} else {
 				router.replace('/');
 			}
 		} catch (err: any) {
+			setIsRedirecting(false);
 			setError(err?.message || 'Error al iniciar sesión');
 		}
 	}
