@@ -59,23 +59,19 @@ export function ClientsAddDialog({
 		referred_to: clientToEdit?.referred_to || '',
 	});
 
-	const resetForm = () => {
-		setFormData({
-			name: '',
-			last_name: '',
-			email: '',
-			phone_number: '',
-			locality: '',
-			contact_method: '',
-			referred_to: '',
-		});
-	};
-
 	useEffect(() => {
-		if (!clientToEdit && open) {
-			resetForm();
+		if (open) {
+			setFormData({
+				name: clientToEdit?.name || '',
+				last_name: clientToEdit?.last_name || '',
+				email: clientToEdit?.email || '',
+				phone_number: clientToEdit?.phone_number || '',
+				locality: clientToEdit?.locality || '',
+				contact_method: clientToEdit?.contact_method || '',
+				referred_to: clientToEdit?.referred_to || '',
+			});
 		}
-	}, [open, clientToEdit]);
+	}, [open]);
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { id, value } = e.target;
@@ -123,7 +119,6 @@ export function ClientsAddDialog({
 					description: `${payload.name} ${payload.last_name} ha sido actualizado correctamente.`,
 				});
 				onOpenChange(false);
-				resetForm();
 			} else {
 				// Create new client
 				console.log('Creating client with payload:', payload);
@@ -142,7 +137,6 @@ export function ClientsAddDialog({
 					});
 					onClientAdded?.();
 					onOpenChange(false);
-					resetForm();
 				}
 			}
 		} catch (error) {
@@ -157,20 +151,6 @@ export function ClientsAddDialog({
 			setIsLoading(false);
 		}
 	};
-
-	useEffect(() => {
-		if (clientToEdit) {
-			setFormData({
-				name: clientToEdit.name || '',
-				last_name: clientToEdit.last_name || '',
-				email: clientToEdit.email || '',
-				phone_number: clientToEdit.phone_number || '',
-				locality: clientToEdit.locality || '',
-				contact_method: clientToEdit.contact_method || '',
-				referred_to: clientToEdit.referred_to || '',
-			});
-		}
-	}, [clientToEdit]);
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
