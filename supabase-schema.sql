@@ -244,7 +244,6 @@ create table public.events (
   created_at timestamp with time zone not null default now(),
   description character varying null,
   title character varying null,
-  client character varying null,
   client_id bigint null,
   client_name character varying null,
   location character varying null,
