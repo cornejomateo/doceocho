@@ -7,7 +7,8 @@ export type Event = {
 	type?: string | null;
 	title?: string | null;
 	description?: string | null;
-	client?: string | null;
+	client_id?: number | null;
+	client_name?: string | null;
 	location?: string | null;
 	address?: string | null;
 	status?: string | null;
@@ -58,7 +59,8 @@ export async function createEvent(
 			title: event.title,
 			type_id: event.type_id,
 			description: event.description,
-			client: event.client,
+			client_id: event.client_id,
+			client_name: event.client_name,
 			location: event.location,
 			date: event.date,
 			address: event.address,
