@@ -285,11 +285,8 @@ export function WorksList({
 
 						const { error } = await createChecklist({
 							work_id: selectedWorkId,
-							name: checklist.name || `Abertura ${existingCount + 1}`,
+							name: checklist.name || `Mobiliario ${existingCount + 1}`,
 							description: checklist.description || '',
-							width: checklist.width || null,
-							height: checklist.height || null,
-							type_opening: checklist.type_opening,
 							notes: '',
 							items: checklist.items.map((item) => ({
 								name: item.name,

@@ -58,16 +58,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const allowedByRole = useMemo(() => {
 		return {
 			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos'],
-			'Jefe taller': ['Insumos', 'Clientes', 'Calendario'],
-			Armador: ['Calendario', 'Clientes', 'Insumos'],
+			Taller: ['Insumos', 'Clientes', 'Calendario'],
 		} as Record<UserRole, string[]>;
 	}, []);
 
 	const homeRouteByRole = useMemo(() => {
 		return {
 			Admin: '/',
-			'Jefe taller': '/supplies',
-			Armador: '/supplies',
+			Taller: '/supplies',
 		} as Record<UserRole, string>;
 	}, []);
 

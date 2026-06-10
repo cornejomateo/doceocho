@@ -20,8 +20,7 @@ export default function LoginPage() {
 	const getHomeByRole = (role: UserRole) => {
 		const map: Record<UserRole, string> = {
 			Admin: '/',
-			'Jefe taller': '/supplies',
-			Armador: '/supplies',
+			Taller: '/supplies',
 		};
 		return map[role];
 	};
