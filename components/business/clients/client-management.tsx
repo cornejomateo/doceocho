@@ -49,7 +49,7 @@ import { paginateAndFilter } from '@/utils/pagination';
 export function ClientManagement() {
 	const { toast } = useToast();
 	const { user } = useAuth();
-	const notIsAuthorized = user?.role === 'Armador' || user?.role === 'Jefe taller';
+	const notIsAuthorized = user?.role === 'Taller';
 
 	const {
 		data: clients,
