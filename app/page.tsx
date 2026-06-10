@@ -11,8 +11,11 @@ export default function HomePage() {
 	const router = useRouter();
 
 	useEffect(() => {
-		if (!loading && !user) {
+		if (loading) return;
+		if (!user) {
 			router.push('/login');
+		} else if (user.role !== 'Admin') {
+			router.replace('/supplies');
 		}
 	}, [user, loading, router]);
 
@@ -28,12 +31,13 @@ export default function HomePage() {
 		return null;
 	}
 
-	switch (user.role) {
-		case 'Admin':
-			return (
-				<DashboardLayout>
-					<DashboardHome />
-				</DashboardLayout>
-			);
+	if (user.role !== 'Admin') {
+		return null;
 	}
+
+	return (
+		<DashboardLayout>
+			<DashboardHome />
+		</DashboardLayout>
+	);
 }
