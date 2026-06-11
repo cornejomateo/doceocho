@@ -263,7 +263,7 @@ export function ChatManagement() {
 				{selectedChannel ? (
 					<>
 						{/* Chat Header */}
-						<div className="p-4 border-b flex items-center gap-2">
+						<div className="p-4 border-b flex items-center gap-2 w-full">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -276,7 +276,7 @@ export function ChatManagement() {
 								<ArrowLeft className="h-5 w-5" />
 							</Button>
 							{showSearch ? (
-								<div className="flex items-center gap-2">
+								<div className="flex items-center gap-2 flex-1">
 									<Input
 										placeholder="Buscar mensajes..."
 										value={searchTerm}
@@ -289,7 +289,7 @@ export function ChatManagement() {
 									</Button>
 								</div>
 							) : (
-								<div className="flex items-center justify-between">
+								<div className="flex items-center justify-between flex-1">
 									<div>
 										<h2 className="text-base font-semibold">
 											{selectedChannel.name || 'Sin nombre'}
