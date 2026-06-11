@@ -22,3 +22,19 @@ ALTER TABLE public.messages
 ADD CONSTRAINT messages_user_id_fkey 
 FOREIGN KEY (user_id) REFERENCES public.users(username) 
 ON UPDATE CASCADE ON DELETE CASCADE;
+
+-- Add foreign key from messages to channels with CASCADE delete
+ALTER TABLE public.messages 
+DROP CONSTRAINT IF EXISTS messages_channel_id_fkey;
+ALTER TABLE public.messages 
+ADD CONSTRAINT messages_channel_id_fkey 
+FOREIGN KEY (channel_id) REFERENCES public.channels(id) 
+ON UPDATE CASCADE ON DELETE CASCADE;
+
+-- Add foreign key from channel_members to channels with CASCADE delete
+ALTER TABLE public.channel_members 
+DROP CONSTRAINT IF EXISTS channel_members_channel_id_fkey;
+ALTER TABLE public.channel_members 
+ADD CONSTRAINT channel_members_channel_id_fkey 
+FOREIGN KEY (channel_id) REFERENCES public.channels(id) 
+ON UPDATE CASCADE ON DELETE CASCADE;

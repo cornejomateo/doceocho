@@ -5,9 +5,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Plus, Users, MessageSquare, LogOut } from 'lucide-react';
+import { Send, Plus, Users, MessageSquare, LogOut, Trash2 } from 'lucide-react';
 import { useAuth } from '@/components/provider/auth-provider';
-import { getUserChannelsAction } from '@/actions/chat/channels';
+import { getUserChannelsAction, deleteChannelAction } from '@/actions/chat/channels';
 import { sendMessageAction, getMessagesAction } from '@/actions/chat/messages';
 import { getChannelMembersAction } from '@/actions/chat/channel-members';
 import { ChannelWithLastMessage, MessageWithUser } from '@/types/chat';
@@ -93,6 +93,29 @@ export function ChatManagement() {
 		setShowCreateDialog(false);
 	};
 
+	const handleDeleteChannel = async (channelId: number, channelName: string) => {
+		if (!user) return;
+
+		if (
+			!confirm(
+				`¿Estás seguro de que quieres eliminar el canal "${channelName}"? Esta acción eliminará todos los mensajes y miembros del canal.`
+			)
+		) {
+			return;
+		}
+
+		const result = await deleteChannelAction(channelId, user.username);
+		if (result.success) {
+			if (selectedChannel?.id === channelId) {
+				setSelectedChannel(null);
+				setMessages([]);
+			}
+			loadChannels();
+		} else {
+			alert(result.error || 'Error al eliminar el canal');
+		}
+	};
+
 	if (!user) {
 		return <div className="p-4">Cargando...</div>;
 	}
@@ -120,20 +143,34 @@ export function ChatManagement() {
 					) : (
 						<div className="p-2 space-y-1">
 							{channels.map((channel) => (
-								<button
+								<div
 									key={channel.id}
-									onClick={() => handleChannelSelect(channel)}
-									className={`w-full text-left p-3 rounded-lg transition-colors ${
+									className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${
 										selectedChannel?.id === channel.id
 											? 'bg-primary text-primary-foreground'
 											: 'hover:bg-muted'
 									}`}
 								>
-									<div className="font-medium">{channel.name || 'Sin nombre'}</div>
-									{channel.description && (
-										<div className="text-xs opacity-70 mt-1">{channel.description}</div>
+									<button onClick={() => handleChannelSelect(channel)} className="flex-1 text-left">
+										<div className="font-medium">{channel.name || 'Sin nombre'}</div>
+										{channel.description && (
+											<div className="text-xs opacity-70 mt-1">{channel.description}</div>
+										)}
+									</button>
+									{user.role === 'Admin' && (
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={(e) => {
+												e.stopPropagation();
+												handleDeleteChannel(channel.id, channel.name || 'Sin nombre');
+											}}
+											className="shrink-0"
+										>
+											<Trash2 className="h-4 w-4 text-destructive" />
+										</Button>
 									)}
-								</button>
+								</div>
 							))}
 						</div>
 					)}
