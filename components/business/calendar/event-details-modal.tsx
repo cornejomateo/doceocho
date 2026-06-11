@@ -126,12 +126,12 @@ export function EventDetailsModal({
 
 				<div className="space-y-4 py-2">
 					<div className="space-y-3">
-						{event.client && (
+						{event.client_name && (
 							<div className="flex items-start gap-3">
 								<User className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
 								<div>
 									<p className="text-sm text-muted-foreground">Cliente</p>
-									<p className="text-sm">{event.client}</p>
+									<p className="text-sm">{event.client_name}</p>
 								</div>
 							</div>
 						)}
