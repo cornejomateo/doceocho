@@ -5,7 +5,18 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Plus, Users, MessageSquare, LogOut, Trash2, Search, X, Edit2 } from 'lucide-react';
+import {
+	Send,
+	Plus,
+	Users,
+	MessageSquare,
+	LogOut,
+	Trash2,
+	Search,
+	X,
+	Edit2,
+	ArrowLeft,
+} from 'lucide-react';
 import { useAuth } from '@/components/provider/auth-provider';
 import { getUserChannelsAction, deleteChannelAction } from '@/actions/chat/channels';
 import {
@@ -34,6 +45,7 @@ export function ChatManagement() {
 	const [editingMessage, setEditingMessage] = useState<{ id: number; content: string } | null>(
 		null
 	);
+	const [showSidebar, setShowSidebar] = useState(true);
 
 	const filteredMessages = searchTerm
 		? messages.filter(
@@ -94,6 +106,7 @@ export function ChatManagement() {
 	const handleChannelSelect = async (channel: ChannelWithLastMessage) => {
 		setSelectedChannel(channel);
 		setSearchTerm(''); // Clear search when changing channel
+		setShowSidebar(false); // Close sidebar on mobile after selecting channel
 		// Mark messages as read when selecting channel
 		if (user) {
 			const { markChannelMessagesAsRead } = await import('@/lib/chat/message-reads');
@@ -170,9 +183,13 @@ export function ChatManagement() {
 	}
 
 	return (
-		<div className="flex h-[calc(100vh-2rem)] gap-4">
+		<div className="flex h-[calc(100vh-2rem)] gap-4 relative">
 			{/* Channels Sidebar */}
-			<Card className="w-80 flex flex-col">
+			<Card
+				className={`w-80 flex flex-col absolute md:relative z-10 h-full transition-transform ${
+					showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+				}`}
+			>
 				<div className="p-4 border-b">
 					<div className="flex items-center justify-between mb-4">
 						<h2 className="text-lg font-semibold">Canales</h2>
@@ -233,12 +250,31 @@ export function ChatManagement() {
 				</ScrollArea>
 			</Card>
 
+			{/* Mobile sidebar overlay */}
+			{showSidebar && (
+				<div
+					className="fixed inset-0 bg-black/50 z-0 md:hidden"
+					onClick={() => setShowSidebar(false)}
+				/>
+			)}
+
 			{/* Chat Area */}
 			<Card className="flex-1 flex flex-col">
 				{selectedChannel ? (
 					<>
 						{/* Chat Header */}
-						<div className="p-4 border-b">
+						<div className="p-4 border-b flex items-center gap-2">
+							<Button
+								variant="ghost"
+								size="icon"
+								className="md:hidden"
+								onClick={() => {
+									setSelectedChannel(null);
+									setShowSidebar(true);
+								}}
+							>
+								<ArrowLeft className="h-5 w-5" />
+							</Button>
 							{showSearch ? (
 								<div className="flex items-center gap-2">
 									<Input
