@@ -74,12 +74,26 @@ export async function editMessageAction(
 			return { success: false, error: 'Usuario no encontrado' };
 		}
 
+		// Get message to check ownership
+		const messageResult = await getMessageById(messageId);
+		if (messageResult.error || !messageResult.data) {
+			return { success: false, error: 'Mensaje no encontrado' };
+		}
+
+		// Check if user is the message owner or admin
+		const isOwner = messageResult.data.user_id === userResult.data.username;
+		const isAdmin = userResult.data.role === 'Admin';
+
+		if (!isOwner && !isAdmin) {
+			return { success: false, error: 'No tienes permiso para editar este mensaje' };
+		}
+
 		// Validate content
 		if (!content || content.trim().length === 0) {
 			return { success: false, error: 'El mensaje no puede estar vacío' };
 		}
 
-		// Update message (note: we should also check if the user owns the message, but for simplicity we'll allow admins to edit any message)
+		// Update message
 		const result = await updateMessage(messageId, { content: content.trim() });
 
 		if (result.error) {

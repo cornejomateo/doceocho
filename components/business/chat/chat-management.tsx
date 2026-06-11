@@ -5,10 +5,15 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Plus, Users, MessageSquare, LogOut, Trash2, Search, X } from 'lucide-react';
+import { Send, Plus, Users, MessageSquare, LogOut, Trash2, Search, X, Edit2 } from 'lucide-react';
 import { useAuth } from '@/components/provider/auth-provider';
 import { getUserChannelsAction, deleteChannelAction } from '@/actions/chat/channels';
-import { sendMessageAction, getMessagesAction, deleteMessageAction } from '@/actions/chat/messages';
+import {
+	sendMessageAction,
+	getMessagesAction,
+	deleteMessageAction,
+	editMessageAction,
+} from '@/actions/chat/messages';
 import { getChannelMembersAction } from '@/actions/chat/channel-members';
 import { ChannelWithLastMessage, MessageWithUser } from '@/types/chat';
 import { CreateChannelDialog } from './create-channel-dialog';
@@ -26,6 +31,9 @@ export function ChatManagement() {
 	const [members, setMembers] = useState<any[]>([]);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [showSearch, setShowSearch] = useState(false);
+	const [editingMessage, setEditingMessage] = useState<{ id: number; content: string } | null>(
+		null
+	);
 
 	const filteredMessages = searchTerm
 		? messages.filter(
@@ -120,6 +128,16 @@ export function ChatManagement() {
 
 		const result = await deleteMessageAction(messageId, user.username);
 		if (result.success) {
+			await loadMessages(selectedChannel!.id);
+		}
+	};
+
+	const handleEditMessage = async (messageId: number, newContent: string) => {
+		if (!user) return;
+
+		const result = await editMessageAction(messageId, newContent, user.username);
+		if (result.success) {
+			setEditingMessage(null);
 			await loadMessages(selectedChannel!.id);
 		}
 	};
@@ -296,6 +314,38 @@ export function ChatManagement() {
 													<div className="text-sm italic opacity-70">
 														Este mensaje fue eliminado
 													</div>
+												) : editingMessage?.id === message.id ? (
+													<div className="flex gap-2">
+														<Input
+															value={editingMessage.content}
+															onChange={(e) =>
+																setEditingMessage({ id: message.id, content: e.target.value })
+															}
+															onKeyDown={(e) => {
+																if (e.key === 'Enter' && !e.shiftKey) {
+																	e.preventDefault();
+																	handleEditMessage(message.id, editingMessage.content);
+																} else if (e.key === 'Escape') {
+																	setEditingMessage(null);
+																}
+															}}
+															autoFocus
+															className="flex-1"
+														/>
+														<Button
+															size="sm"
+															onClick={() => handleEditMessage(message.id, editingMessage.content)}
+														>
+															Guardar
+														</Button>
+														<Button
+															size="sm"
+															variant="outline"
+															onClick={() => setEditingMessage(null)}
+														>
+															Cancelar
+														</Button>
+													</div>
 												) : (
 													<div className="text-sm">{message.content}</div>
 												)}
@@ -308,12 +358,25 @@ export function ChatManagement() {
 														{message.edited_at && ' (editado)'}
 													</span>
 													{message.user_id === user.username && !message.is_deleted && (
-														<button
-															onClick={() => handleDeleteMessage(message.id)}
-															className="hover:opacity-100 opacity-50"
-														>
-															<Trash2 className="h-3 w-3" />
-														</button>
+														<div className="flex gap-1">
+															<button
+																onClick={() =>
+																	setEditingMessage({
+																		id: message.id,
+																		content: message.content || '',
+																	})
+																}
+																className="hover:opacity-100 opacity-50"
+															>
+																<Edit2 className="h-3 w-3" />
+															</button>
+															<button
+																onClick={() => handleDeleteMessage(message.id)}
+																className="hover:opacity-100 opacity-50"
+															>
+																<Trash2 className="h-3 w-3" />
+															</button>
+														</div>
 													)}
 												</div>
 											</div>
