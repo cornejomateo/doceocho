@@ -183,10 +183,10 @@ export function ChatManagement() {
 	}
 
 	return (
-		<div className="flex h-[calc(100vh-2rem)] gap-4 relative">
+		<div className="flex h-full gap-4 relative overflow-hidden">
 			{/* Channels Sidebar */}
 			<Card
-				className={`w-80 flex flex-col absolute md:relative z-10 h-full transition-transform ${
+				className={`w-80 flex flex-col absolute md:relative z-10 h-full transition-transform overflow-hidden ${
 					showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
 				}`}
 			>
@@ -201,13 +201,13 @@ export function ChatManagement() {
 						)}
 					</div>
 				</div>
-				<ScrollArea className="flex-1">
+				<ScrollArea className="flex-1 h-0">
 					{loading ? (
 						<div className="p-4 text-center text-sm text-muted-foreground">Cargando canales...</div>
 					) : channels.length === 0 ? (
 						<div className="p-4 text-center text-sm text-muted-foreground">No tienes canales</div>
 					) : (
-						<div className="p-2 space-y-1">
+						<div className="p-1.5 space-y-1">
 							{channels.map((channel) => (
 								<div
 									key={channel.id}
@@ -291,11 +291,11 @@ export function ChatManagement() {
 							) : (
 								<div className="flex items-center justify-between">
 									<div>
-										<h2 className="text-lg font-semibold">
+										<h2 className="text-base font-semibold">
 											{selectedChannel.name || 'Sin nombre'}
 										</h2>
 										{selectedChannel.description && (
-											<p className="text-sm text-muted-foreground">{selectedChannel.description}</p>
+											<p className="text-xs text-muted-foreground">{selectedChannel.description}</p>
 										)}
 									</div>
 									<div className="flex items-center gap-2">
@@ -312,8 +312,8 @@ export function ChatManagement() {
 						</div>
 
 						{/* Messages */}
-						<ScrollArea className="flex-1 p-4 min-h-0">
-							<div className="space-y-4">
+						<ScrollArea className="flex-1 p-3 min-h-0 h-0">
+							<div className="space-y-3">
 								{filteredMessages.length === 0 ? (
 									searchTerm ? (
 										<div className="text-center text-muted-foreground py-8">
@@ -335,7 +335,7 @@ export function ChatManagement() {
 											}`}
 										>
 											<div
-												className={`max-w-[70%] rounded-lg p-3 ${
+												className={`max-w-[70%] rounded-lg p-2 ${
 													message.user_id === user.username
 														? 'bg-primary text-primary-foreground'
 														: 'bg-muted'
@@ -429,7 +429,7 @@ export function ChatManagement() {
 						</ScrollArea>
 
 						{/* Message Input */}
-						<div className="p-4 border-t">
+						<div className="p-3 border-t">
 							<div className="flex gap-2">
 								<Input
 									placeholder="Escribe un mensaje..."

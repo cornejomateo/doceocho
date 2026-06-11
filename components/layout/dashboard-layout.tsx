@@ -230,7 +230,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 				</div>
 			</aside>
 
-			<div className="lg:pl-64">
+			<div className={cn('lg:pl-64', pathname === '/chat' ? 'flex h-screen flex-col' : '')}>
 				<header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:px-6">
 					<Button
 						variant="ghost"
@@ -248,7 +248,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 					</div>
 				</header>
 
-				<main className="p-4 lg:p-6">{children}</main>
+				<main className={cn('p-4 lg:p-6', pathname === '/chat' ? 'flex-1 overflow-hidden' : '')}>
+					{children}
+				</main>
 			</div>
 		</div>
 	);
