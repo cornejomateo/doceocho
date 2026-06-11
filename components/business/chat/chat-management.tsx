@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Plus, Users, MessageSquare, LogOut, Trash2, Search, X } from 'lucide-react';
 import { useAuth } from '@/components/provider/auth-provider';
 import { getUserChannelsAction, deleteChannelAction } from '@/actions/chat/channels';
-import { sendMessageAction, getMessagesAction } from '@/actions/chat/messages';
+import { sendMessageAction, getMessagesAction, deleteMessageAction } from '@/actions/chat/messages';
 import { getChannelMembersAction } from '@/actions/chat/channel-members';
 import { ChannelWithLastMessage, MessageWithUser } from '@/types/chat';
 import { CreateChannelDialog } from './create-channel-dialog';
@@ -109,6 +109,19 @@ export function ChatManagement() {
 	const handleChannelCreated = () => {
 		loadChannels();
 		setShowCreateDialog(false);
+	};
+
+	const handleDeleteMessage = async (messageId: number) => {
+		if (!user) return;
+
+		if (!confirm('¿Estás seguro de que quieres eliminar este mensaje?')) {
+			return;
+		}
+
+		const result = await deleteMessageAction(messageId, user.username);
+		if (result.success) {
+			await loadMessages(selectedChannel!.id);
+		}
 	};
 
 	const handleDeleteChannel = async (channelId: number, channelName: string) => {
@@ -279,13 +292,29 @@ export function ChatManagement() {
 														{message.users?.username || 'Usuario'}
 													</div>
 												)}
-												<div className="text-sm">{message.content}</div>
-												<div className="text-xs mt-1 opacity-70">
-													{new Date(message.created_at).toLocaleTimeString('es-AR', {
-														hour: '2-digit',
-														minute: '2-digit',
-													})}
-													{message.edited_at && ' (editado)'}
+												{message.is_deleted ? (
+													<div className="text-sm italic opacity-70">
+														Este mensaje fue eliminado
+													</div>
+												) : (
+													<div className="text-sm">{message.content}</div>
+												)}
+												<div className="text-xs mt-1 opacity-70 flex items-center justify-between gap-2">
+													<span>
+														{new Date(message.created_at).toLocaleTimeString('es-AR', {
+															hour: '2-digit',
+															minute: '2-digit',
+														})}
+														{message.edited_at && ' (editado)'}
+													</span>
+													{message.user_id === user.username && !message.is_deleted && (
+														<button
+															onClick={() => handleDeleteMessage(message.id)}
+															className="hover:opacity-100 opacity-50"
+														>
+															<Trash2 className="h-3 w-3" />
+														</button>
+													)}
 												</div>
 											</div>
 										</div>

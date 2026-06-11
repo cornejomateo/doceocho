@@ -5,6 +5,7 @@ import {
 	updateMessage,
 	deleteMessage,
 	getMessagesByChannel,
+	getMessageById,
 } from '@/lib/chat/messages';
 import { getUser } from '@/lib/users/users';
 import { isUserInChannel } from '@/lib/chat/channel-members';
@@ -43,6 +44,7 @@ export async function sendMessageAction(
 			user_id: userResult.data.username,
 			edited_at: null,
 			deleted_at: null,
+			is_deleted: false,
 		});
 
 		if (result.error) {
@@ -99,6 +101,20 @@ export async function deleteMessageAction(
 		const userResult = await getUser(currentUsername);
 		if (!userResult.data) {
 			return { success: false, error: 'Usuario no encontrado' };
+		}
+
+		// Get message to check ownership
+		const messageResult = await getMessageById(messageId);
+		if (messageResult.error || !messageResult.data) {
+			return { success: false, error: 'Mensaje no encontrado' };
+		}
+
+		// Check if user is the message owner or admin
+		const isOwner = messageResult.data.user_id === userResult.data.username;
+		const isAdmin = userResult.data.role === 'Admin';
+
+		if (!isOwner && !isAdmin) {
+			return { success: false, error: 'No tienes permiso para eliminar este mensaje' };
 		}
 
 		// Soft delete message
