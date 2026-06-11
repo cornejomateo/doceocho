@@ -19,6 +19,7 @@ import {
 	Lock,
 	AlertCircle,
 	DollarSign,
+	MessageSquare,
 } from 'lucide-react';
 
 import {
@@ -47,6 +48,7 @@ const navigation = [
 	{ name: 'Reportes de Presupuestos', href: '/budgets', icon: FileText, disabled: false },
 	{ name: 'Reportes', href: '/reports', icon: BarChart3, disabled: false },
 	{ name: 'Flujo de Fondos', href: '/cash-flow', icon: DollarSign, disabled: false },
+	{ name: 'Chat', href: '/chat', icon: MessageSquare, disabled: false },
 ] as const;
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -57,8 +59,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 	const allowedByRole = useMemo(() => {
 		return {
-			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos'],
-			Taller: ['Insumos', 'Clientes', 'Calendario'],
+			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos', 'Chat'],
+			Taller: ['Insumos', 'Clientes', 'Calendario', 'Chat'],
 		} as Record<UserRole, string[]>;
 	}, []);
 

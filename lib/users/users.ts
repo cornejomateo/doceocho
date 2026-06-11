@@ -24,3 +24,12 @@ export async function getUser(username: string): Promise<{ data: User | null; er
 
 	return { data, error: null };
 }
+
+export async function listUsers(): Promise<{ data: User[] | null; error: any }> {
+	const supabase = getSupabaseClient();
+	const { data, error } = await supabase
+		.from('users')
+		.select('*')
+		.order('username', { ascending: true });
+	return { data, error };
+}
