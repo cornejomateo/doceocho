@@ -29,12 +29,12 @@ import { getChannelMembersAction } from '@/actions/chat/channel-members';
 import { ChannelWithLastMessage, MessageWithUser } from '@/types/chat';
 import { CreateChannelDialog } from './create-channel-dialog';
 import { ChannelMembersDialog } from './channel-members-dialog';
+import { useChatRealtime } from '@/hooks/chat/use-chat-realtime';
 
 export function ChatManagement() {
 	const { user } = useAuth();
 	const [channels, setChannels] = useState<ChannelWithLastMessage[]>([]);
 	const [selectedChannel, setSelectedChannel] = useState<ChannelWithLastMessage | null>(null);
-	const [messages, setMessages] = useState<MessageWithUser[]>([]);
 	const [newMessage, setNewMessage] = useState('');
 	const [loading, setLoading] = useState(true);
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -46,6 +46,8 @@ export function ChatManagement() {
 		null
 	);
 	const [showSidebar, setShowSidebar] = useState(true);
+
+	const { messages, loading: messagesLoading } = useChatRealtime(selectedChannel?.id || null);
 
 	const filteredMessages = searchTerm
 		? messages.filter(
@@ -61,12 +63,6 @@ export function ChatManagement() {
 		}
 	}, [user]);
 
-	useEffect(() => {
-		if (selectedChannel && user) {
-			loadMessages(selectedChannel.id);
-		}
-	}, [selectedChannel, user]);
-
 	const loadChannels = async () => {
 		if (!user) return;
 		setLoading(true);
@@ -75,14 +71,6 @@ export function ChatManagement() {
 			setChannels(result.data);
 		}
 		setLoading(false);
-	};
-
-	const loadMessages = async (channelId: number) => {
-		if (!user) return;
-		const result = await getMessagesAction(channelId, user.username);
-		if (result.success && result.data) {
-			setMessages(result.data);
-		}
 	};
 
 	const loadMembers = async (channelId: number) => {
@@ -99,7 +87,6 @@ export function ChatManagement() {
 		const result = await sendMessageAction(selectedChannel.id, newMessage, user.username);
 		if (result.success) {
 			setNewMessage('');
-			await loadMessages(selectedChannel.id);
 		}
 	};
 
@@ -140,9 +127,6 @@ export function ChatManagement() {
 		}
 
 		const result = await deleteMessageAction(messageId, user.username);
-		if (result.success) {
-			await loadMessages(selectedChannel!.id);
-		}
 	};
 
 	const handleEditMessage = async (messageId: number, newContent: string) => {
@@ -151,7 +135,6 @@ export function ChatManagement() {
 		const result = await editMessageAction(messageId, newContent, user.username);
 		if (result.success) {
 			setEditingMessage(null);
-			await loadMessages(selectedChannel!.id);
 		}
 	};
 
@@ -170,7 +153,6 @@ export function ChatManagement() {
 		if (result.success) {
 			if (selectedChannel?.id === channelId) {
 				setSelectedChannel(null);
-				setMessages([]);
 			}
 			loadChannels();
 		} else {

@@ -2,15 +2,18 @@ import { getSupabaseClient } from '@/lib/supabase-client';
 import { useEffect, useState, useCallback } from 'react';
 import { MessageWithUser } from '@/types/chat';
 import { getMessagesByChannel } from '@/lib/chat/messages';
+import { getMessagesAction } from '@/actions/chat/messages';
+import { useAuth } from '@/components/provider/auth-provider';
 
 export function useChatRealtime(channelId: number | null) {
+	const { user } = useAuth();
 	const [messages, setMessages] = useState<MessageWithUser[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const supabase = getSupabaseClient();
 
 	const fetchMessages = useCallback(async () => {
-		if (!channelId) {
+		if (!channelId || !user) {
 			setMessages([]);
 			setLoading(false);
 			return;
@@ -20,9 +23,9 @@ export function useChatRealtime(channelId: number | null) {
 		setError(null);
 
 		try {
-			const result = await getMessagesByChannel(channelId);
+			const result = await getMessagesAction(channelId, user.username);
 			if (result.error) {
-				setError(result.error.message || 'Error al cargar mensajes');
+				setError(result.error || 'Error al cargar mensajes');
 			} else if (result.data) {
 				setMessages(result.data);
 			}
@@ -31,7 +34,7 @@ export function useChatRealtime(channelId: number | null) {
 		} finally {
 			setLoading(false);
 		}
-	}, [channelId]);
+	}, [channelId, user]);
 
 	useEffect(() => {
 		fetchMessages();
@@ -81,7 +84,9 @@ export function useChatRealtime(channelId: number | null) {
 					}
 				}
 			)
-			.subscribe();
+			.subscribe((status) => {
+				console.log('Realtime subscription status:', status);
+			});
 
 		return () => {
 			supabase.removeChannel(channel);
