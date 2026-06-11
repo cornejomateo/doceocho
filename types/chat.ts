@@ -37,4 +37,5 @@ export type ChannelWithLastMessage = Channel & {
 	last_message?: string;
 	last_message_at?: string;
 	member_count?: number;
+	unread_count?: number;
 };

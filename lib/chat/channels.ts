@@ -65,8 +65,43 @@ export async function getChannelsForUser(userId: string): Promise<{
 		return { data: null, error };
 	}
 
+	// Get all messages for user's channels
+	const channelIds = data.map((item: any) => item.channels.id);
+	const { data: allMessages, error: messagesError } = await supabase
+		.from('messages')
+		.select('id, channel_id')
+		.in('channel_id', channelIds)
+		.is('deleted_at', null);
+
+	if (messagesError) {
+		return { data: null, error: messagesError };
+	}
+
+	// Get read message IDs for this user
+	const { data: readMessages, error: readError } = await supabase
+		.from('message_reads')
+		.select('message_id')
+		.eq('user_id', userId);
+
+	if (readError) {
+		return { data: null, error: readError };
+	}
+
+	const readMessageIds = new Set(readMessages?.map((m: any) => m.message_id) || []);
+
+	// Count unread messages per channel
+	const unreadCounts: Record<number, number> = {};
+	if (allMessages) {
+		allMessages.forEach((msg: any) => {
+			if (!readMessageIds.has(msg.id)) {
+				unreadCounts[msg.channel_id] = (unreadCounts[msg.channel_id] || 0) + 1;
+			}
+		});
+	}
+
 	const channels = data.map((item: any) => ({
 		...item.channels,
+		unread_count: unreadCounts[item.channels.id] || 0,
 	}));
 
 	return { data: channels, error: null };

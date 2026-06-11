@@ -75,6 +75,13 @@ export function ChatManagement() {
 
 	const handleChannelSelect = async (channel: ChannelWithLastMessage) => {
 		setSelectedChannel(channel);
+		// Mark messages as read when selecting channel
+		if (user) {
+			const { markChannelMessagesAsRead } = await import('@/lib/chat/message-reads');
+			await markChannelMessagesAsRead(channel.id, user.username);
+			// Reload channels to update unread counts
+			loadChannels();
+		}
 	};
 
 	const handleCreateChannel = () => {
@@ -152,7 +159,14 @@ export function ChatManagement() {
 									}`}
 								>
 									<button onClick={() => handleChannelSelect(channel)} className="flex-1 text-left">
-										<div className="font-medium">{channel.name || 'Sin nombre'}</div>
+										<div className="flex items-center justify-between">
+											<div className="font-medium">{channel.name || 'Sin nombre'}</div>
+											{channel.unread_count && channel.unread_count > 0 && (
+												<div className="bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+													{channel.unread_count > 99 ? '99+' : channel.unread_count}
+												</div>
+											)}
+										</div>
 										{channel.description && (
 											<div className="text-xs opacity-70 mt-1">{channel.description}</div>
 										)}

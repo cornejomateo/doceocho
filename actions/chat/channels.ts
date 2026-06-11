@@ -8,6 +8,7 @@ import {
 	getChannelsForUser,
 } from '@/lib/chat/channels';
 import { addChannelMember, isUserInChannel } from '@/lib/chat/channel-members';
+import { markChannelMessagesAsRead } from '@/lib/chat/message-reads';
 import { getUser } from '@/lib/users/users';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { UserRole } from '@/constants/users/user-role';
@@ -156,6 +157,9 @@ export async function getChannelByIdAction(
 		if (!isMemberResult.data && !isAdmin) {
 			return { success: false, error: 'No tienes acceso a este canal' };
 		}
+
+		// Mark messages as read when user opens channel
+		await markChannelMessagesAsRead(channelId, userResult.data.username);
 
 		return { success: true, data: channelResult.data, isMember: isMemberResult.data };
 	} catch (error: any) {

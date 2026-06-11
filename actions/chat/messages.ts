@@ -8,6 +8,7 @@ import {
 } from '@/lib/chat/messages';
 import { getUser } from '@/lib/users/users';
 import { isUserInChannel } from '@/lib/chat/channel-members';
+import { markMessageAsRead } from '@/lib/chat/message-reads';
 import { Message } from '@/types/chat';
 
 export async function sendMessageAction(
@@ -46,6 +47,11 @@ export async function sendMessageAction(
 
 		if (result.error) {
 			return { success: false, error: result.error.message || 'Error al enviar el mensaje' };
+		}
+
+		// Mark message as read for the sender
+		if (result.data) {
+			await markMessageAsRead(result.data.id, userResult.data.username);
 		}
 
 		return { success: true, data: result.data || undefined };
