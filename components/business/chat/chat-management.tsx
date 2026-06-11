@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Plus, Users, MessageSquare, LogOut, Trash2 } from 'lucide-react';
+import { Send, Plus, Users, MessageSquare, LogOut, Trash2, Search, X } from 'lucide-react';
 import { useAuth } from '@/components/provider/auth-provider';
 import { getUserChannelsAction, deleteChannelAction } from '@/actions/chat/channels';
 import { sendMessageAction, getMessagesAction } from '@/actions/chat/messages';
@@ -24,6 +24,16 @@ export function ChatManagement() {
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showMembersDialog, setShowMembersDialog] = useState(false);
 	const [members, setMembers] = useState<any[]>([]);
+	const [searchTerm, setSearchTerm] = useState('');
+	const [showSearch, setShowSearch] = useState(false);
+
+	const filteredMessages = searchTerm
+		? messages.filter(
+				(msg) =>
+					msg.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+					msg.users?.username?.toLowerCase().includes(searchTerm.toLowerCase())
+			)
+		: messages;
 
 	useEffect(() => {
 		if (user) {
@@ -75,6 +85,7 @@ export function ChatManagement() {
 
 	const handleChannelSelect = async (channel: ChannelWithLastMessage) => {
 		setSelectedChannel(channel);
+		setSearchTerm(''); // Clear search when changing channel
 		// Mark messages as read when selecting channel
 		if (user) {
 			const { markChannelMessagesAsRead } = await import('@/lib/chat/message-reads');
@@ -196,29 +207,60 @@ export function ChatManagement() {
 				{selectedChannel ? (
 					<>
 						{/* Chat Header */}
-						<div className="p-4 border-b flex items-center justify-between">
-							<div>
-								<h2 className="text-lg font-semibold">{selectedChannel.name || 'Sin nombre'}</h2>
-								{selectedChannel.description && (
-									<p className="text-sm text-muted-foreground">{selectedChannel.description}</p>
-								)}
-							</div>
-							<Button size="sm" variant="outline" onClick={handleShowMembers}>
-								<Users className="h-4 w-4 mr-2" />
-								Miembros
-							</Button>
+						<div className="p-4 border-b">
+							{showSearch ? (
+								<div className="flex items-center gap-2">
+									<Input
+										placeholder="Buscar mensajes..."
+										value={searchTerm}
+										onChange={(e) => setSearchTerm(e.target.value)}
+										autoFocus
+										className="flex-1"
+									/>
+									<Button size="sm" variant="ghost" onClick={() => setShowSearch(false)}>
+										<X className="h-4 w-4" />
+									</Button>
+								</div>
+							) : (
+								<div className="flex items-center justify-between">
+									<div>
+										<h2 className="text-lg font-semibold">
+											{selectedChannel.name || 'Sin nombre'}
+										</h2>
+										{selectedChannel.description && (
+											<p className="text-sm text-muted-foreground">{selectedChannel.description}</p>
+										)}
+									</div>
+									<div className="flex items-center gap-2">
+										<Button size="sm" variant="outline" onClick={() => setShowSearch(true)}>
+											<Search className="h-4 w-4" />
+										</Button>
+										<Button size="sm" variant="outline" onClick={handleShowMembers}>
+											<Users className="h-4 w-4 mr-2" />
+											Miembros
+										</Button>
+									</div>
+								</div>
+							)}
 						</div>
 
 						{/* Messages */}
 						<ScrollArea className="flex-1 p-4 min-h-0">
 							<div className="space-y-4">
-								{messages.length === 0 ? (
-									<div className="text-center text-muted-foreground py-8">
-										<MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-										<p>No hay mensajes en este canal</p>
-									</div>
+								{filteredMessages.length === 0 ? (
+									searchTerm ? (
+										<div className="text-center text-muted-foreground py-8">
+											<Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
+											<p>No se encontraron mensajes que coincidan con "{searchTerm}"</p>
+										</div>
+									) : (
+										<div className="text-center text-muted-foreground py-8">
+											<MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+											<p>No hay mensajes en este canal</p>
+										</div>
+									)
 								) : (
-									messages.map((message) => (
+									filteredMessages.map((message) => (
 										<div
 											key={message.id}
 											className={`flex ${
@@ -248,6 +290,12 @@ export function ChatManagement() {
 											</div>
 										</div>
 									))
+								)}
+								{searchTerm && filteredMessages.length > 0 && (
+									<div className="text-center text-sm text-muted-foreground py-2">
+										{filteredMessages.length}{' '}
+										{filteredMessages.length === 1 ? 'mensaje encontrado' : 'mensajes encontrados'}
+									</div>
 								)}
 							</div>
 						</ScrollArea>
