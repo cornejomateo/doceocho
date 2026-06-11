@@ -61,6 +61,3 @@ ON UPDATE CASCADE ON DELETE CASCADE;
 
 -- Disable RLS on message_reads (security handled in server actions)
 ALTER TABLE public.message_reads DISABLE ROW LEVEL SECURITY;
-
--- Add is_deleted column to messages table for soft delete
-ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS is_deleted boolean DEFAULT false;

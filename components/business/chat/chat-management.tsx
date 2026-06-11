@@ -310,7 +310,7 @@ export function ChatManagement() {
 														{message.users?.username || 'Usuario'}
 													</div>
 												)}
-												{message.is_deleted ? (
+												{message.deleted_at ? (
 													<div className="text-sm italic opacity-70">
 														Este mensaje fue eliminado
 													</div>
@@ -357,7 +357,7 @@ export function ChatManagement() {
 														})}
 														{message.edited_at && ' (editado)'}
 													</span>
-													{message.user_id === user.username && !message.is_deleted && (
+													{message.user_id === user.username && !message.deleted_at && (
 														<div className="flex gap-1">
 															<button
 																onClick={() =>

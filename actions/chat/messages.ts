@@ -44,7 +44,6 @@ export async function sendMessageAction(
 			user_id: userResult.data.username,
 			edited_at: null,
 			deleted_at: null,
-			is_deleted: false,
 		});
 
 		if (result.error) {

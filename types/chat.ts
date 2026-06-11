@@ -20,7 +20,6 @@ export type Message = {
 	deleted_at: string | null;
 	user_id: string;
 	channel_id: number;
-	is_deleted: boolean;
 };
 
 export type MessageWithUser = Message & {

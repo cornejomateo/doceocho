@@ -20,7 +20,6 @@ export async function getMessagesByChannel(
 		`
 		)
 		.eq('channel_id', channelId)
-		.is('deleted_at', null)
 		.order('created_at', { ascending: false })
 		.limit(limit);
 
@@ -76,7 +75,7 @@ export async function updateMessage(
 export async function deleteMessage(id: number): Promise<{ data: Message | null; error: any }> {
 	const supabase = getSupabaseClient();
 	const payload = {
-		is_deleted: true,
+		deleted_at: new Date().toISOString(),
 	};
 	const { data, error } = await supabase.from(TABLE).update(payload).eq('id', id).select().single();
 	return { data, error };
