@@ -3,9 +3,6 @@ import webpush from 'web-push';
 // Generate VAPID keys (run this once and save to environment variables)
 export function generateVapidKeys() {
 	const vapidKeys = webpush.generateVAPIDKeys();
-	console.log('VAPID Keys generated:');
-	console.log('Public Key:', vapidKeys.publicKey);
-	console.log('Private Key:', vapidKeys.privateKey);
 	return vapidKeys;
 }
 
