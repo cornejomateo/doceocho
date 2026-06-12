@@ -12,7 +12,10 @@ export async function sendPushNotificationToChannel(
 ) {
 	try {
 		// Configure web-push
-		configureWebPush();
+		const configured = configureWebPush();
+		if (!configured) {
+			return { success: false, error: 'VAPID keys are not configured', sentCount: 0 };
+		}
 
 		// Get all push subscriptions for channel members (excluding sender)
 		const { data: subscriptions, error } = await getChannelPushSubscriptions(
@@ -20,7 +23,10 @@ export async function sendPushNotificationToChannel(
 			senderUsername
 		);
 
-		if (error || !subscriptions || subscriptions.length === 0) {
+		if (error) {
+			return { success: false, error, sentCount: 0 };
+		}
+		if (!subscriptions || subscriptions.length === 0) {
 			return { success: true, sentCount: 0 };
 		}
 
