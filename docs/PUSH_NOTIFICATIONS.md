@@ -245,8 +245,8 @@ npx tsx scripts/generate-vapid-keys.ts
 En Vercel → Settings → Environment Variables:
 
 ```
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=BCeNC5d4Pf6GL5Zfzv3sUII0WEDO8AkOLLFSlZyZ1ISLKhEai3boAJ-AYdKb-nEzXupy6ak_FVB8pPhTFPPLlnE
-VAPID_PRIVATE_KEY=k6qawgUGqXgntibCJqqTH4pRvnrSRGJh91gBWCORiuY
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=[tu_clave_publica_aqui]
+VAPID_PRIVATE_KEY=[tu_clave_privada_aqui]
 ```
 
 ### 3. Ejecutar SQL en Supabase

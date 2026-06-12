@@ -14,8 +14,10 @@ export function usePushNotifications() {
 
 	// Check if push notifications are supported
 	useEffect(() => {
-		setIsSupported('serviceWorker' in navigator && 'PushManager' in window);
-		setPermission(Notification.permission);
+		const supported =
+			'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+		setIsSupported(supported);
+		setPermission(supported ? Notification.permission : 'default');
 	}, []);
 
 	// Request notification permission
