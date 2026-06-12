@@ -126,7 +126,10 @@ export function usePushNotifications() {
 
 		try {
 			// Delete from database
-			await deletePushSubscription(user.username, subscription.endpoint);
+			const deleteResult = await deletePushSubscription(user.username, subscription.endpoint);
+			if (!deleteResult.success) {
+				return { success: false, error: deleteResult.error || 'Failed to delete subscription' };
+			}
 
 			// Unsubscribe from push
 			const registration = await navigator.serviceWorker.getRegistration();
