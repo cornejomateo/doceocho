@@ -64,8 +64,13 @@ export function usePushNotifications() {
 
 			console.log('VAPID public key configured:', vapidPublicKey.substring(0, 20) + '...');
 
+			// Convert base64 URL-safe to standard base64
+			const base64Key = vapidPublicKey.replace(/-/g, '+').replace(/_/g, '/');
+			// Add padding if needed
+			const paddedKey = base64Key.padEnd(Math.ceil(base64Key.length / 4) * 4, '=');
+
 			// Convert base64 to Uint8Array
-			const applicationServerKey = Uint8Array.from(atob(vapidPublicKey), (c) => c.charCodeAt(0));
+			const applicationServerKey = Uint8Array.from(atob(paddedKey), (c) => c.charCodeAt(0));
 
 			// Subscribe to push
 			const pushSubscription = await registration.pushManager.subscribe({
