@@ -36,9 +36,16 @@ export function usePushNotifications() {
 
 	// Subscribe to push notifications
 	const subscribe = useCallback(async () => {
-		if (!isSupported || !user || permission !== 'granted') {
-			console.error('Subscribe failed:', { isSupported, hasUser: !!user, permission });
-			return { success: false, error: 'Not supported or permission not granted' };
+		if (!isSupported || !user) {
+			console.error('Subscribe failed:', { isSupported, hasUser: !!user });
+			return { success: false, error: 'Not supported or user not logged in' };
+		}
+
+		// Check current permission directly instead of relying on state
+		const currentPermission = Notification.permission;
+		if (currentPermission !== 'granted') {
+			console.error('Subscribe failed: permission not granted', currentPermission);
+			return { success: false, error: `Permission not granted: ${currentPermission}` };
 		}
 
 		try {
@@ -96,7 +103,7 @@ export function usePushNotifications() {
 			console.error('Error subscribing to push:', error);
 			return { success: false, error: error.message };
 		}
-	}, [isSupported, user, permission]);
+	}, [isSupported, user]);
 
 	// Unsubscribe from push notifications
 	const unsubscribe = useCallback(async () => {
