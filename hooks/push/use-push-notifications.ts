@@ -75,10 +75,13 @@ export function usePushNotifications() {
 			const applicationServerKey = Uint8Array.from(atob(paddedKey), (c) => c.charCodeAt(0));
 
 			// Subscribe to push
-			const pushSubscription = await registration.pushManager.subscribe({
-				userVisibleOnly: true,
-				applicationServerKey,
-			});
+			const existing = await registration.pushManager.getSubscription();
+			const pushSubscription =
+				existing ??
+				(await registration.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey,
+				}));
 
 			console.log('Push subscription created:', pushSubscription);
 
