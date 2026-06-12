@@ -82,18 +82,18 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
 	event.notification.close();
 
-	if (event.action === 'open') {
+	if (event.action === 'open' || event.action === '') {
 		event.waitUntil(
 			self.clients.matchAll({ type: 'window' }).then((clientList) => {
-				// If a window is already open, focus it
+				const targetUrl = new URL('/', self.location.origin).href;
 				for (const client of clientList) {
-					if (client.url === '/' && 'focus' in client) {
+					if (client.url.startsWith(self.location.origin) && 'focus' in client) {
 						return client.focus();
 					}
 				}
 				// Otherwise, open a new window
 				if (clients.openWindow) {
-					return clients.openWindow('/');
+					return clients.openWindow(targetUrl);
 				}
 			})
 		);
