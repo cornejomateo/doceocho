@@ -37,19 +37,36 @@ export function usePushNotifications() {
 	// Subscribe to push notifications
 	const subscribe = useCallback(async () => {
 		if (!isSupported || !user || permission !== 'granted') {
+			console.error('Subscribe failed:', { isSupported, hasUser: !!user, permission });
 			return { success: false, error: 'Not supported or permission not granted' };
 		}
 
 		try {
+			console.log('Starting subscription process...');
+
 			// Register service worker
 			const registration = await navigator.serviceWorker.register('/sw.js');
 			console.log('Service Worker registered:', registration);
 
+			// Convert VAPID public key from base64 to Uint8Array
+			const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+			if (!vapidPublicKey) {
+				console.error('VAPID public key not configured');
+				return { success: false, error: 'VAPID public key not configured' };
+			}
+
+			console.log('VAPID public key configured:', vapidPublicKey.substring(0, 20) + '...');
+
+			// Convert base64 to Uint8Array
+			const applicationServerKey = Uint8Array.from(atob(vapidPublicKey), (c) => c.charCodeAt(0));
+
 			// Subscribe to push
 			const pushSubscription = await registration.pushManager.subscribe({
 				userVisibleOnly: true,
-				applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+				applicationServerKey,
 			});
+
+			console.log('Push subscription created:', pushSubscription);
 
 			const p256dh = pushSubscription.getKey('p256dh');
 			const auth = pushSubscription.getKey('auth');
@@ -62,8 +79,12 @@ export function usePushNotifications() {
 				},
 			};
 
+			console.log('Subscription data prepared:', subscriptionData);
+
 			// Save subscription to database
 			const result = await savePushSubscription(user.username, subscriptionData);
+
+			console.log('Save subscription result:', result);
 
 			if (result.success) {
 				setSubscription(subscriptionData);
