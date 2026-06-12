@@ -45,7 +45,14 @@ self.addEventListener('push', (event) => {
 		return;
 	}
 
-	const data = event.data.json();
+	let data;
+	try {
+		data = event.data.json();
+	} catch (e) {
+		// Fallback to text if JSON parsing fails
+		const text = event.data.text() || 'Nuevo mensaje';
+		data = { body: text, title: 'Notificación' };
+	}
 
 	const options = {
 		body: data.body || 'Nuevo mensaje',
