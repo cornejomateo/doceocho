@@ -6,6 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
+import {
 	Send,
 	Plus,
 	Users,
@@ -16,6 +24,7 @@ import {
 	X,
 	Edit2,
 	ArrowLeft,
+	Calendar,
 } from 'lucide-react';
 import { useAuth } from '@/components/provider/auth-provider';
 import { getUserChannelsAction, deleteChannelAction } from '@/actions/chat/channels';
@@ -24,12 +33,14 @@ import {
 	getMessagesAction,
 	deleteMessageAction,
 	editMessageAction,
+	cleanChannelMessagesAction,
 } from '@/actions/chat/messages';
 import { getChannelMembersAction } from '@/actions/chat/channel-members';
 import { ChannelWithLastMessage, MessageWithUser } from '@/types/chat';
 import { CreateChannelDialog } from './create-channel-dialog';
 import { ChannelMembersDialog } from './channel-members-dialog';
 import { useChatRealtime } from '@/hooks/chat/use-chat-realtime';
+import { getSupabaseClient } from '@/lib/supabase-client';
 
 export function ChatManagement() {
 	const { user } = useAuth();
@@ -46,6 +57,8 @@ export function ChatManagement() {
 		null
 	);
 	const [showSidebar, setShowSidebar] = useState(true);
+	const [showCleanupDialog, setShowCleanupDialog] = useState(false);
+	const [cleanupDate, setCleanupDate] = useState('');
 
 	const { messages, loading: messagesLoading } = useChatRealtime(selectedChannel?.id || null);
 
@@ -62,6 +75,49 @@ export function ChatManagement() {
 			loadChannels();
 		}
 	}, [user]);
+
+	// Realtime subscription for unread counts
+	useEffect(() => {
+		if (!user) return;
+
+		const supabase = getSupabaseClient();
+
+		// Subscribe to new messages to update unread counts
+		const messagesChannel = supabase
+			.channel('channels-unread')
+			.on(
+				'postgres_changes',
+				{
+					event: 'INSERT',
+					schema: 'public',
+					table: 'messages',
+				},
+				async (payload) => {
+					const newMessage = payload.new as any;
+					// Only reload channels if the message is not in the currently selected channel
+					if (selectedChannel?.id !== newMessage.channel_id) {
+						loadChannels();
+					}
+				}
+			)
+			.on(
+				'postgres_changes',
+				{
+					event: 'INSERT',
+					schema: 'public',
+					table: 'message_reads',
+				},
+				async () => {
+					// Reload channels when messages are marked as read
+					loadChannels();
+				}
+			)
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(messagesChannel);
+		};
+	}, [user, selectedChannel?.id]);
 
 	const loadChannels = async () => {
 		if (!user) return;
@@ -157,6 +213,29 @@ export function ChatManagement() {
 			loadChannels();
 		} else {
 			alert(result.error || 'Error al eliminar el canal');
+		}
+	};
+
+	const handleCleanupMessages = async () => {
+		if (!selectedChannel || !user || !cleanupDate) return;
+
+		if (
+			!confirm(
+				`¿Estás seguro de que quieres eliminar todos los mensajes anteriores a ${new Date(
+					cleanupDate
+				).toLocaleDateString()}? Esta acción no se puede deshacer.`
+			)
+		) {
+			return;
+		}
+
+		const result = await cleanChannelMessagesAction(selectedChannel.id, cleanupDate, user.username);
+		if (result.success) {
+			alert(`Se eliminaron ${result.deletedCount || 0} mensajes del canal.`);
+			setShowCleanupDialog(false);
+			setCleanupDate('');
+		} else {
+			alert(result.error || 'Error al limpiar mensajes del canal');
 		}
 	};
 
@@ -284,6 +363,16 @@ export function ChatManagement() {
 										<Button size="sm" variant="outline" onClick={() => setShowSearch(true)}>
 											<Search className="h-4 w-4" />
 										</Button>
+										{user.role === 'Admin' && (
+											<Button
+												size="sm"
+												variant="outline"
+												onClick={() => setShowCleanupDialog(true)}
+											>
+												<Calendar className="h-4 w-4 mr-2" />
+												Limpiar
+											</Button>
+										)}
 										<Button size="sm" variant="outline" onClick={handleShowMembers}>
 											<Users className="h-4 w-4 mr-2" />
 											Miembros
@@ -460,6 +549,35 @@ export function ChatManagement() {
 					currentUserRole={user.role}
 				/>
 			)}
+
+			{/* Cleanup Messages Dialog */}
+			<Dialog open={showCleanupDialog} onOpenChange={setShowCleanupDialog}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Limpiar mensajes del canal</DialogTitle>
+						<DialogDescription>
+							Selecciona una fecha. Se eliminarán todos los mensajes anteriores a esa fecha. Esta
+							acción no se puede deshacer.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="py-4">
+						<Input
+							type="date"
+							value={cleanupDate}
+							onChange={(e) => setCleanupDate(e.target.value)}
+							className="w-full"
+						/>
+					</div>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setShowCleanupDialog(false)}>
+							Cancelar
+						</Button>
+						<Button onClick={handleCleanupMessages} disabled={!cleanupDate}>
+							Limpiar mensajes
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

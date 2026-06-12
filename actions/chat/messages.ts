@@ -6,11 +6,13 @@ import {
 	deleteMessage,
 	getMessagesByChannel,
 	getMessageById,
+	hardDeleteMessage,
 } from '@/lib/chat/messages';
 import { getUser } from '@/lib/users/users';
 import { isUserInChannel } from '@/lib/chat/channel-members';
 import { markMessageAsRead } from '@/lib/chat/message-reads';
 import { Message } from '@/types/chat';
+import { getSupabaseClient } from '@/lib/supabase-client';
 
 export async function sendMessageAction(
 	channelId: number,
@@ -172,5 +174,60 @@ export async function getMessagesAction(
 		return { success: true, data: result.data || undefined };
 	} catch (error: any) {
 		return { success: false, error: error.message || 'Error al obtener los mensajes' };
+	}
+}
+
+export async function cleanChannelMessagesAction(
+	channelId: number,
+	cleanupDate: string,
+	currentUsername: string
+): Promise<{ success: boolean; error?: string; deletedCount?: number }> {
+	try {
+		// Get current user
+		const userResult = await getUser(currentUsername);
+		if (!userResult.data) {
+			return { success: false, error: 'Usuario no encontrado' };
+		}
+
+		// Only admin can clean channel messages
+		if (userResult.data.role !== 'Admin') {
+			return {
+				success: false,
+				error: 'Solo los administradores pueden limpiar mensajes del canal',
+			};
+		}
+
+		const supabase = getSupabaseClient();
+
+		// Get all messages before the cleanup date
+		const { data: messagesToDelete, error: fetchError } = await supabase
+			.from('messages')
+			.select('id')
+			.eq('channel_id', channelId)
+			.lt('created_at', cleanupDate);
+
+		if (fetchError) {
+			return { success: false, error: fetchError.message || 'Error al obtener mensajes' };
+		}
+
+		if (!messagesToDelete || messagesToDelete.length === 0) {
+			return { success: true, deletedCount: 0 };
+		}
+
+		const messageIds = messagesToDelete.map((m) => m.id);
+
+		// Delete message_reads for these messages
+		for (const messageId of messageIds) {
+			await supabase.from('message_reads').delete().eq('message_id', messageId);
+		}
+
+		// Hard delete the messages
+		for (const messageId of messageIds) {
+			await supabase.from('messages').delete().eq('id', messageId);
+		}
+
+		return { success: true, deletedCount: messageIds.length };
+	} catch (error: any) {
+		return { success: false, error: error.message || 'Error al limpiar mensajes del canal' };
 	}
 }
