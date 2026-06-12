@@ -87,12 +87,15 @@ export function usePushNotifications() {
 
 			const p256dh = pushSubscription.getKey('p256dh');
 			const auth = pushSubscription.getKey('auth');
+			if (!p256dh || !auth) {
+				return { success: false, error: 'Invalid push subscription keys' };
+			}
 
 			const subscriptionData: PushSubscription = {
 				endpoint: pushSubscription.endpoint,
 				keys: {
-					p256dh: p256dh ? btoa(String.fromCharCode(...new Uint8Array(p256dh))) : '',
-					auth: auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : '',
+					p256dh: btoa(String.fromCharCode(...new Uint8Array(p256dh))),
+					auth: btoa(String.fromCharCode(...new Uint8Array(auth))),
 				},
 			};
 
@@ -154,12 +157,15 @@ export function usePushNotifications() {
 					if (pushSubscription) {
 						const p256dh = pushSubscription.getKey('p256dh');
 						const auth = pushSubscription.getKey('auth');
+						if (!p256dh || !auth) {
+							return { success: false, error: 'Invalid push subscription keys' };
+						}
 
 						const subscriptionData: PushSubscription = {
 							endpoint: pushSubscription.endpoint,
 							keys: {
-								p256dh: p256dh ? btoa(String.fromCharCode(...new Uint8Array(p256dh))) : '',
-								auth: auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : '',
+								p256dh: btoa(String.fromCharCode(...new Uint8Array(p256dh))),
+								auth: btoa(String.fromCharCode(...new Uint8Array(auth))),
 							},
 						};
 						setSubscription(subscriptionData);
