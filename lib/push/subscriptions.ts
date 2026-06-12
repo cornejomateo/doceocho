@@ -1,0 +1,145 @@
+import { getSupabaseClient } from '@/lib/supabase-client';
+
+export interface PushSubscription {
+	endpoint: string;
+	keys: {
+		p256dh: string;
+		auth: string;
+	};
+}
+
+/**
+ * Save a push subscription for a user
+ */
+export async function savePushSubscription(
+	username: string,
+	subscription: PushSubscription
+): Promise<{ success: boolean; error?: string }> {
+	const supabase = getSupabaseClient();
+
+	try {
+		const { error } = await supabase.from('push_subscriptions').upsert({
+			user_id: username,
+			endpoint: subscription.endpoint,
+			p256dh: subscription.keys.p256dh,
+			auth: subscription.keys.auth,
+		});
+
+		if (error) {
+			return { success: false, error: error.message };
+		}
+
+		return { success: true };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+
+/**
+ * Get all push subscriptions for a user
+ */
+export async function getUserPushSubscriptions(
+	username: string
+): Promise<{ data: PushSubscription[] | null; error?: string }> {
+	const supabase = getSupabaseClient();
+
+	try {
+		const { data, error } = await supabase
+			.from('push_subscriptions')
+			.select('endpoint, p256dh, auth')
+			.eq('user_id', username);
+
+		if (error) {
+			return { data: null, error: error.message };
+		}
+
+		const subscriptions: PushSubscription[] = data.map((sub) => ({
+			endpoint: sub.endpoint,
+			keys: {
+				p256dh: sub.p256dh,
+				auth: sub.auth,
+			},
+		}));
+
+		return { data: subscriptions };
+	} catch (error: any) {
+		return { data: null, error: error.message };
+	}
+}
+
+/**
+ * Delete a push subscription
+ */
+export async function deletePushSubscription(
+	username: string,
+	endpoint: string
+): Promise<{ success: boolean; error?: string }> {
+	const supabase = getSupabaseClient();
+
+	try {
+		const { error } = await supabase
+			.from('push_subscriptions')
+			.delete()
+			.eq('user_id', username)
+			.eq('endpoint', endpoint);
+
+		if (error) {
+			return { success: false, error: error.message };
+		}
+
+		return { success: true };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+
+/**
+ * Get all push subscriptions for users in a channel (excluding sender)
+ */
+export async function getChannelPushSubscriptions(
+	channelId: number,
+	senderUsername: string
+): Promise<{ data: PushSubscription[] | null; error?: string }> {
+	const supabase = getSupabaseClient();
+
+	try {
+		// Get all users in the channel except the sender
+		const { data: members, error: membersError } = await supabase
+			.from('channel_members')
+			.select('user_id')
+			.eq('channel_id', channelId)
+			.neq('user_id', senderUsername);
+
+		if (membersError) {
+			return { data: null, error: membersError.message };
+		}
+
+		if (!members || members.length === 0) {
+			return { data: [] };
+		}
+
+		const userIds = members.map((m) => m.user_id);
+
+		// Get all push subscriptions for these users
+		const { data, error } = await supabase
+			.from('push_subscriptions')
+			.select('endpoint, p256dh, auth')
+			.in('user_id', userIds);
+
+		if (error) {
+			return { data: null, error: error.message };
+		}
+
+		const subscriptions: PushSubscription[] = data.map((sub) => ({
+			endpoint: sub.endpoint,
+			keys: {
+				p256dh: sub.p256dh,
+				auth: sub.auth,
+			},
+		}));
+
+		return { data: subscriptions };
+	} catch (error: any) {
+		return { data: null, error: error.message };
+	}
+}

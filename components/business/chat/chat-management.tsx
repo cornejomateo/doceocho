@@ -41,6 +41,7 @@ import { CreateChannelDialog } from './create-channel-dialog';
 import { ChannelMembersDialog } from './channel-members-dialog';
 import { useChatRealtime } from '@/hooks/chat/use-chat-realtime';
 import { getSupabaseClient } from '@/lib/supabase-client';
+import { usePushNotifications } from '@/hooks/push/use-push-notifications';
 
 export function ChatManagement() {
 	const { user } = useAuth();
@@ -61,6 +62,14 @@ export function ChatManagement() {
 	const [cleanupDate, setCleanupDate] = useState('');
 
 	const { messages, loading: messagesLoading } = useChatRealtime(selectedChannel?.id || null);
+	const {
+		isSupported: pushSupported,
+		permission: pushPermission,
+		subscription: pushSubscription,
+		requestPermission,
+		subscribe,
+		unsubscribe,
+	} = usePushNotifications();
 
 	const filteredMessages = searchTerm
 		? messages.filter(
@@ -261,6 +270,44 @@ export function ChatManagement() {
 							</Button>
 						)}
 					</div>
+					{pushSupported && (
+						<div className="mb-4 p-2 bg-muted rounded">
+							{pushPermission === 'default' && (
+								<Button
+									size="sm"
+									variant="outline"
+									className="w-full"
+									onClick={async () => {
+										const result = await requestPermission();
+										if (result.success) {
+											await subscribe();
+										}
+									}}
+								>
+									Habilitar notificaciones
+								</Button>
+							)}
+							{pushPermission === 'granted' && (
+								<div className="flex items-center justify-between">
+									<span className="text-xs text-muted-foreground">
+										{pushSubscription ? 'Notificaciones activadas' : 'Suscribir'}
+									</span>
+									{pushSubscription ? (
+										<Button size="sm" variant="ghost" onClick={unsubscribe} className="h-6 text-xs">
+											Desactivar
+										</Button>
+									) : (
+										<Button size="sm" variant="ghost" onClick={subscribe} className="h-6 text-xs">
+											Suscribir
+										</Button>
+									)}
+								</div>
+							)}
+							{pushPermission === 'denied' && (
+								<span className="text-xs text-destructive">Notificaciones bloqueadas</span>
+							)}
+						</div>
+					)}
 				</div>
 				<ScrollArea className="flex-1 h-0">
 					{loading ? (
