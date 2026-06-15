@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +61,8 @@ export function ChatManagement() {
 	const [showCleanupDialog, setShowCleanupDialog] = useState(false);
 	const [cleanupDate, setCleanupDate] = useState('');
 	const [sending, setSending] = useState(false);
+	const messagesScrollRef = useRef<HTMLDivElement>(null);
+	const [scrolledToUnread, setScrolledToUnread] = useState(false);
 
 	const { messages, loading: messagesLoading } = useChatRealtime(selectedChannel?.id || null);
 	const {
@@ -129,6 +131,67 @@ export function ChatManagement() {
 		};
 	}, [user, selectedChannel?.id]);
 
+	// Smart scroll to first unread message or bottom when channel is opened
+	useEffect(() => {
+		if (!selectedChannel || !user || messagesLoading || scrolledToUnread || messages.length === 0) {
+			return;
+		}
+
+		const scrollToUnreadOrBottom = async () => {
+			try {
+				// Get read message IDs for current user
+				const { data: readMessages } = await getSupabaseClient()
+					.from('message_reads')
+					.select('message_id')
+					.eq('user_id', user.username)
+					.in(
+						'message_id',
+						messages.map((m) => m.id)
+					);
+
+				const readMessageIds = new Set(readMessages?.map((m: any) => m.message_id) || []);
+
+				// Find first unread message
+				const firstUnreadMessage = messages.find((msg) => !readMessageIds.has(msg.id));
+
+				// Scroll to first unread message or bottom
+				setTimeout(() => {
+					const scrollArea = messagesScrollRef.current?.querySelector(
+						'[data-radix-scroll-area-viewport]'
+					);
+					if (scrollArea) {
+						if (firstUnreadMessage) {
+							// Find the message element and scroll to it
+							const messageElements = scrollArea.querySelectorAll('[data-message-id]');
+							const targetElement = Array.from(messageElements).find(
+								(el) => el.getAttribute('data-message-id') === String(firstUnreadMessage.id)
+							);
+							if (targetElement) {
+								targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+							}
+						} else {
+							// Scroll to bottom
+							scrollArea.scrollTop = scrollArea.scrollHeight;
+						}
+					}
+				}, 100);
+
+				// Mark messages as read after scrolling
+				if (selectedChannel) {
+					const { markChannelMessagesAsRead } = await import('@/lib/chat/message-reads');
+					await markChannelMessagesAsRead(selectedChannel.id, user.username);
+					loadChannels(); // Update unread counts
+				}
+
+				setScrolledToUnread(true);
+			} catch (error) {
+				console.error('Error scrolling to unread messages:', error);
+			}
+		};
+
+		scrollToUnreadOrBottom();
+	}, [selectedChannel, messages, messagesLoading, scrolledToUnread, user]);
+
 	const loadChannels = async () => {
 		if (!user) return;
 		setLoading(true);
@@ -165,13 +228,7 @@ export function ChatManagement() {
 		setSelectedChannel(channel);
 		setSearchTerm(''); // Clear search when changing channel
 		setShowSidebar(false); // Close sidebar on mobile after selecting channel
-		// Mark messages as read when selecting channel
-		if (user) {
-			const { markChannelMessagesAsRead } = await import('@/lib/chat/message-reads');
-			await markChannelMessagesAsRead(channel.id, user.username);
-			// Reload channels to update unread counts
-			loadChannels();
-		}
+		setScrolledToUnread(false); // Reset scroll state when changing channel
 	};
 
 	const handleCreateChannel = () => {
@@ -436,7 +493,7 @@ export function ChatManagement() {
 						</div>
 
 						{/* Messages */}
-						<ScrollArea className="flex-1 p-3 min-h-0 h-0">
+						<ScrollArea ref={messagesScrollRef} className="flex-1 p-3 min-h-0 h-0">
 							<div className="space-y-3">
 								{filteredMessages.length === 0 ? (
 									searchTerm ? (
@@ -454,6 +511,7 @@ export function ChatManagement() {
 									filteredMessages.map((message) => (
 										<div
 											key={message.id}
+											data-message-id={message.id}
 											className={`flex ${
 												message.user_id === user.username ? 'justify-end' : 'justify-start'
 											}`}
