@@ -59,26 +59,29 @@ export async function sendMessageAction(
 		}
 
 		// Send push notifications to channel members (fire-and-forget)
-		// Get channel name for notification
-		const { data: channel } = await getSupabaseClient()
-			.from('channels')
-			.select('name')
-			.eq('id', channelId)
-			.single();
+		// Get channel name and send notifications in background
+		void (async () => {
+			try {
+				const { data: channel } = await getSupabaseClient()
+					.from('channels')
+					.select('name')
+					.eq('id', channelId)
+					.single();
 
-		// Send push notifications in background without blocking message send
-		void sendPushNotificationToChannel(
-			channelId,
-			userResult.data?.username || '',
-			content.trim(),
-			channel?.name || 'Canal'
-		).catch((error) => {
-			console.error('Failed to send push notification:', {
-				channelId,
-				username: userResult.data?.username,
-				error: error.message,
-			});
-		});
+				await sendPushNotificationToChannel(
+					channelId,
+					userResult.data?.username || '',
+					content.trim(),
+					channel?.name || 'Canal'
+				);
+			} catch (error: any) {
+				console.error('Failed to send push notification:', {
+					channelId,
+					username: userResult.data?.username,
+					error: error.message,
+				});
+			}
+		})();
 
 		return { success: true, data: result.data || undefined };
 	} catch (error: any) {

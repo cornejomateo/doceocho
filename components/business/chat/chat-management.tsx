@@ -60,6 +60,7 @@ export function ChatManagement() {
 	const [showSidebar, setShowSidebar] = useState(true);
 	const [showCleanupDialog, setShowCleanupDialog] = useState(false);
 	const [cleanupDate, setCleanupDate] = useState('');
+	const [sending, setSending] = useState(false);
 
 	const { messages, loading: messagesLoading } = useChatRealtime(selectedChannel?.id || null);
 	const {
@@ -147,12 +148,17 @@ export function ChatManagement() {
 	};
 
 	const handleSendMessage = async () => {
-		if (!selectedChannel || !user || !newMessage.trim()) return;
+		if (!selectedChannel || !user || !newMessage.trim() || sending) return;
 
-		const result = await sendMessageAction(selectedChannel.id, newMessage, user.username);
-		if (result.success) {
-			setNewMessage('');
+		setSending(true);
+		const messageContent = newMessage.trim();
+		setNewMessage(''); // Clear input immediately for fast feedback
+
+		const result = await sendMessageAction(selectedChannel.id, messageContent, user.username);
+		if (!result.success) {
+			setNewMessage(messageContent); // Restore message on error
 		}
+		setSending(false);
 	};
 
 	const handleChannelSelect = async (channel: ChannelWithLastMessage) => {
@@ -555,7 +561,7 @@ export function ChatManagement() {
 									onChange={(e) => setNewMessage(e.target.value)}
 									onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
 								/>
-								<Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+								<Button onClick={handleSendMessage} disabled={!newMessage.trim() || sending}>
 									<Send className="h-4 w-4" />
 								</Button>
 							</div>
