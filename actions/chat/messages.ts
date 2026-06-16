@@ -19,7 +19,8 @@ import { after } from 'next/server';
 export async function sendMessageAction(
 	channelId: number,
 	content: string,
-	currentUsername: string
+	currentUsername: string,
+	replyToId?: number
 ): Promise<{ success: boolean; error?: string; data?: Message }> {
 	try {
 		// Get current user
@@ -48,6 +49,7 @@ export async function sendMessageAction(
 			user_id: userResult.data.username,
 			edited_at: null,
 			deleted_at: null,
+			reply_to: replyToId || null,
 		});
 
 		if (result.error) {

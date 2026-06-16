@@ -113,16 +113,19 @@ export function ChatManagement() {
 							onEditMessage={chatManagement.handleEditMessage}
 							onDeleteMessage={chatManagement.handleDeleteMessage}
 							onSetEditingMessage={chatManagement.setEditingMessage}
+							onReplyTo={chatManagement.handleReplyTo}
 						/>
 
 						<MessageInput
 							newMessage={chatManagement.newMessage}
 							sending={chatManagement.sending}
+							replyingTo={chatManagement.replyingTo}
 							onMessageChange={chatManagement.setNewMessage}
 							onSendMessage={() =>
 								chatManagement.selectedChannel &&
 								chatManagement.handleSendMessage(chatManagement.selectedChannel.id)
 							}
+							onCancelReply={chatManagement.handleCancelReply}
 						/>
 					</>
 				) : (

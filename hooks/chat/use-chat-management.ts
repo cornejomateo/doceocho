@@ -45,6 +45,7 @@ export function useChatManagement({
 	const messagesScrollRef = useRef<HTMLDivElement>(null);
 	const [scrolledToUnread, setScrolledToUnread] = useState(false);
 	const loadChannelsDebouncedRef = useRef<NodeJS.Timeout | null>(null);
+	const [replyingTo, setReplyingTo] = useState<MessageWithUser | null>(null);
 
 	const loadChannels = useCallback(
 		async (isBackgroundUpdate = false) => {
@@ -91,10 +92,18 @@ export function useChatManagement({
 		const messageContent = newMessage.trim();
 		setNewMessage('');
 
-		const result = await sendMessageAction(channelId, messageContent, currentUsername);
+		const result = await sendMessageAction(
+			channelId,
+			messageContent,
+			currentUsername,
+			replyingTo?.id
+		);
 		if (!result.success) {
 			setNewMessage(messageContent);
 		} else {
+			// Clear reply state after sending
+			setReplyingTo(null);
+
 			// Scroll to bottom after sending message with multiple attempts
 			const scrollToBottom = () => {
 				const scrollArea = messagesScrollRef.current?.querySelector(
@@ -118,6 +127,15 @@ export function useChatManagement({
 		setSearchTerm('');
 		setShowSidebar(false);
 		setScrolledToUnread(false);
+		setReplyingTo(null);
+	};
+
+	const handleReplyTo = (message: MessageWithUser) => {
+		setReplyingTo(message);
+	};
+
+	const handleCancelReply = () => {
+		setReplyingTo(null);
 	};
 
 	const handleCreateChannel = () => {
@@ -326,6 +344,7 @@ export function useChatManagement({
 		sending,
 		messagesScrollRef,
 		scrolledToUnread,
+		replyingTo,
 
 		// Setters
 		setNewMessage,
@@ -352,6 +371,8 @@ export function useChatManagement({
 		handleEditMessage,
 		handleDeleteChannel,
 		handleCleanupMessages,
+		handleReplyTo,
+		handleCancelReply,
 
 		// Computed
 		isAdmin: currentUserRole === 'Admin',

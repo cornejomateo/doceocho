@@ -3,9 +3,10 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, MessageSquare, Edit2, Trash2 } from 'lucide-react';
+import { Search, MessageSquare, Edit2, Trash2, MessageCircle } from 'lucide-react';
 import { MessageWithUser } from '@/types/chat';
 import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
+import { QuoteMessage } from './quote-message';
 
 interface MessagesListProps {
 	messages: MessageWithUser[];
@@ -17,6 +18,7 @@ interface MessagesListProps {
 	onEditMessage: (messageId: number, newContent: string) => void;
 	onDeleteMessage: (messageId: number) => void;
 	onSetEditingMessage: (message: { id: number; content: string } | null) => void;
+	onReplyTo: (message: MessageWithUser) => void;
 }
 
 export function MessagesList({
@@ -29,6 +31,7 @@ export function MessagesList({
 	onEditMessage,
 	onDeleteMessage,
 	onSetEditingMessage,
+	onReplyTo,
 }: MessagesListProps) {
 	return (
 		<ScrollArea ref={messagesScrollRef} className="flex-1 p-3 min-h-0 h-0">
@@ -50,11 +53,13 @@ export function MessagesList({
 						<MessageItem
 							key={message.id}
 							message={message}
+							messages={messages}
 							currentUsername={currentUsername}
 							editingMessage={editingMessage}
 							onEditMessage={onEditMessage}
 							onDeleteMessage={onDeleteMessage}
 							onSetEditingMessage={onSetEditingMessage}
+							onReplyTo={onReplyTo}
 						/>
 					))
 				)}
@@ -71,22 +76,27 @@ export function MessagesList({
 
 interface MessageItemProps {
 	message: MessageWithUser;
+	messages: MessageWithUser[];
 	currentUsername: string;
 	editingMessage: { id: number; content: string } | null;
 	onEditMessage: (messageId: number, newContent: string) => void;
 	onDeleteMessage: (messageId: number) => void;
 	onSetEditingMessage: (message: { id: number; content: string } | null) => void;
+	onReplyTo: (message: MessageWithUser) => void;
 }
 
 function MessageItem({
 	message,
+	messages,
 	currentUsername,
 	editingMessage,
 	onEditMessage,
 	onDeleteMessage,
 	onSetEditingMessage,
+	onReplyTo,
 }: MessageItemProps) {
 	const isOwnMessage = message.user_id === currentUsername;
+	const quotedMessage = message.reply_to ? messages.find((m) => m.id === message.reply_to) : null;
 
 	return (
 		<div
@@ -101,6 +111,11 @@ function MessageItem({
 				{!isOwnMessage && (
 					<div className="text-xs font-medium mb-1 opacity-70">
 						{message.users?.username || 'Usuario'}
+					</div>
+				)}
+				{quotedMessage && (
+					<div className="mb-2">
+						<QuoteMessage message={quotedMessage} showCancel={false} />
 					</div>
 				)}
 				{message.deleted_at ? (
@@ -139,25 +154,36 @@ function MessageItem({
 						})}
 						{message.edited_at && ` ${CHAT_CONSTANTS.MESSAGES.EDITED}`}
 					</span>
-					{isOwnMessage && !message.deleted_at && (
+					{!message.deleted_at && (
 						<div className="flex gap-1">
 							<button
-								onClick={() =>
-									onSetEditingMessage({
-										id: message.id,
-										content: message.content || '',
-									})
-								}
+								onClick={() => onReplyTo(message)}
 								className="hover:opacity-100 opacity-50"
+								title="Responder"
 							>
-								<Edit2 className="h-3 w-3" />
+								<MessageCircle className="h-3 w-3" />
 							</button>
-							<button
-								onClick={() => onDeleteMessage(message.id)}
-								className="hover:opacity-100 opacity-50"
-							>
-								<Trash2 className="h-3 w-3" />
-							</button>
+							{isOwnMessage && (
+								<>
+									<button
+										onClick={() =>
+											onSetEditingMessage({
+												id: message.id,
+												content: message.content || '',
+											})
+										}
+										className="hover:opacity-100 opacity-50"
+									>
+										<Edit2 className="h-3 w-3" />
+									</button>
+									<button
+										onClick={() => onDeleteMessage(message.id)}
+										className="hover:opacity-100 opacity-50"
+									>
+										<Trash2 className="h-3 w-3" />
+									</button>
+								</>
+							)}
 						</div>
 					)}
 				</div>

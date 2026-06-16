@@ -20,6 +20,7 @@ export type Message = {
 	deleted_at: string | null;
 	user_id: string;
 	channel_id: number;
+	reply_to: number | null;
 };
 
 export type MessageWithUser = Message & {
