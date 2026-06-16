@@ -1,70 +1,24 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from '@/components/ui/dialog';
-import {
-	Send,
-	Plus,
-	Users,
-	MessageSquare,
-	LogOut,
-	Trash2,
-	Search,
-	X,
-	Edit2,
-	ArrowLeft,
-	Calendar,
-} from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { useAuth } from '@/components/provider/auth-provider';
-import { getUserChannelsAction, deleteChannelAction } from '@/actions/chat/channels';
-import {
-	sendMessageAction,
-	getMessagesAction,
-	deleteMessageAction,
-	editMessageAction,
-	cleanChannelMessagesAction,
-} from '@/actions/chat/messages';
-import { getChannelMembersAction } from '@/actions/chat/channel-members';
-import { ChannelWithLastMessage, MessageWithUser } from '@/types/chat';
+import { useChatRealtime } from '@/hooks/chat/use-chat-realtime';
+import { usePushNotifications } from '@/hooks/push/use-push-notifications';
+import { useChatManagement } from '@/hooks/chat/use-chat-management';
+import { ChatSidebar } from './chat-sidebar';
+import { ChatHeader } from './chat-header';
+import { MessagesList } from './messages-list';
+import { MessageInput } from './message-input';
+import { PushNotificationSettings } from './push-notification-settings';
+import { CleanupMessagesDialog } from './cleanup-messages-dialog';
 import { CreateChannelDialog } from './create-channel-dialog';
 import { ChannelMembersDialog } from './channel-members-dialog';
-import { useChatRealtime } from '@/hooks/chat/use-chat-realtime';
-import { getSupabaseClient } from '@/lib/supabase-client';
-import { usePushNotifications } from '@/hooks/push/use-push-notifications';
+import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
 
 export function ChatManagement() {
 	const { user } = useAuth();
-	const [channels, setChannels] = useState<ChannelWithLastMessage[]>([]);
-	const [selectedChannel, setSelectedChannel] = useState<ChannelWithLastMessage | null>(null);
-	const [newMessage, setNewMessage] = useState('');
-	const [loading, setLoading] = useState(true);
-	const [showCreateDialog, setShowCreateDialog] = useState(false);
-	const [showMembersDialog, setShowMembersDialog] = useState(false);
-	const [members, setMembers] = useState<any[]>([]);
-	const [searchTerm, setSearchTerm] = useState('');
-	const [showSearch, setShowSearch] = useState(false);
-	const [editingMessage, setEditingMessage] = useState<{ id: number; content: string } | null>(
-		null
-	);
-	const [showSidebar, setShowSidebar] = useState(true);
-	const [showCleanupDialog, setShowCleanupDialog] = useState(false);
-	const [cleanupDate, setCleanupDate] = useState('');
-	const [sending, setSending] = useState(false);
-	const messagesScrollRef = useRef<HTMLDivElement>(null);
-	const [scrolledToUnread, setScrolledToUnread] = useState(false);
-
-	const { messages, loading: messagesLoading } = useChatRealtime(selectedChannel?.id || null);
 	const {
 		isSupported: pushSupported,
 		permission: pushPermission,
@@ -74,242 +28,30 @@ export function ChatManagement() {
 		unsubscribe,
 	} = usePushNotifications();
 
-	const filteredMessages = searchTerm
+	const chatManagement = useChatManagement({
+		currentUsername: user?.username || '',
+		currentUserRole: user?.role || '',
+		messages: [],
+		messagesLoading: false,
+	});
+
+	const { messages, loading: messagesLoading } = useChatRealtime(
+		chatManagement.selectedChannel?.id || null
+	);
+
+	const filteredMessages = chatManagement.searchTerm
 		? messages.filter(
 				(msg) =>
-					msg.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					msg.users?.username?.toLowerCase().includes(searchTerm.toLowerCase())
+					msg.content?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
+					msg.users?.username?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase())
 			)
 		: messages;
 
 	useEffect(() => {
 		if (user) {
-			loadChannels();
+			chatManagement.loadChannels();
 		}
-	}, [user]);
-
-	// Realtime subscription for unread counts
-	useEffect(() => {
-		if (!user) return;
-
-		const supabase = getSupabaseClient();
-
-		// Subscribe to new messages to update unread counts
-		const messagesChannel = supabase
-			.channel('channels-unread')
-			.on(
-				'postgres_changes',
-				{
-					event: 'INSERT',
-					schema: 'public',
-					table: 'messages',
-				},
-				async (payload) => {
-					const newMessage = payload.new as any;
-					// Only reload channels if the message is not in the currently selected channel
-					if (selectedChannel?.id !== newMessage.channel_id) {
-						loadChannels();
-					}
-				}
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: 'INSERT',
-					schema: 'public',
-					table: 'message_reads',
-				},
-				async () => {
-					// Reload channels when messages are marked as read
-					loadChannels();
-				}
-			)
-			.subscribe();
-
-		return () => {
-			supabase.removeChannel(messagesChannel);
-		};
-	}, [user, selectedChannel?.id]);
-
-	// Smart scroll to first unread message or bottom when channel is opened
-	useEffect(() => {
-		if (!selectedChannel || !user || messagesLoading || scrolledToUnread || messages.length === 0) {
-			return;
-		}
-
-		const scrollToUnreadOrBottom = async () => {
-			try {
-				// Get read message IDs for current user
-				const { data: readMessages } = await getSupabaseClient()
-					.from('message_reads')
-					.select('message_id')
-					.eq('user_id', user.username)
-					.in(
-						'message_id',
-						messages.map((m) => m.id)
-					);
-
-				const readMessageIds = new Set(readMessages?.map((m: any) => m.message_id) || []);
-
-				// Find first unread message
-				const firstUnreadMessage = messages.find((msg) => !readMessageIds.has(msg.id));
-
-				// Scroll to first unread message or bottom
-				setTimeout(() => {
-					const scrollArea = messagesScrollRef.current?.querySelector(
-						'[data-radix-scroll-area-viewport]'
-					);
-					if (scrollArea) {
-						if (firstUnreadMessage) {
-							// Find the message element and scroll to it
-							const messageElements = scrollArea.querySelectorAll('[data-message-id]');
-							const targetElement = Array.from(messageElements).find(
-								(el) => el.getAttribute('data-message-id') === String(firstUnreadMessage.id)
-							);
-							if (targetElement) {
-								targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-							}
-						} else {
-							// Scroll to bottom
-							scrollArea.scrollTop = scrollArea.scrollHeight;
-						}
-					}
-				}, 100);
-
-				// Mark messages as read after scrolling
-				if (selectedChannel) {
-					const { markChannelMessagesAsRead } = await import('@/lib/chat/message-reads');
-					await markChannelMessagesAsRead(selectedChannel.id, user.username);
-					loadChannels(); // Update unread counts
-				}
-
-				setScrolledToUnread(true);
-			} catch (error) {
-				console.error('Error scrolling to unread messages:', error);
-			}
-		};
-
-		scrollToUnreadOrBottom();
-	}, [selectedChannel, messages, messagesLoading, scrolledToUnread, user]);
-
-	const loadChannels = async () => {
-		if (!user) return;
-		setLoading(true);
-		const result = await getUserChannelsAction(user.username);
-		if (result.success && result.data) {
-			setChannels(result.data);
-		}
-		setLoading(false);
-	};
-
-	const loadMembers = async (channelId: number) => {
-		if (!user) return;
-		const result = await getChannelMembersAction(channelId, user.username);
-		if (result.success && result.data) {
-			setMembers(result.data);
-		}
-	};
-
-	const handleSendMessage = async () => {
-		if (!selectedChannel || !user || !newMessage.trim() || sending) return;
-
-		setSending(true);
-		const messageContent = newMessage.trim();
-		setNewMessage(''); // Clear input immediately for fast feedback
-
-		const result = await sendMessageAction(selectedChannel.id, messageContent, user.username);
-		if (!result.success) {
-			setNewMessage(messageContent); // Restore message on error
-		}
-		setSending(false);
-	};
-
-	const handleChannelSelect = async (channel: ChannelWithLastMessage) => {
-		setSelectedChannel(channel);
-		setSearchTerm(''); // Clear search when changing channel
-		setShowSidebar(false); // Close sidebar on mobile after selecting channel
-		setScrolledToUnread(false); // Reset scroll state when changing channel
-	};
-
-	const handleCreateChannel = () => {
-		setShowCreateDialog(true);
-	};
-
-	const handleShowMembers = async () => {
-		if (selectedChannel) {
-			await loadMembers(selectedChannel.id);
-			setShowMembersDialog(true);
-		}
-	};
-
-	const handleChannelCreated = () => {
-		loadChannels();
-		setShowCreateDialog(false);
-	};
-
-	const handleDeleteMessage = async (messageId: number) => {
-		if (!user) return;
-
-		if (!confirm('¿Estás seguro de que quieres eliminar este mensaje?')) {
-			return;
-		}
-
-		const result = await deleteMessageAction(messageId, user.username);
-	};
-
-	const handleEditMessage = async (messageId: number, newContent: string) => {
-		if (!user) return;
-
-		const result = await editMessageAction(messageId, newContent, user.username);
-		if (result.success) {
-			setEditingMessage(null);
-		}
-	};
-
-	const handleDeleteChannel = async (channelId: number, channelName: string) => {
-		if (!user) return;
-
-		if (
-			!confirm(
-				`¿Estás seguro de que quieres eliminar el canal "${channelName}"? Esta acción eliminará todos los mensajes y miembros del canal.`
-			)
-		) {
-			return;
-		}
-
-		const result = await deleteChannelAction(channelId, user.username);
-		if (result.success) {
-			if (selectedChannel?.id === channelId) {
-				setSelectedChannel(null);
-			}
-			loadChannels();
-		} else {
-			alert(result.error || 'Error al eliminar el canal');
-		}
-	};
-
-	const handleCleanupMessages = async () => {
-		if (!selectedChannel || !user || !cleanupDate) return;
-
-		if (
-			!confirm(
-				`¿Estás seguro de que quieres eliminar todos los mensajes anteriores a ${new Date(
-					cleanupDate
-				).toLocaleDateString()}? Esta acción no se puede deshacer.`
-			)
-		) {
-			return;
-		}
-
-		const result = await cleanChannelMessagesAction(selectedChannel.id, cleanupDate, user.username);
-		if (result.success) {
-			alert(`Se eliminaron ${result.deletedCount || 0} mensajes del canal.`);
-			setShowCleanupDialog(false);
-			setCleanupDate('');
-		} else {
-			alert(result.error || 'Error al limpiar mensajes del canal');
-		}
-	};
+	}, [user, chatManagement.loadChannels]);
 
 	if (!user) {
 		return <div className="p-4">Cargando...</div>;
@@ -317,343 +59,98 @@ export function ChatManagement() {
 
 	return (
 		<div className="flex h-full gap-4 relative overflow-hidden">
-			{/* Channels Sidebar */}
-			<Card
-				className={`w-80 flex flex-col absolute md:relative z-10 h-full transition-transform overflow-hidden ${
-					showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-				}`}
-			>
-				<div className="p-4 border-b">
-					<div className="flex items-center justify-between mb-4">
-						<h2 className="text-lg font-semibold">Canales</h2>
-						{user.role === 'Admin' && (
-							<Button size="sm" onClick={handleCreateChannel}>
-								<Plus className="h-4 w-4 mr-2" />
-								Nuevo
-							</Button>
-						)}
-					</div>
-					{pushSupported && (
-						<div className="mb-4 p-2 bg-muted rounded">
-							{pushPermission === 'default' && (
-								<Button
-									size="sm"
-									variant="outline"
-									className="w-full"
-									onClick={async () => {
-										const result = await requestPermission();
-										if (result.success) {
-											await subscribe();
-										}
-									}}
-								>
-									Habilitar notificaciones
-								</Button>
-							)}
-							{pushPermission === 'granted' && (
-								<div className="flex items-center justify-between">
-									<span className="text-xs text-muted-foreground">
-										{pushSubscription ? 'Notificaciones activadas' : 'Suscribir'}
-									</span>
-									{pushSubscription ? (
-										<Button size="sm" variant="ghost" onClick={unsubscribe} className="h-6 text-xs">
-											Desactivar
-										</Button>
-									) : (
-										<Button size="sm" variant="ghost" onClick={subscribe} className="h-6 text-xs">
-											Suscribir
-										</Button>
-									)}
-								</div>
-							)}
-							{pushPermission === 'denied' && (
-								<span className="text-xs text-destructive">Notificaciones bloqueadas</span>
-							)}
-						</div>
-					)}
-				</div>
-				<ScrollArea className="flex-1 h-0">
-					{loading ? (
-						<div className="p-4 text-center text-sm text-muted-foreground">Cargando canales...</div>
-					) : channels.length === 0 ? (
-						<div className="p-4 text-center text-sm text-muted-foreground">No tienes canales</div>
-					) : (
-						<div className="p-1.5 space-y-1">
-							{channels.map((channel) => (
-								<div
-									key={channel.id}
-									className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${
-										selectedChannel?.id === channel.id
-											? 'bg-primary text-primary-foreground'
-											: 'hover:bg-muted'
-									}`}
-								>
-									<button onClick={() => handleChannelSelect(channel)} className="flex-1 text-left">
-										<div className="flex items-center justify-between">
-											<div className="font-medium">{channel.name || 'Sin nombre'}</div>
-											{channel.unread_count && channel.unread_count > 0 && (
-												<div className="bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-													{channel.unread_count > 99 ? '99+' : channel.unread_count}
-												</div>
-											)}
-										</div>
-										{channel.description && (
-											<div className="text-xs opacity-70 mt-1">{channel.description}</div>
-										)}
-									</button>
-									{user.role === 'Admin' && (
-										<Button
-											variant="ghost"
-											size="icon"
-											onClick={(e) => {
-												e.stopPropagation();
-												handleDeleteChannel(channel.id, channel.name || 'Sin nombre');
-											}}
-											className="shrink-0"
-										>
-											<Trash2 className="h-4 w-4 text-destructive" />
-										</Button>
-									)}
-								</div>
-							))}
-						</div>
-					)}
-				</ScrollArea>
-			</Card>
+			<ChatSidebar
+				channels={chatManagement.channels}
+				selectedChannel={chatManagement.selectedChannel}
+				loading={chatManagement.loading}
+				showSidebar={chatManagement.showSidebar}
+				isAdmin={chatManagement.isAdmin}
+				onChannelSelect={chatManagement.handleChannelSelect}
+				onCreateChannel={chatManagement.handleCreateChannel}
+				onDeleteChannel={chatManagement.handleDeleteChannel}
+				onCloseSidebar={() => chatManagement.setShowSidebar(false)}
+				pushNotificationSettings={
+					pushSupported ? (
+						<PushNotificationSettings
+							isSupported={pushSupported}
+							permission={pushPermission}
+							subscription={pushSubscription}
+							onRequestPermission={requestPermission}
+							onSubscribe={subscribe}
+							onUnsubscribe={unsubscribe}
+						/>
+					) : undefined
+				}
+			/>
 
-			{/* Mobile sidebar overlay */}
-			{showSidebar && (
-				<div
-					className="fixed inset-0 bg-black/50 z-0 md:hidden"
-					onClick={() => setShowSidebar(false)}
-				/>
-			)}
-
-			{/* Chat Area */}
 			<Card className="flex-1 flex flex-col">
-				{selectedChannel ? (
+				{chatManagement.selectedChannel ? (
 					<>
-						{/* Chat Header */}
-						<div className="p-4 border-b flex items-center gap-2 w-full">
-							<Button
-								variant="ghost"
-								size="icon"
-								className="md:hidden"
-								onClick={() => {
-									setSelectedChannel(null);
-									setShowSidebar(true);
-								}}
-							>
-								<ArrowLeft className="h-5 w-5" />
-							</Button>
-							{showSearch ? (
-								<div className="flex items-center gap-2 flex-1">
-									<Input
-										placeholder="Buscar mensajes..."
-										value={searchTerm}
-										onChange={(e) => setSearchTerm(e.target.value)}
-										autoFocus
-										className="flex-1"
-									/>
-									<Button size="sm" variant="ghost" onClick={() => setShowSearch(false)}>
-										<X className="h-4 w-4" />
-									</Button>
-								</div>
-							) : (
-								<div className="flex items-center justify-between flex-1">
-									<div>
-										<h2 className="text-base font-semibold">
-											{selectedChannel.name || 'Sin nombre'}
-										</h2>
-										{selectedChannel.description && (
-											<p className="text-xs text-muted-foreground">{selectedChannel.description}</p>
-										)}
-									</div>
-									<div className="flex items-center gap-2">
-										<Button size="sm" variant="outline" onClick={() => setShowSearch(true)}>
-											<Search className="h-4 w-4" />
-										</Button>
-										{user.role === 'Admin' && (
-											<Button
-												size="sm"
-												variant="outline"
-												onClick={() => setShowCleanupDialog(true)}
-											>
-												<Calendar className="h-4 w-4 mr-2" />
-												Limpiar
-											</Button>
-										)}
-										<Button size="sm" variant="outline" onClick={handleShowMembers}>
-											<Users className="h-4 w-4 mr-2" />
-											Miembros
-										</Button>
-									</div>
-								</div>
-							)}
-						</div>
+						<ChatHeader
+							channel={chatManagement.selectedChannel}
+							showSearch={chatManagement.showSearch}
+							searchTerm={chatManagement.searchTerm}
+							isAdmin={chatManagement.isAdmin}
+							isMobile={false}
+							onSearchToggle={() => chatManagement.setShowSearch(!chatManagement.showSearch)}
+							onSearchChange={chatManagement.setSearchTerm}
+							onShowMembers={chatManagement.handleShowMembers}
+							onCleanupMessages={() => chatManagement.setShowCleanupDialog(true)}
+							onBack={() => {
+								chatManagement.setSelectedChannel(null);
+								chatManagement.setShowSidebar(true);
+							}}
+						/>
 
-						{/* Messages */}
-						<ScrollArea ref={messagesScrollRef} className="flex-1 p-3 min-h-0 h-0">
-							<div className="space-y-3">
-								{filteredMessages.length === 0 ? (
-									searchTerm ? (
-										<div className="text-center text-muted-foreground py-8">
-											<Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
-											<p>No se encontraron mensajes que coincidan con "{searchTerm}"</p>
-										</div>
-									) : (
-										<div className="text-center text-muted-foreground py-8">
-											<MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-											<p>No hay mensajes en este canal</p>
-										</div>
-									)
-								) : (
-									filteredMessages.map((message) => (
-										<div
-											key={message.id}
-											data-message-id={message.id}
-											className={`flex ${
-												message.user_id === user.username ? 'justify-end' : 'justify-start'
-											}`}
-										>
-											<div
-												className={`max-w-[70%] rounded-lg p-2 ${
-													message.user_id === user.username
-														? 'bg-primary text-primary-foreground'
-														: 'bg-muted'
-												}`}
-											>
-												{message.user_id !== user.username && (
-													<div className="text-xs font-medium mb-1 opacity-70">
-														{message.users?.username || 'Usuario'}
-													</div>
-												)}
-												{message.deleted_at ? (
-													<div className="text-sm italic opacity-70">
-														Este mensaje fue eliminado
-													</div>
-												) : editingMessage?.id === message.id ? (
-													<div className="flex gap-2">
-														<Input
-															value={editingMessage.content}
-															onChange={(e) =>
-																setEditingMessage({ id: message.id, content: e.target.value })
-															}
-															onKeyDown={(e) => {
-																if (e.key === 'Enter' && !e.shiftKey) {
-																	e.preventDefault();
-																	handleEditMessage(message.id, editingMessage.content);
-																} else if (e.key === 'Escape') {
-																	setEditingMessage(null);
-																}
-															}}
-															autoFocus
-															className="flex-1"
-														/>
-														<Button
-															size="sm"
-															onClick={() => handleEditMessage(message.id, editingMessage.content)}
-														>
-															Guardar
-														</Button>
-														<Button
-															size="sm"
-															variant="outline"
-															onClick={() => setEditingMessage(null)}
-														>
-															Cancelar
-														</Button>
-													</div>
-												) : (
-													<div className="text-sm">{message.content}</div>
-												)}
-												<div className="text-xs mt-1 opacity-70 flex items-center justify-between gap-2">
-													<span>
-														{new Date(message.created_at).toLocaleTimeString('es-AR', {
-															hour: '2-digit',
-															minute: '2-digit',
-														})}
-														{message.edited_at && ' (editado)'}
-													</span>
-													{message.user_id === user.username && !message.deleted_at && (
-														<div className="flex gap-1">
-															<button
-																onClick={() =>
-																	setEditingMessage({
-																		id: message.id,
-																		content: message.content || '',
-																	})
-																}
-																className="hover:opacity-100 opacity-50"
-															>
-																<Edit2 className="h-3 w-3" />
-															</button>
-															<button
-																onClick={() => handleDeleteMessage(message.id)}
-																className="hover:opacity-100 opacity-50"
-															>
-																<Trash2 className="h-3 w-3" />
-															</button>
-														</div>
-													)}
-												</div>
-											</div>
-										</div>
-									))
-								)}
-								{searchTerm && filteredMessages.length > 0 && (
-									<div className="text-center text-sm text-muted-foreground py-2">
-										{filteredMessages.length}{' '}
-										{filteredMessages.length === 1 ? 'mensaje encontrado' : 'mensajes encontrados'}
-									</div>
-								)}
-							</div>
-						</ScrollArea>
+						<MessagesList
+							messages={messages}
+							filteredMessages={filteredMessages}
+							searchTerm={chatManagement.searchTerm}
+							currentUsername={user.username}
+							editingMessage={chatManagement.editingMessage}
+							messagesScrollRef={chatManagement.messagesScrollRef}
+							onEditMessage={chatManagement.handleEditMessage}
+							onDeleteMessage={chatManagement.handleDeleteMessage}
+							onSetEditingMessage={chatManagement.setEditingMessage}
+						/>
 
-						{/* Message Input */}
-						<div className="p-3 border-t">
-							<div className="flex gap-2">
-								<Input
-									placeholder="Escribe un mensaje..."
-									value={newMessage}
-									onChange={(e) => setNewMessage(e.target.value)}
-									onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-								/>
-								<Button onClick={handleSendMessage} disabled={!newMessage.trim() || sending}>
-									<Send className="h-4 w-4" />
-								</Button>
-							</div>
-						</div>
+						<MessageInput
+							newMessage={chatManagement.newMessage}
+							sending={chatManagement.sending}
+							onMessageChange={chatManagement.setNewMessage}
+							onSendMessage={() =>
+								chatManagement.selectedChannel &&
+								chatManagement.handleSendMessage(chatManagement.selectedChannel.id)
+							}
+						/>
 					</>
 				) : (
 					<div className="flex-1 flex items-center justify-center text-muted-foreground">
 						<div className="text-center">
 							<MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-							<p>Selecciona un canal para comenzar a chatear</p>
+							<p>{CHAT_CONSTANTS.MESSAGES.SELECT_CHANNEL}</p>
 						</div>
 					</div>
 				)}
 			</Card>
 
-			{/* Create Channel Dialog */}
-			{showCreateDialog && (
+			{chatManagement.showCreateDialog && (
 				<CreateChannelDialog
-					open={showCreateDialog}
-					onOpenChange={setShowCreateDialog}
-					onChannelCreated={handleChannelCreated}
+					open={chatManagement.showCreateDialog}
+					onOpenChange={chatManagement.setShowCreateDialog}
+					onChannelCreated={chatManagement.handleChannelCreated}
 				/>
 			)}
 
-			{/* Channel Members Dialog */}
-			{showMembersDialog && (
+			{chatManagement.showMembersDialog && (
 				<ChannelMembersDialog
-					open={showMembersDialog}
-					onOpenChange={setShowMembersDialog}
-					channel={selectedChannel}
-					members={members}
+					open={chatManagement.showMembersDialog}
+					onOpenChange={chatManagement.setShowMembersDialog}
+					channel={chatManagement.selectedChannel}
+					members={chatManagement.members}
 					onMembersUpdated={() => {
-						if (selectedChannel) {
-							loadMembers(selectedChannel.id);
+						if (chatManagement.selectedChannel) {
+							chatManagement.loadMembers(chatManagement.selectedChannel.id);
 						}
 					}}
 					currentUsername={user.username}
@@ -661,34 +158,13 @@ export function ChatManagement() {
 				/>
 			)}
 
-			{/* Cleanup Messages Dialog */}
-			<Dialog open={showCleanupDialog} onOpenChange={setShowCleanupDialog}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Limpiar mensajes del canal</DialogTitle>
-						<DialogDescription>
-							Selecciona una fecha. Se eliminarán todos los mensajes anteriores a esa fecha. Esta
-							acción no se puede deshacer.
-						</DialogDescription>
-					</DialogHeader>
-					<div className="py-4">
-						<Input
-							type="date"
-							value={cleanupDate}
-							onChange={(e) => setCleanupDate(e.target.value)}
-							className="w-full"
-						/>
-					</div>
-					<DialogFooter>
-						<Button variant="outline" onClick={() => setShowCleanupDialog(false)}>
-							Cancelar
-						</Button>
-						<Button onClick={handleCleanupMessages} disabled={!cleanupDate}>
-							Limpiar mensajes
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+			<CleanupMessagesDialog
+				open={chatManagement.showCleanupDialog}
+				onOpenChange={chatManagement.setShowCleanupDialog}
+				cleanupDate={chatManagement.cleanupDate}
+				onCleanupDateChange={chatManagement.setCleanupDate}
+				onCleanup={chatManagement.handleCleanupMessages}
+			/>
 		</div>
 	);
 }
