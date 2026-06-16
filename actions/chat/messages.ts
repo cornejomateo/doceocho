@@ -14,6 +14,7 @@ import { markMessageAsRead } from '@/lib/chat/message-reads';
 import { Message } from '@/types/chat';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { sendPushNotificationToChannel } from '@/actions/push/send-notification';
+import { after } from 'next/server';
 
 export async function sendMessageAction(
 	channelId: number,
@@ -58,9 +59,8 @@ export async function sendMessageAction(
 			await markMessageAsRead(result.data.id, userResult.data.username);
 		}
 
-		// Send push notifications to channel members (fire-and-forget)
-		// Get channel name and send notifications in background
-		void (async () => {
+		// Send push notifications to channel members after response is sent
+		after(async () => {
 			try {
 				const { data: channel } = await getSupabaseClient()
 					.from('channels')
@@ -81,7 +81,7 @@ export async function sendMessageAction(
 					error: error.message,
 				});
 			}
-		})();
+		});
 
 		return { success: true, data: result.data || undefined };
 	} catch (error: any) {

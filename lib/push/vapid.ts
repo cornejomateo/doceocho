@@ -10,17 +10,21 @@ export function generateVapidKeys() {
 export function configureWebPush() {
 	const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 	const privateKey = process.env.VAPID_PRIVATE_KEY;
+	const subject = process.env.VAPID_SUBJECT;
 
 	if (!publicKey || !privateKey) {
 		console.warn('VAPID keys not configured. Push notifications will not work.');
 		return false;
 	}
 
-	webpush.setVapidDetails(
-		'mailto:your-email@example.com', // Replace with your email
-		publicKey,
-		privateKey
-	);
+	if (!subject) {
+		console.warn(
+			'VAPID_SUBJECT environment variable not configured. Push notifications will not work.'
+		);
+		return false;
+	}
+
+	webpush.setVapidDetails(subject, publicKey, privateKey);
 
 	return true;
 }

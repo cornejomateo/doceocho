@@ -40,7 +40,15 @@ export async function createChannelAction(
 
 		// Add the admin as a member
 		if (result.data) {
-			await addChannelMember(result.data.id, userResult.data.username);
+			const memberResult = await addChannelMember(result.data.id, userResult.data.username);
+			if (memberResult.error) {
+				return {
+					success: false,
+					error:
+						memberResult.error.message ||
+						'Canal creado pero no se pudo agregar al creador como miembro',
+				};
+			}
 		}
 
 		return { success: true, data: result.data || undefined };

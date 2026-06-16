@@ -48,7 +48,7 @@ export async function markChannelMessagesAsRead(
 	}
 
 	// Get already read messages
-	const { data: readMessages } = await supabase
+	const { data: readMessages, error: readError } = await supabase
 		.from(TABLE)
 		.select('message_id')
 		.eq('user_id', userId)
@@ -57,6 +57,9 @@ export async function markChannelMessagesAsRead(
 			messages.map((m: any) => m.id)
 		);
 
+	if (readError) {
+		return { data: null, error: readError }; // in markChannelMessagesAsRead
+	}
 	const readMessageIds = new Set(readMessages?.map((m: any) => m.message_id) || []);
 
 	// Mark unread messages as read
@@ -96,7 +99,7 @@ export async function getUnreadCount(
 	}
 
 	// Get read messages for this user
-	const { data: readMessages } = await supabase
+	const { data: readMessages, error: readError } = await supabase
 		.from(TABLE)
 		.select('message_id')
 		.eq('user_id', userId)
@@ -105,8 +108,12 @@ export async function getUnreadCount(
 			messages.map((m: any) => m.id)
 		);
 
+	if (readError) {
+		return { data: 0, error: readError };
+	}
+
 	const readMessageIds = new Set(readMessages?.map((m: any) => m.message_id) || []);
 	const unreadCount = messages.filter((m: any) => !readMessageIds.has(m.id)).length;
 
-	return { data: unreadCount, error: null };
+	return { data: unreadCount, error: messagesError };
 }
