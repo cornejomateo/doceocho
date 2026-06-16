@@ -29,6 +29,7 @@ export function useChatManagement({
 	const [newMessage, setNewMessage] = useState('');
 	const [loading, setLoading] = useState(true);
 	const [initialLoadDone, setInitialLoadDone] = useState(false);
+	const [totalUnreadCount, setTotalUnreadCount] = useState(0);
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showMembersDialog, setShowMembersDialog] = useState(false);
 	const [members, setMembers] = useState<any[]>([]);
@@ -54,6 +55,9 @@ export function useChatManagement({
 			const result = await getUserChannelsAction(currentUsername);
 			if (result.success && result.data) {
 				setChannels(result.data);
+				// Calculate total unread count
+				const total = result.data.reduce((sum, ch) => sum + (ch.unread_count || 0), 0);
+				setTotalUnreadCount(total);
 			}
 			if (!isBackgroundUpdate) {
 				setLoading(false);
@@ -289,6 +293,8 @@ export function useChatManagement({
 					setChannels((prev) =>
 						prev.map((ch) => (ch.id === selectedChannel.id ? { ...ch, unread_count: 0 } : ch))
 					);
+					// Update total unread count
+					setTotalUnreadCount((prev) => prev - (selectedChannel.unread_count || 0));
 				}
 
 				setScrolledToUnread(true);
@@ -307,6 +313,7 @@ export function useChatManagement({
 		newMessage,
 		loading,
 		initialLoadDone,
+		totalUnreadCount,
 		showCreateDialog,
 		showMembersDialog,
 		members,
