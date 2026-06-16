@@ -90,6 +90,21 @@ export function useChatManagement({
 		const result = await sendMessageAction(channelId, messageContent, currentUsername);
 		if (!result.success) {
 			setNewMessage(messageContent);
+		} else {
+			// Scroll to bottom after sending message with multiple attempts
+			const scrollToBottom = () => {
+				const scrollArea = messagesScrollRef.current?.querySelector(
+					'[data-radix-scroll-area-viewport]'
+				);
+				if (scrollArea) {
+					scrollArea.scrollTop = scrollArea.scrollHeight;
+				}
+			};
+
+			// Try scrolling at different intervals to ensure the message is rendered
+			setTimeout(scrollToBottom, 100);
+			setTimeout(scrollToBottom, 300);
+			setTimeout(scrollToBottom, 500);
 		}
 		setSending(false);
 	};
