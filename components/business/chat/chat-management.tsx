@@ -63,6 +63,7 @@ export function ChatManagement() {
 				channels={chatManagement.channels}
 				selectedChannel={chatManagement.selectedChannel}
 				loading={chatManagement.loading}
+				initialLoadDone={chatManagement.initialLoadDone}
 				showSidebar={chatManagement.showSidebar}
 				isAdmin={chatManagement.isAdmin}
 				onChannelSelect={chatManagement.handleChannelSelect}

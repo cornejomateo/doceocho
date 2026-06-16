@@ -11,6 +11,7 @@ interface ChatSidebarProps {
 	channels: ChannelWithLastMessage[];
 	selectedChannel: ChannelWithLastMessage | null;
 	loading: boolean;
+	initialLoadDone: boolean;
 	showSidebar: boolean;
 	isAdmin: boolean;
 	onChannelSelect: (channel: ChannelWithLastMessage) => void;
@@ -24,6 +25,7 @@ export function ChatSidebar({
 	channels,
 	selectedChannel,
 	loading,
+	initialLoadDone,
 	showSidebar,
 	isAdmin,
 	onChannelSelect,
@@ -52,7 +54,7 @@ export function ChatSidebar({
 					{pushNotificationSettings}
 				</div>
 				<ScrollArea className="flex-1 h-0">
-					{loading ? (
+					{loading && !initialLoadDone ? (
 						<div className="p-4 text-center text-sm text-muted-foreground">
 							{CHAT_CONSTANTS.MESSAGES.LOADING_CHANNELS}
 						</div>

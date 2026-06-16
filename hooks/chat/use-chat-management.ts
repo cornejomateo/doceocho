@@ -28,6 +28,7 @@ export function useChatManagement({
 	const [selectedChannel, setSelectedChannel] = useState<ChannelWithLastMessage | null>(null);
 	const [newMessage, setNewMessage] = useState('');
 	const [loading, setLoading] = useState(true);
+	const [initialLoadDone, setInitialLoadDone] = useState(false);
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showMembersDialog, setShowMembersDialog] = useState(false);
 	const [members, setMembers] = useState<any[]>([]);
@@ -42,16 +43,34 @@ export function useChatManagement({
 	const [sending, setSending] = useState(false);
 	const messagesScrollRef = useRef<HTMLDivElement>(null);
 	const [scrolledToUnread, setScrolledToUnread] = useState(false);
+	const loadChannelsDebouncedRef = useRef<NodeJS.Timeout | null>(null);
 
-	const loadChannels = useCallback(async () => {
-		if (!currentUsername) return;
-		setLoading(true);
-		const result = await getUserChannelsAction(currentUsername);
-		if (result.success && result.data) {
-			setChannels(result.data);
+	const loadChannels = useCallback(
+		async (isBackgroundUpdate = false) => {
+			if (!currentUsername) return;
+			if (!isBackgroundUpdate) {
+				setLoading(true);
+			}
+			const result = await getUserChannelsAction(currentUsername);
+			if (result.success && result.data) {
+				setChannels(result.data);
+			}
+			if (!isBackgroundUpdate) {
+				setLoading(false);
+				setInitialLoadDone(true);
+			}
+		},
+		[currentUsername]
+	);
+
+	const debouncedLoadChannels = useCallback(() => {
+		if (loadChannelsDebouncedRef.current) {
+			clearTimeout(loadChannelsDebouncedRef.current);
 		}
-		setLoading(false);
-	}, [currentUsername]);
+		loadChannelsDebouncedRef.current = setTimeout(() => {
+			loadChannels(true);
+		}, 300);
+	}, [loadChannels]);
 
 	const loadMembers = async (channelId: number) => {
 		if (!currentUsername) return;
@@ -184,7 +203,7 @@ export function useChatManagement({
 				async (payload) => {
 					const newMessage = payload.new as any;
 					if (selectedChannel?.id !== newMessage.channel_id) {
-						loadChannels();
+						debouncedLoadChannels();
 					}
 				}
 			)
@@ -196,15 +215,18 @@ export function useChatManagement({
 					table: 'message_reads',
 				},
 				async () => {
-					loadChannels();
+					debouncedLoadChannels();
 				}
 			)
 			.subscribe();
 
 		return () => {
 			supabase.removeChannel(messagesChannel);
+			if (loadChannelsDebouncedRef.current) {
+				clearTimeout(loadChannelsDebouncedRef.current);
+			}
 		};
-	}, [currentUsername, selectedChannel?.id]);
+	}, [currentUsername, debouncedLoadChannels, selectedChannel?.id]);
 
 	// Smart scroll to first unread message or bottom when channel is opened
 	useEffect(() => {
@@ -248,7 +270,10 @@ export function useChatManagement({
 				if (selectedChannel) {
 					const { markChannelMessagesAsRead } = await import('@/lib/chat/message-reads');
 					await markChannelMessagesAsRead(selectedChannel.id, currentUsername);
-					loadChannels();
+					// Update local state instead of reloading all channels
+					setChannels((prev) =>
+						prev.map((ch) => (ch.id === selectedChannel.id ? { ...ch, unread_count: 0 } : ch))
+					);
 				}
 
 				setScrolledToUnread(true);
@@ -266,6 +291,7 @@ export function useChatManagement({
 		selectedChannel,
 		newMessage,
 		loading,
+		initialLoadDone,
 		showCreateDialog,
 		showMembersDialog,
 		members,
