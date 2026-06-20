@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { TrendingUp, Plus } from 'lucide-react';
 import { BudgetWithWork } from '@/lib/balances/balances';
+import { Work } from '@/lib/works/works';
+import { updateFolderBudget } from '@/lib/budgets/folder_budgets';
 import { ClientBudgetsDollarUpdateModal } from '@/components/ui/client-budgets-dollar-update-modal';
 import { BudgetFormModal } from '@/components/business/budgets/budget-form-modal';
 import { useClientBudgetsState } from '@/hooks/budgets/useClientBudgetsState';
@@ -15,6 +17,8 @@ import { FolderCard } from '@/components/business/budgets/FolderCard';
 import { BudgetDetailModal } from '@/components/business/budgets/BudgetDetailModal';
 import { PdfPreviewModal } from '@/components/business/budgets/PdfPreviewModal';
 import { ClientBudgetsTabProps } from '@/components/business/reports/budgets/types';
+import { toast } from '@/components/ui/use-toast';
+import { translateError } from '@/lib/error-translator';
 
 export function ClientBudgetsTab({
 	clientId,
@@ -141,6 +145,25 @@ export function ClientBudgetsTab({
 		await budgetHandlers.handleClientBudgetsUpdate(newUsdRate, clientId, refresh);
 	};
 
+	const handleAssignWork = async (folderId: number, workId: number) => {
+		const { error } = await updateFolderBudget(folderId, { work_id: workId });
+		if (!error) {
+			toast({
+				title: 'Obra asignada',
+				description: 'La obra ha sido asignada a la carpeta de presupuestos.',
+			});
+			refresh();
+		} else {
+			const errorMessage = translateError(error);
+			toast({
+				title: 'Error',
+				description:
+					errorMessage || 'Ocurrió un error al asignar la obra. Por favor, intentá nuevamente.',
+				variant: 'destructive',
+			});
+		}
+	};
+
 	const handleCreateBudgetSubmit = async (formData: any) => {
 		await budgetHandlers.handleCreateBudget(
 			formData,
@@ -223,6 +246,7 @@ export function ClientBudgetsTab({
 						<FolderCard
 							key={folder.id}
 							folder={folder}
+							works={works}
 							isOpen={!!openFolders[folder.id]}
 							onToggle={(open) => setOpenFolders((prev) => ({ ...prev, [folder.id]: open }))}
 							isLoading={isLoading}
@@ -231,6 +255,7 @@ export function ClientBudgetsTab({
 							onDeleteFolder={handleDeleteFolder}
 							onViewPdf={handleViewPdf}
 							onOpenDetail={handleOpenBudgetDetail}
+							onAssignWork={handleAssignWork}
 						/>
 					))}
 				</div>

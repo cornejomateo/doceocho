@@ -7,7 +7,6 @@ import { CheckCircle, FileText, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BudgetWithWork } from '@/lib/balances/balances';
 import { BudgetFolderVM } from '@/components/business/reports/budgets/types';
-import { workLabel } from '@/helpers/budgets/helper-budget';
 import { formatCurrency, formatCurrencyUSD } from '@/utils/formats-money';
 import { formatCreatedAt } from '@/utils/format-date';
 import {
