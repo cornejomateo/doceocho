@@ -13,6 +13,8 @@ import {
 	Search,
 	CheckSquare,
 	BrickWall,
+	Map,
+	Home,
 } from 'lucide-react';
 import { ChecklistModal } from '@/components/business/works/checklists/checklist-modal';
 import { format } from 'date-fns';
@@ -93,6 +95,8 @@ export function WorksList({
 					work.address?.toLowerCase().includes(search) ||
 					work.architect?.toLowerCase().includes(search) ||
 					work.status?.toLowerCase().includes(search) ||
+					work.zone?.toLowerCase().includes(search) ||
+					work.hood?.toLowerCase().includes(search) ||
 					false;
 
 				return matchesSearch;
@@ -112,7 +116,7 @@ export function WorksList({
 					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 					<Input
 						type="search"
-						placeholder="Buscar por dirección, arquitecto o estado..."
+						placeholder="Buscar por dirección, arquitecto, zona, barrio o estado..."
 						className="pl-9 w-full"
 						value={searchTerm}
 						onChange={(e) => setSearchTerm(e.target.value)}
@@ -152,6 +156,20 @@ export function WorksList({
 										value={work.locality || ''}
 										onSave={async (newValue) => {
 											await handleUpdateWork(work.id, { locality: newValue });
+										}}
+										className="text-xs sm:text-sm text-muted-foreground truncate"
+									/>
+									<EditableField
+										value={work.zone || 'Zona no especificada'}
+										onSave={async (newValue) => {
+											await handleUpdateWork(work.id, { zone: newValue });
+										}}
+										className="text-xs sm:text-sm text-muted-foreground truncate"
+									/>
+									<EditableField
+										value={work.hood || 'Barrio no especificado'}
+										onSave={async (newValue) => {
+											await handleUpdateWork(work.id, { hood: newValue });
 										}}
 										className="text-xs sm:text-sm text-muted-foreground truncate"
 									/>
