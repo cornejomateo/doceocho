@@ -31,6 +31,7 @@ import { Bell } from 'lucide-react';
 import { validateDate } from '@/helpers/calendar/validateDate';
 import { EventType, getEventTypeOptions } from '@/lib/calendar/event-types';
 import { ClientSelect } from '@/components/ui/client-select';
+import { getWorksByClientId, Work } from '@/lib/works/works';
 
 interface EventFormModalProps {
 	onSave: (data: any) => Promise<boolean>;
@@ -67,6 +68,7 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 			return { ...previous, type: defaultEventType };
 		});
 	}, [defaultEventType, eventTypeOptions]);
+
 	const [formData, setFormData] = useState({
 		title: '',
 		type: defaultEventType,
@@ -74,24 +76,46 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 		client_id: null as number | null,
 		client_name: '' as string,
 		isManualClient: false,
-		location: '',
-		address: '',
+		work_id: null as number | null,
+		work_location: '' as string,
+		isManualWork: false,
 		description: '',
 		remember: true,
 	});
+
+	const [clientWorks, setClientWorks] = useState<Work[]>([]);
+	const [loadingWorks, setLoadingWorks] = useState(false);
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { id, value } = e.target;
 		setFormData((prev) => ({ ...prev, [id]: value }));
 	};
 
-	const handleClientSelect = (clientId: number | null, clientName: string | null) => {
+	const handleClientSelect = async (clientId: number | null, clientName: string | null) => {
 		setFormData((prev) => ({
 			...prev,
 			client_id: clientId,
-			client_name: clientName || '',
+			client_name: clientId ? '' : clientName || '',
 			isManualClient: false,
+			work_id: null,
+			work_location: '',
+			isManualWork: false,
 		}));
+
+		if (clientId) {
+			setLoadingWorks(true);
+			const { data, error } = await getWorksByClientId(clientId);
+			if (error) {
+				console.error('Error fetching works:', error);
+				setClientWorks([]);
+			} else {
+				console.log('Obras del cliente seleccionado:', data);
+				setClientWorks(data || []);
+			}
+			setLoadingWorks(false);
+		} else {
+			setClientWorks([]);
+		}
 	};
 
 	const handleManualClient = () => {
@@ -138,11 +162,13 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 			client_id: null,
 			client_name: '',
 			isManualClient: false,
-			location: '',
-			address: '',
+			work_id: null,
+			work_location: '',
+			isManualWork: false,
 			description: '',
 			remember: true,
 		});
+		setClientWorks([]);
 		setIsOpen(false);
 	};
 
@@ -194,7 +220,7 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 						)}
 					</div>
 
-					<div className="grid gap-2">
+					<div className="grid gap-2 col-span-2">
 						<Label>Fecha del evento</Label>
 						<Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
 							<PopoverTrigger asChild>
@@ -230,7 +256,7 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 						</Popover>
 					</div>
 
-					<div className="grid gap-2">
+					<div className="grid gap-2 col-span-2">
 						<Label htmlFor="client">Cliente</Label>
 						{!formData.isManualClient ? (
 							<ClientSelect
@@ -260,25 +286,72 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 						)}
 					</div>
 
-					<div className="grid gap-2">
-						<Label htmlFor="location">Localidad</Label>
-						<Input
-							id="location"
-							value={formData.location}
-							onChange={handleInputChange}
-							placeholder="Localidad"
-						/>
-					</div>
-
-					<div className="grid gap-2">
-						<Label htmlFor="address">Dirección</Label>
-						<Input
-							id="address"
-							value={formData.address}
-							onChange={handleInputChange}
-							placeholder="Dirección"
-						/>
-					</div>
+					{formData.client_id && !formData.isManualWork ? (
+						<div className="grid gap-2 col-span-2">
+							<Label htmlFor="work">Obra</Label>
+							<Select
+								value={formData.work_id?.toString() || ''}
+								onValueChange={(value) => {
+									if (value === 'manual') {
+										setFormData((prev) => ({
+											...prev,
+											isManualWork: true,
+											work_id: null,
+											work_location: '',
+										}));
+									} else {
+										setFormData((prev) => ({
+											...prev,
+											work_id: parseInt(value),
+											work_location: '',
+										}));
+									}
+								}}
+							>
+								<SelectTrigger className="w-full">
+									<SelectValue
+										placeholder={loadingWorks ? 'Cargando obras...' : 'Seleccionar obra...'}
+									/>
+								</SelectTrigger>
+								<SelectContent>
+									{clientWorks.map((work) => (
+										<SelectItem key={work.id} value={work.id.toString()}>
+											{work.locality || 'Sin localidad'} - {work.address || 'Sin dirección'}
+											{work.zone ? ` - ${work.zone}` : ''} {work.hood ? ` - ${work.hood}` : ''}
+										</SelectItem>
+									))}
+									<SelectItem value="manual">Otro (ingresar manualmente)</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+					) : (
+						<div className="grid gap-2 col-span-2">
+							<Label htmlFor="work_location">Ubicación de la obra</Label>
+							<Input
+								id="work_location"
+								value={formData.work_location}
+								onChange={handleInputChange}
+								placeholder="Ej: Av. Colón 1234 - Córdoba Capital"
+							/>
+							{formData.client_id && formData.isManualWork && (
+								<Button
+									type="button"
+									variant="ghost"
+									size="sm"
+									onClick={() =>
+										setFormData((prev) => ({
+											...prev,
+											isManualWork: false,
+											work_location: '',
+										}))
+									}
+									className="text-xs"
+								>
+									← Volver a seleccionar obra
+								</Button>
+							)}
+						</div>
+					)}
 
 					<div className="grid gap-2 col-span-2">
 						<Label htmlFor="description">Descripción</Label>

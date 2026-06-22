@@ -9,12 +9,12 @@ export type Event = {
 	description?: string | null;
 	client_id?: number | null;
 	client_name?: string | null;
-	location?: string | null;
-	address?: string | null;
 	status?: string | null;
 	is_overdue?: boolean;
 	remember?: boolean;
 	type_id: number | null;
+	work_id?: number | null;
+	work_location?: string | null;
 };
 
 const TABLE = 'events';
@@ -25,7 +25,12 @@ export async function listEvents(): Promise<{ data: Event[] | null; error: any }
 	try {
 		const { data, error } = await supabase
 			.from(TABLE)
-			.select('*')
+			.select(
+				`
+				*,
+				clients:client_id (name, last_name)
+			`
+			)
 			.order('created_at', { ascending: true });
 
 		if (error) {
@@ -33,7 +38,14 @@ export async function listEvents(): Promise<{ data: Event[] | null; error: any }
 			return { data: null, error };
 		}
 
-		return { data, error: null };
+		const eventsWithClientName = (data ?? []).map((event: any) => ({
+			...event,
+			client_name: event.clients
+				? [event.clients.last_name, event.clients.name].filter(Boolean).join(' ')
+				: event.client_name,
+		}));
+
+		return { data: eventsWithClientName, error: null };
 	} catch (error) {
 		console.error('Error inesperado al listar eventos:', error);
 		return {
@@ -60,13 +72,13 @@ export async function createEvent(
 			type_id: event.type_id,
 			description: event.description,
 			client_id: event.client_id,
-			client_name: event.client_name,
-			location: event.location,
+			client_name: event.client_id ? null : event.client_name,
 			date: event.date,
-			address: event.address,
 			status: 'pending',
 			is_overdue: false,
 			remember: event.remember,
+			work_id: event.work_id,
+			work_location: event.work_location,
 			created_at: new Date().toISOString(),
 		};
 
