@@ -1,0 +1,413 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+	DialogFooter,
+} from '@/components/ui/dialog';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table';
+import { Trash2, Plus, Shield, ShieldHalf, Edit } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { translateError } from '@/lib/error-translator';
+import {
+	User,
+	listUsers,
+	createUser,
+	deleteUser,
+	updateUser,
+	updateUserPassword,
+} from '@/lib/users/users';
+import { cn } from '@/lib/utils';
+
+interface UsersDialogProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}
+
+export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
+	const { toast } = useToast();
+	const [users, setUsers] = useState<User[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [showForm, setShowForm] = useState(false);
+	const [editingUser, setEditingUser] = useState<User | null>(null);
+	const [formData, setFormData] = useState({
+		username: '',
+		password: '',
+		role: '',
+	});
+	const [saving, setSaving] = useState(false);
+	const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+	const loadUsers = async () => {
+		setLoading(true);
+		const { data, error } = await listUsers();
+		if (error) {
+			toast({
+				title: 'Error al cargar usuarios',
+				description: translateError(error),
+				variant: 'destructive',
+			});
+		} else {
+			setUsers(data ?? []);
+		}
+		setLoading(false);
+	};
+
+	useEffect(() => {
+		if (open) {
+			loadUsers();
+			setShowForm(false);
+			setEditingUser(null);
+			setFormData({ username: '', password: '', role: '' });
+		}
+	}, [open]);
+
+	const handleEdit = (user: User) => {
+		setEditingUser(user);
+		setFormData({ username: user.username, password: '', role: user.role });
+		setShowForm(true);
+	};
+
+	const handleSave = async () => {
+		if (!formData.username || !formData.role) {
+			toast({ title: 'Completá todos los campos', variant: 'destructive' });
+			return;
+		}
+
+		setSaving(true);
+
+		if (editingUser) {
+			const { error: updateError } = await updateUser(editingUser.uid_user!, {
+				username: formData.username,
+				role: formData.role,
+			});
+
+			if (updateError) {
+				toast({
+					title: 'Error al actualizar usuario',
+					description: translateError(updateError),
+					variant: 'destructive',
+				});
+				setSaving(false);
+				return;
+			}
+
+			if (formData.password) {
+				const { error: pwError } = await updateUserPassword(
+					editingUser.uid_user!,
+					formData.password
+				);
+
+				if (pwError) {
+					toast({
+						title: 'Error al actualizar contraseña',
+						description: translateError(pwError),
+						variant: 'destructive',
+					});
+					setSaving(false);
+					return;
+				}
+			}
+
+			toast({
+				title: 'Usuario actualizado',
+				description: `${formData.username} ha sido actualizado correctamente.`,
+			});
+		} else {
+			if (!formData.password) {
+				toast({ title: 'La contraseña es obligatoria', variant: 'destructive' });
+				setSaving(false);
+				return;
+			}
+
+			const { error } = await createUser({
+				username: formData.username,
+				password: formData.password,
+				role: formData.role,
+			});
+
+			if (error) {
+				toast({
+					title: 'Error al crear usuario',
+					description: translateError(error),
+					variant: 'destructive',
+				});
+				setSaving(false);
+				return;
+			}
+
+			toast({
+				title: 'Usuario creado',
+				description: `${formData.username} ha sido creado correctamente.`,
+			});
+		}
+
+		setShowForm(false);
+		setEditingUser(null);
+		setFormData({ username: '', password: '', role: '' });
+		await loadUsers();
+		setSaving(false);
+	};
+
+	const handleUpdateRole = async (user: User, newRole: string) => {
+		if (!user.uid_user) return;
+
+		const { error } = await updateUser(user.uid_user, { role: newRole });
+
+		if (error) {
+			toast({
+				title: 'Error al actualizar rol',
+				description: translateError(error),
+				variant: 'destructive',
+			});
+		} else {
+			toast({
+				title: 'Rol actualizado',
+				description: `El rol de ${user.username} ahora es ${newRole}.`,
+			});
+			await loadUsers();
+		}
+	};
+
+	const confirmDelete = async () => {
+		if (!userToDelete?.uid_user) return;
+
+		const user = userToDelete;
+		setUserToDelete(null);
+
+		let error;
+		if (user.uid_user) {
+			({ error } = await deleteUser(user.uid_user));
+		} else {
+			toast({
+				title: 'Error al eliminar usuario',
+				description: 'El usuario no tiene un ID válido.',
+				variant: 'destructive',
+			});
+			return;
+		}
+
+		if (error) {
+			toast({
+				title: 'Error al eliminar usuario',
+				description: translateError(error),
+				variant: 'destructive',
+			});
+		} else {
+			toast({
+				title: 'Usuario eliminado',
+				description: `${user.username} ha sido eliminado correctamente.`,
+			});
+			await loadUsers();
+		}
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent className="bg-card max-w-2xl max-h-[80vh] overflow-y-auto">
+				<DialogHeader>
+					<DialogTitle className="text-foreground">
+						{showForm ? (editingUser ? 'Editar usuario' : 'Nuevo usuario') : 'Configurar usuarios'}
+					</DialogTitle>
+					<DialogDescription className="text-muted-foreground">
+						{showForm
+							? editingUser
+								? 'Actualizá los datos del usuario'
+								: 'Completá los datos del nuevo usuario'
+							: 'Administrá los usuarios del sistema'}
+					</DialogDescription>
+				</DialogHeader>
+
+				{!showForm ? (
+					<div className="space-y-4">
+						<div className="flex justify-end">
+							<Button onClick={() => setShowForm(true)} className="gap-2">
+								<Plus className="h-4 w-4" />
+								Agregar usuario
+							</Button>
+						</div>
+
+						{loading ? (
+							<p className="text-center text-muted-foreground py-8">Cargando usuarios...</p>
+						) : users.length === 0 ? (
+							<p className="text-center text-muted-foreground py-8">No hay usuarios registrados</p>
+						) : (
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>Usuario</TableHead>
+										<TableHead>Rol</TableHead>
+										<TableHead className="w-[200px]">Acciones</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{users.map((user) => (
+										<TableRow key={user.uid_user || user.username}>
+											<TableCell className="font-medium">{user.username}</TableCell>
+											<TableCell>
+												<div className="flex items-center gap-2">
+													<Select
+														value={user.role}
+														onValueChange={(value) => handleUpdateRole(user, value)}
+													>
+														<SelectTrigger
+															className={cn(
+																'h-8 w-[130px]',
+																user.role === 'Admin' ? 'border-primary/30 text-primary' : ''
+															)}
+														>
+															<SelectValue />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value="Admin">Admin</SelectItem>
+															<SelectItem value="Taller">Taller</SelectItem>
+														</SelectContent>
+													</Select>
+												</div>
+											</TableCell>
+											<TableCell>
+												<div className="flex items-center gap-1">
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={() => handleEdit(user)}
+														aria-label={`Editar ${user.username}`}
+													>
+														<Edit className="h-4 w-4" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="sm"
+														className="text-destructive hover:text-destructive"
+														onClick={() => setUserToDelete(user)}
+														aria-label={`Eliminar ${user.username}`}
+													>
+														<Trash2 className="h-4 w-4" />
+													</Button>
+												</div>
+											</TableCell>
+										</TableRow>
+									))}
+								</TableBody>
+							</Table>
+						)}
+					</div>
+				) : (
+					<div className="grid gap-4 py-4">
+						<div className="grid gap-2">
+							<Label htmlFor="username" className="text-foreground">
+								Nombre de usuario
+							</Label>
+							<Input
+								id="username"
+								value={formData.username}
+								onChange={(e) => setFormData((p) => ({ ...p, username: e.target.value }))}
+								className="bg-background"
+								placeholder="ej: juanperez"
+							/>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="password" className="text-foreground">
+								Contraseña{' '}
+								{editingUser && (
+									<span className="text-muted-foreground font-normal">
+										(dejá en blanco para no cambiar)
+									</span>
+								)}
+							</Label>
+							<Input
+								id="password"
+								type="password"
+								value={formData.password}
+								onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
+								className="bg-background"
+							/>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="role" className="text-foreground">
+								Rol
+							</Label>
+							<Select
+								value={formData.role}
+								onValueChange={(value) => setFormData((p) => ({ ...p, role: value }))}
+							>
+								<SelectTrigger className="bg-background">
+									<SelectValue placeholder="Seleccionar rol" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="Admin">Admin</SelectItem>
+									<SelectItem value="Taller">Taller</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<DialogFooter className="gap-2">
+							<Button
+								variant="outline"
+								onClick={() => {
+									setShowForm(false);
+									setEditingUser(null);
+									setFormData({ username: '', password: '', role: '' });
+								}}
+							>
+								Cancelar
+							</Button>
+							<Button onClick={handleSave} disabled={saving}>
+								{saving ? 'Guardando...' : editingUser ? 'Guardar cambios' : 'Crear usuario'}
+							</Button>
+						</DialogFooter>
+					</div>
+				)}
+			</DialogContent>
+			<AlertDialog open={!!userToDelete} onOpenChange={(o) => !o && setUserToDelete(null)}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+					</AlertDialogHeader>
+					<p className="text-sm text-muted-foreground">
+						Esta acción no se puede deshacer. Se eliminará el usuario{' '}
+						<strong>{userToDelete?.username}</strong> y no podrá iniciar sesión.
+					</p>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={confirmDelete}
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+						>
+							Eliminar
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</Dialog>
+	);
+}
