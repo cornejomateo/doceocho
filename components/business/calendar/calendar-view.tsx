@@ -16,6 +16,7 @@ import {
 	MapPin,
 	Package,
 	Trash2,
+	Home,
 } from 'lucide-react';
 import { monthNames, dayNames } from '@/constants/date';
 import { Event } from '@/lib/calendar/events';
@@ -43,6 +44,8 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { getSupabaseClient } from '@/lib/supabase-client';
+import { Work } from '@/lib/works/works';
 
 export function CalendarView() {
 	const { toast } = useToast();
@@ -57,6 +60,30 @@ export function CalendarView() {
 	const [searchTerm, setSearchTerm] = useState('');
 	const maxVisibleEvents = 5; // Show only 5 events by default
 	const [showAllEvents, setShowAllEvents] = useState(false);
+
+	const [workDataMap, setWorkDataMap] = useState<Record<number, Work>>({});
+
+	useEffect(() => {
+		const workIds = [...new Set(events.filter((e) => e.work_id).map((e) => e.work_id!))];
+		if (workIds.length === 0) {
+			setWorkDataMap({});
+			return;
+		}
+		const supabase = getSupabaseClient();
+		supabase
+			.from('works')
+			.select('*')
+			.in('id', workIds)
+			.then(({ data }) => {
+				if (data) {
+					const map: Record<number, Work> = {};
+					data.forEach((w: Work) => {
+						map[w.id] = w;
+					});
+					setWorkDataMap(map);
+				}
+			});
+	}, [events]);
 
 	const [openEventTypesDialog, setOpenEventTypesDialog] = useState(false);
 	const [deleteEventId, setDeleteEventId] = useState<number | null>(null);
@@ -147,32 +174,45 @@ export function CalendarView() {
 		setIsDetailsModalOpen(true);
 	};
 
+	const matchesWorkData = (event: Event, search: string) => {
+		if (event.work_id && workDataMap[event.work_id]) {
+			const w = workDataMap[event.work_id];
+			if (
+				w.locality?.toLowerCase().includes(search) ||
+				w.address?.toLowerCase().includes(search) ||
+				w.zone?.toLowerCase().includes(search) ||
+				w.hood?.toLowerCase().includes(search)
+			) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	const matchesSearchText = (event: Event, search: string) => {
+		if (search === '') return true;
+		return (
+			event.title?.toLowerCase().includes(search) ||
+			event.client_name?.toLowerCase().includes(search) ||
+			event.description?.toLowerCase().includes(search) ||
+			event.type?.toLowerCase().includes(search) ||
+			event.work_location?.toLowerCase().includes(search) ||
+			matchesWorkData(event, search)
+		);
+	};
+
 	const filteredEvents = selectedDate
 		? events.filter((event) => {
 				const [eventDay, eventMonth, eventYear] = event.date?.split('-') ?? [];
 				const formattedEventDate = `${eventDay.padStart(2, '0')}-${eventMonth.padStart(2, '0')}-${eventYear}`;
 				const matchesDate = formattedEventDate === selectedDate;
 				const matchesFilter = activeFilter === 'todos' || event.type === activeFilter;
-				const matchesSearch =
-					searchTerm === '' ||
-					event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					event.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					event.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					event.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					event.address?.toLowerCase().includes(searchTerm.toLowerCase());
-				return matchesDate && matchesFilter && matchesSearch;
+				return matchesDate && matchesFilter && matchesSearchText(event, searchTerm.toLowerCase());
 			})
 		: events
 				.filter((event) => {
 					const matchesFilter = activeFilter === 'todos' || event.type === activeFilter;
-					const matchesSearch =
-						searchTerm === '' ||
-						event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-						event.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-						event.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-						event.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-						event.address?.toLowerCase().includes(searchTerm.toLowerCase());
-					return matchesFilter && matchesSearch;
+					return matchesFilter && matchesSearchText(event, searchTerm.toLowerCase());
 				})
 				.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -246,10 +286,10 @@ export function CalendarView() {
 									description: eventData.description,
 									client_id: eventData.client_id,
 									client_name: eventData.client_name,
-									location: eventData.location,
-									address: eventData.address,
 									date: formattedDate,
 									remember: eventData.remember,
+									work_id: eventData.work_id,
+									work_location: eventData.work_location,
 								});
 
 								if (error) {
@@ -480,16 +520,38 @@ export function CalendarView() {
 													<CalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
 													<span>{event.date}</span>
 												</div>
-												{event.location && (
-													<div className="flex items-start gap-1.5">
-														<MapPin className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-														<span className="break-words line-clamp-1">{event.location}</span>
+												{event.work_id && workDataMap[event.work_id] ? (
+													<>
+														<div className="flex items-center gap-1.5">
+															<MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+															<span>
+																{workDataMap[event.work_id].locality || 'Sin localidad'} -{' '}
+																{workDataMap[event.work_id].address || 'Sin dirección'}
+															</span>
+														</div>
+														{workDataMap[event.work_id].zone && (
+															<div className="flex items-center gap-1.5">
+																<MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+																<span>Zona: {workDataMap[event.work_id].zone}</span>
+															</div>
+														)}
+														{workDataMap[event.work_id].hood && (
+															<div className="flex items-center gap-1.5">
+																<Home className="h-3.5 w-3.5 flex-shrink-0" />
+																<span>Barrio: {workDataMap[event.work_id].hood}</span>
+															</div>
+														)}
+													</>
+												) : event.work_location ? (
+													<div className="flex items-center gap-1.5">
+														<MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+														<span>{event.work_location}</span>
 													</div>
-												)}
-												{event.address && (
-													<div className="flex items-start gap-1.5">
-														<Package className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-														<span className="break-words line-clamp-1">{event.address}</span>
+												) : null}
+												{event.description && (
+													<div className="flex items-center gap-1.5">
+														<Package className="h-3.5 w-3.5 flex-shrink-0" />
+														<span>{event.description}</span>
 													</div>
 												)}
 											</div>
@@ -598,10 +660,10 @@ export function CalendarView() {
 						type: selectedEvent?.type,
 						date: selectedEvent?.date ?? '',
 						client_name: selectedEvent?.client_name ?? '',
-						location: selectedEvent?.location ?? '',
-						address: selectedEvent?.address ?? '',
 						description: selectedEvent?.description ?? '',
 						remember: selectedEvent?.remember ?? false,
+						work_location: selectedEvent?.work_location ?? '',
+						work_id: selectedEvent?.work_id ?? null,
 					}}
 					onEventUpdated={refresh}
 					eventTypes={eventTypes}

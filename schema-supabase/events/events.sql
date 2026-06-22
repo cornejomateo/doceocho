@@ -12,6 +12,8 @@ create table public.events (
   is_overdue boolean null default false,
   remember boolean null default false,
   type_id bigint null,
+  work_id bigint null,
+  work_location character varying null,
   constraint events_pkey primary key (id)
   constraint events_type_id_fkey foreign KEY (type_id) references events_types (id) on update CASCADE
 ) TABLESPACE pg_default;
