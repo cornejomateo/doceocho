@@ -104,9 +104,14 @@ export function EventFormModal({ onSave, children, eventTypes = [] }: EventFormM
 
 		if (clientId) {
 			setLoadingWorks(true);
-			const { data } = await getWorksByClientId(clientId);
-			console.log('Obras del cliente seleccionado:', data);
-			setClientWorks(data || []);
+			const { data, error } = await getWorksByClientId(clientId);
+			if (error) {
+				console.error('Error fetching works:', error);
+				setClientWorks([]);
+			} else {
+				console.log('Obras del cliente seleccionado:', data);
+				setClientWorks(data || []);
+			}
 			setLoadingWorks(false);
 		} else {
 			setClientWorks([]);

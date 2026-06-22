@@ -74,7 +74,11 @@ export function CalendarView() {
 			.from('works')
 			.select('*')
 			.in('id', workIds)
-			.then(({ data }) => {
+			.then(({ data, error }) => {
+				if (error) {
+					console.error('Error fetching work data:', error);
+					return;
+				}
 				if (data) {
 					const map: Record<number, Work> = {};
 					data.forEach((w: Work) => {

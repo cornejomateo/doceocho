@@ -160,17 +160,19 @@ export function WorksList({
 										className="text-xs sm:text-sm text-muted-foreground truncate"
 									/>
 									<EditableField
-										value={work.zone || 'Zona no especificada'}
+										value={work.zone || ''}
 										onSave={async (newValue) => {
 											await handleUpdateWork(work.id, { zone: newValue });
 										}}
+										formatDisplay={(value) => value || 'Zona no especificada'}
 										className="text-xs sm:text-sm text-muted-foreground truncate"
 									/>
 									<EditableField
-										value={work.hood || 'Barrio no especificado'}
+										value={work.hood || ''}
 										onSave={async (newValue) => {
 											await handleUpdateWork(work.id, { hood: newValue });
 										}}
+										formatDisplay={(value) => value || 'Barrio no especificado'}
 										className="text-xs sm:text-sm text-muted-foreground truncate"
 									/>
 								</div>

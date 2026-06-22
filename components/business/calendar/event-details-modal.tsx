@@ -47,8 +47,13 @@ export function EventDetailsModal({
 	useEffect(() => {
 		if (event.work_id) {
 			setIsLoadingWork(true);
-			getWorkById(event.work_id).then(({ data }) => {
-				setWorkData(data);
+			getWorkById(event.work_id).then(({ data, error }) => {
+				if (error) {
+					console.error('Error fetching work data:', error);
+					setWorkData(null);
+				} else {
+					setWorkData(data);
+				}
 				setIsLoadingWork(false);
 			});
 		} else {

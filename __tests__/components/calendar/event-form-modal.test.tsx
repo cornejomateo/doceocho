@@ -170,8 +170,9 @@ describe('EventFormModal', () => {
 			await user.click(screen.getByRole('button', { name: /open modal/i }));
 			await user.click(screen.getByRole('button', { name: /select client 1/i }));
 
+			selectWorkByRadixHiddenSelect('manual');
 			await waitFor(() => {
-				expect(selectWorkByRadixHiddenSelect('manual')).toBeTruthy();
+				expect(screen.getByLabelText(/ubicación/i)).toBeInTheDocument();
 			});
 
 			selectWorkByRadixHiddenSelect('manual');

@@ -102,12 +102,10 @@ export function EmailNotificationModal({
 			};
 
 			await onSendEmail(emailData);
-			if (!error) {
-				toast({
-					title: 'Email enviado',
-					description: 'El email ha sido enviado correctamente.',
-				});
-			}
+			toast({
+				title: 'Email enviado',
+				description: 'El email ha sido enviado correctamente.',
+			});
 			onOpenChange(false);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Error al enviar el email');
