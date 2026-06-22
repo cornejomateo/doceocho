@@ -8,8 +8,8 @@ import {
 	cleanChannelMessagesAction,
 } from '@/actions/chat/messages';
 import { getChannelMembersAction } from '@/actions/chat/channel-members';
-import { getSupabaseClient } from '@/lib/supabase-client';
 import { SCROLL_DELAY } from '@/constants/chat/chat.constants';
+import { updateLastReadMessage } from '@/lib/chat/channel-members';
 
 interface UseChatManagementProps {
 	currentUsername: string;
@@ -22,14 +22,12 @@ export function useChatManagement({
 	currentUsername,
 	currentUserRole,
 	messages,
-	messagesLoading,
 }: UseChatManagementProps) {
 	const [channels, setChannels] = useState<ChannelWithLastMessage[]>([]);
 	const [selectedChannel, setSelectedChannel] = useState<ChannelWithLastMessage | null>(null);
 	const [newMessage, setNewMessage] = useState('');
 	const [loading, setLoading] = useState(true);
 	const [initialLoadDone, setInitialLoadDone] = useState(false);
-	const [totalUnreadCount, setTotalUnreadCount] = useState(0);
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showMembersDialog, setShowMembersDialog] = useState(false);
 	const [members, setMembers] = useState<any[]>([]);
@@ -44,8 +42,9 @@ export function useChatManagement({
 	const [sending, setSending] = useState(false);
 	const messagesScrollRef = useRef<HTMLDivElement>(null);
 	const [scrolledToUnread, setScrolledToUnread] = useState(false);
-	const loadChannelsDebouncedRef = useRef<NodeJS.Timeout | null>(null);
 	const [replyingTo, setReplyingTo] = useState<MessageWithUser | null>(null);
+
+	const totalUnreadCount = channels.reduce((sum, ch) => sum + (ch.unread_count || 0), 0);
 
 	const loadChannels = useCallback(
 		async (isBackgroundUpdate = false) => {
@@ -56,9 +55,6 @@ export function useChatManagement({
 			const result = await getUserChannelsAction(currentUsername);
 			if (result.success && result.data) {
 				setChannels(result.data);
-				// Calculate total unread count
-				const total = result.data.reduce((sum, ch) => sum + (ch.unread_count || 0), 0);
-				setTotalUnreadCount(total);
 			}
 			if (!isBackgroundUpdate) {
 				setLoading(false);
@@ -67,15 +63,6 @@ export function useChatManagement({
 		},
 		[currentUsername]
 	);
-
-	const debouncedLoadChannels = useCallback(() => {
-		if (loadChannelsDebouncedRef.current) {
-			clearTimeout(loadChannelsDebouncedRef.current);
-		}
-		loadChannelsDebouncedRef.current = setTimeout(() => {
-			loadChannels(true);
-		}, 300);
-	}, [loadChannels]);
 
 	const loadMembers = async (channelId: number) => {
 		if (!currentUsername) return;
@@ -89,41 +76,49 @@ export function useChatManagement({
 		if (!channelId || !currentUsername || !newMessage.trim() || sending) return;
 
 		setSending(true);
+
 		const messageContent = newMessage.trim();
 		setNewMessage('');
 
-		const result = await sendMessageAction(
-			channelId,
-			messageContent,
-			currentUsername,
-			replyingTo?.id
-		);
-		if (!result.success) {
-			setNewMessage(messageContent);
-		} else {
-			// Clear reply state after sending
+		try {
+			const result = await sendMessageAction(
+				channelId,
+				messageContent,
+				currentUsername,
+				replyingTo?.id
+			);
+
+			if (!result.success) {
+				setNewMessage(messageContent);
+				return;
+			}
+
 			setReplyingTo(null);
 
-			// Scroll to bottom after sending message with multiple attempts
-			const scrollToBottom = () => {
+			if (result.data) {
+				window.dispatchEvent(new CustomEvent('new-message', { detail: result.data }));
+			}
+
+			setTimeout(() => {
 				const scrollArea = messagesScrollRef.current?.querySelector(
 					'[data-radix-scroll-area-viewport]'
 				);
 				if (scrollArea) {
 					scrollArea.scrollTop = scrollArea.scrollHeight;
 				}
-			};
-
-			// Try scrolling at different intervals to ensure the message is rendered
-			setTimeout(scrollToBottom, 100);
-			setTimeout(scrollToBottom, 300);
-			setTimeout(scrollToBottom, 500);
+			}, 50);
+		} finally {
+			setSending(false);
 		}
-		setSending(false);
 	};
 
 	const handleChannelSelect = async (channel: ChannelWithLastMessage) => {
 		setSelectedChannel(channel);
+
+		if (channel.last_message_id) {
+			await updateLastReadMessage(channel.last_message_id, channel.id, currentUsername);
+		}
+
 		setSearchTerm('');
 		setShowSidebar(false);
 		setScrolledToUnread(false);
@@ -222,107 +217,37 @@ export function useChatManagement({
 		}
 	};
 
-	// Realtime subscription for unread counts
 	useEffect(() => {
-		if (!currentUsername) return;
+		if (!selectedChannel || !currentUsername) return;
+		if (!selectedChannel.last_message_id) return;
 
-		const supabase = getSupabaseClient();
+		void updateLastReadMessage(
+			selectedChannel.last_message_id,
+			selectedChannel.id,
+			currentUsername
+		);
 
-		const messagesChannel = supabase
-			.channel('channels-unread')
-			.on(
-				'postgres_changes',
-				{
-					event: 'INSERT',
-					schema: 'public',
-					table: 'messages',
-				},
-				async (payload) => {
-					const newMessage = payload.new as any;
-					if (selectedChannel?.id !== newMessage.channel_id) {
-						debouncedLoadChannels();
-					}
-				}
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: 'INSERT',
-					schema: 'public',
-					table: 'message_reads',
-				},
-				async () => {
-					debouncedLoadChannels();
-				}
-			)
-			.subscribe();
+		setChannels((prev) =>
+			prev.map((ch) => (ch.id === selectedChannel.id ? { ...ch, unread_count: 0 } : ch))
+		);
+	}, [selectedChannel, currentUsername]);
 
-		return () => {
-			supabase.removeChannel(messagesChannel);
-			if (loadChannelsDebouncedRef.current) {
-				clearTimeout(loadChannelsDebouncedRef.current);
-			}
-		};
-	}, [currentUsername, debouncedLoadChannels, selectedChannel?.id]);
-
-	// Smart scroll to first unread message or bottom when channel is opened
 	useEffect(() => {
-		const scrollToUnreadOrBottom = async () => {
-			if (!selectedChannel || !currentUsername || scrolledToUnread) {
-				return;
-			}
+		if (!selectedChannel || !messages.length) return;
 
-			try {
-				const { data: readMessages } = await getSupabaseClient()
-					.from('message_reads')
-					.select('message_id')
-					.eq('user_id', currentUsername);
+		const timeout = setTimeout(() => {
+			const scrollArea = messagesScrollRef.current?.querySelector(
+				'[data-radix-scroll-area-viewport]'
+			);
 
-				const readMessageIds = new Set(readMessages?.map((m: any) => m.message_id) || []);
+			if (!scrollArea) return;
 
-				// Find first unread message
-				const firstUnreadMessage = messages.find((msg) => !readMessageIds.has(msg.id));
+			// siempre scroll al final (simple y correcto para tu modelo actual)
+			scrollArea.scrollTop = scrollArea.scrollHeight;
+		}, SCROLL_DELAY);
 
-				// Scroll to first unread message or bottom
-				setTimeout(() => {
-					const scrollArea = messagesScrollRef.current?.querySelector(
-						'[data-radix-scroll-area-viewport]'
-					);
-					if (scrollArea) {
-						if (firstUnreadMessage) {
-							const messageElements = scrollArea.querySelectorAll('[data-message-id]');
-							const targetElement = Array.from(messageElements).find(
-								(el) => el.getAttribute('data-message-id') === String(firstUnreadMessage.id)
-							);
-							if (targetElement) {
-								targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-							}
-						} else {
-							scrollArea.scrollTop = scrollArea.scrollHeight;
-						}
-					}
-				}, SCROLL_DELAY);
-
-				// Mark messages as read after scrolling
-				if (selectedChannel) {
-					const { markChannelMessagesAsRead } = await import('@/lib/chat/message-reads');
-					await markChannelMessagesAsRead(selectedChannel.id, currentUsername);
-					// Update local state instead of reloading all channels
-					setChannels((prev) =>
-						prev.map((ch) => (ch.id === selectedChannel.id ? { ...ch, unread_count: 0 } : ch))
-					);
-					// Update total unread count
-					setTotalUnreadCount((prev) => prev - (selectedChannel.unread_count || 0));
-				}
-
-				setScrolledToUnread(true);
-			} catch (error) {
-				console.error('Error scrolling to unread messages:', error);
-			}
-		};
-
-		scrollToUnreadOrBottom();
-	}, [selectedChannel, messages, scrolledToUnread, currentUsername]);
+		return () => clearTimeout(timeout);
+	}, [selectedChannel, messages]);
 
 	return {
 		// State

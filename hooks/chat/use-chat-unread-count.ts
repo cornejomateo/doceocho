@@ -12,57 +12,19 @@ export function useChatUnreadCount() {
 		const fetchUnreadCount = async () => {
 			try {
 				const supabase = getSupabaseClient();
-				const { data, error } = await supabase
-					.from('channel_members')
-					.select(
-						`
-						channel_id,
-						channels (
-							id
-						)
-					`
-					)
-					.eq('user_id', user.username);
 
-				if (error || !data) {
-					console.error('Error fetching channels:', error);
+				const { data, error } = await supabase.rpc('get_unread_messages_count', {
+					p_username: user.username,
+				});
+
+				if (error) {
+					console.error(error);
 					return;
 				}
 
-				const channelIds = data.map((item: any) => item.channels.id);
-
-				// Get all messages for user's channels
-				const { data: allMessages, error: messagesError } = await supabase
-					.from('messages')
-					.select('id, channel_id')
-					.in('channel_id', channelIds)
-					.is('deleted_at', null);
-
-				if (messagesError) {
-					console.error('Error fetching messages:', messagesError);
-					return;
-				}
-
-				// Get read message IDs for this user
-				const { data: readMessages, error: readError } = await supabase
-					.from('message_reads')
-					.select('message_id')
-					.eq('user_id', user.username);
-
-				if (readError) {
-					console.error('Error fetching read messages:', readError);
-					return;
-				}
-
-				const readMessageIds = new Set(readMessages?.map((m: any) => m.message_id) || []);
-
-				// Count unread messages
-				const unreadCount =
-					allMessages?.filter((msg: any) => !readMessageIds.has(msg.id)).length || 0;
-
-				setTotalUnreadCount(unreadCount);
+				setTotalUnreadCount(data ?? 0);
 			} catch (error) {
-				console.error('Error fetching unread count:', error);
+				console.error(error);
 			}
 		};
 
@@ -75,24 +37,20 @@ export function useChatUnreadCount() {
 			.on(
 				'postgres_changes',
 				{
-					event: 'INSERT',
+					event: '*',
 					schema: 'public',
-					table: 'message_reads',
+					table: 'messages',
 				},
-				() => {
-					fetchUnreadCount();
-				}
+				fetchUnreadCount
 			)
 			.on(
 				'postgres_changes',
 				{
-					event: 'INSERT',
+					event: 'UPDATE',
 					schema: 'public',
-					table: 'messages',
+					table: 'channel_members',
 				},
-				() => {
-					fetchUnreadCount();
-				}
+				fetchUnreadCount
 			)
 			.subscribe();
 

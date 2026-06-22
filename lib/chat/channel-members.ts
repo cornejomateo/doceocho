@@ -83,3 +83,23 @@ export async function getUserChannels(userId: string): Promise<{
 
 	return { data, error };
 }
+
+export async function updateLastReadMessage(
+	message_id: number,
+	channel_id: number,
+	username: string
+): Promise<{ success: boolean; error?: any }> {
+	try {
+		const supabase = getSupabaseClient();
+		return supabase
+			.from('channel_members')
+			.update({
+				last_read_message_id: message_id,
+			})
+			.eq('user_id', username)
+			.eq('channel_id', channel_id)
+			.or(`last_read_message_id.is.null,last_read_message_id.lt.${message_id}`);
+	} catch (error) {
+		return { success: false, error };
+	}
+}

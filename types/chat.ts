@@ -3,6 +3,7 @@ export type Channel = {
 	created_at?: string;
 	name: string | null;
 	description: string | null;
+	last_message_id: number | null;
 };
 
 export type ChannelMember = {
@@ -10,6 +11,7 @@ export type ChannelMember = {
 	joined_at: string;
 	user_id: string;
 	channel_id: number;
+	last_read_message_id: number | null;
 };
 
 export type Message = {

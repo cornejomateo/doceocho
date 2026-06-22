@@ -6,11 +6,9 @@ import {
 	deleteMessage,
 	getMessagesByChannel,
 	getMessageById,
-	hardDeleteMessage,
 } from '@/lib/chat/messages';
 import { getUser } from '@/lib/users/users';
-import { isUserInChannel } from '@/lib/chat/channel-members';
-import { markMessageAsRead } from '@/lib/chat/message-reads';
+import { isUserInChannel, updateLastReadMessage } from '@/lib/chat/channel-members';
 import { Message } from '@/types/chat';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { sendPushNotificationToChannel } from '@/actions/push/send-notification';
@@ -21,50 +19,40 @@ export async function sendMessageAction(
 	content: string,
 	currentUsername: string,
 	replyToId?: number
-): Promise<{ success: boolean; error?: string; data?: Message }> {
+): Promise<{ success: boolean; error?: string; data?: any }> {
 	try {
-		// Get current user
-		const userResult = await getUser(currentUsername);
-		if (!userResult.data) {
-			return { success: false, error: 'Usuario no encontrado' };
-		}
+		// Validate content (cheap, no DB)
+		const trimmed = content?.trim();
 
-		// Check if user is member of the channel
-		const isMemberResult = await isUserInChannel(channelId, userResult.data.username);
-		const isAdmin = userResult.data.role === 'Admin';
-
-		if (!isMemberResult.data && !isAdmin) {
-			return { success: false, error: 'No tienes acceso a este canal' };
-		}
-
-		// Validate content
-		if (!content || content.trim().length === 0) {
+		if (!trimmed) {
 			return { success: false, error: 'El mensaje no puede estar vacío' };
 		}
 
-		// Create message
-		const result = await createMessage({
-			content: content.trim(),
-			channel_id: channelId,
-			user_id: userResult.data.username,
-			edited_at: null,
-			deleted_at: null,
-			reply_to: replyToId || null,
-		});
+		const supabase = getSupabaseClient();
 
-		if (result.error) {
-			return { success: false, error: result.error.message || 'Error al enviar el mensaje' };
+		// INSERT ONLY (fast path)
+		const { data, error } = await supabase
+			.from('messages')
+			.insert({
+				content: trimmed,
+				channel_id: channelId,
+				user_id: currentUsername,
+				reply_to: replyToId || null,
+				edited_at: null,
+				deleted_at: null,
+			})
+			.select()
+			.single();
+
+		if (error) {
+			return { success: false, error: error.message };
 		}
 
-		// Mark message as read for the sender
-		if (result.data) {
-			await markMessageAsRead(result.data.id, userResult.data.username);
-		}
-
-		// Send push notifications to channel members after response is sent
+		// Async side effects (NO bloquean request)
 		after(async () => {
 			try {
-				const { data: channel } = await getSupabaseClient()
+				// push notifications (async only)
+				const { data: channel } = await supabase
 					.from('channels')
 					.select('name')
 					.eq('id', channelId)
@@ -72,20 +60,16 @@ export async function sendMessageAction(
 
 				await sendPushNotificationToChannel(
 					channelId,
-					userResult.data?.username || '',
-					content.trim(),
+					currentUsername,
+					trimmed,
 					channel?.name || 'Canal'
 				);
-			} catch (error: any) {
-				console.error('Failed to send push notification:', {
-					channelId,
-					username: userResult.data?.username,
-					error: error.message,
-				});
+			} catch (err: any) {
+				console.error('Push notification error:', err.message);
 			}
 		});
 
-		return { success: true, data: result.data || undefined };
+		return { success: true, data };
 	} catch (error: any) {
 		return { success: false, error: error.message || 'Error al enviar el mensaje' };
 	}
