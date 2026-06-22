@@ -284,9 +284,7 @@ export function ClientDetailsDialog({
 									{isAuthorized && (
 										<>
 											<TabsTrigger value="works">Obras</TabsTrigger>
-											<TabsTrigger value="budgets" disabled>
-												Presupuestos
-											</TabsTrigger>
+											<TabsTrigger value="budgets">Presupuestos</TabsTrigger>
 											<TabsTrigger value="balances" disabled>
 												Saldos
 											</TabsTrigger>
