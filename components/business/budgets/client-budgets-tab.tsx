@@ -7,14 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { TrendingUp, Plus } from 'lucide-react';
 import { BudgetWithWork } from '@/lib/balances/balances';
+import { updateFolderBudget } from '@/lib/budgets/folder_budgets';
 import { ClientBudgetsDollarUpdateModal } from '@/components/ui/client-budgets-dollar-update-modal';
 import { BudgetFormModal } from '@/components/business/budgets/budget-form-modal';
 import { useClientBudgetsState } from '@/hooks/budgets/useClientBudgetsState';
 import { budgetHandlers } from './handlers';
 import { FolderCard } from '@/components/business/budgets/FolderCard';
 import { BudgetDetailModal } from '@/components/business/budgets/BudgetDetailModal';
-import { PdfPreviewModal } from '@/components/business/budgets/PdfPreviewModal';
 import { ClientBudgetsTabProps } from '@/components/business/reports/budgets/types';
+import { toast } from '@/components/ui/use-toast';
+import { translateError } from '@/lib/error-translator';
 
 export function ClientBudgetsTab({
 	clientId,
@@ -34,8 +36,6 @@ export function ClientBudgetsTab({
 		setDeleteBudgetConfirm,
 		deleteFolderConfirm,
 		setDeleteFolderConfirm,
-		pdfPreview,
-		setPdfPreview,
 		isClientBudgetsUpdateModalOpen,
 		setIsClientBudgetsUpdateModalOpen,
 		budgetDetailModal,
@@ -101,11 +101,7 @@ export function ClientBudgetsTab({
 	};
 
 	const handleViewPdf = (budget: BudgetWithWork) => {
-		budgetHandlers.handleViewPdf(budget, setPdfPreview, setIsLoading);
-	};
-
-	const closePdfPreview = () => {
-		budgetHandlers.closePdfPreview(pdfPreview, setPdfPreview);
+		budgetHandlers.handleViewPdf(budget, setIsLoading);
 	};
 
 	const handleOpenBudgetDetail = (budget: BudgetWithWork) => {
@@ -139,6 +135,25 @@ export function ClientBudgetsTab({
 
 	const handleClientBudgetsUpdate = async (newUsdRate: number) => {
 		await budgetHandlers.handleClientBudgetsUpdate(newUsdRate, clientId, refresh);
+	};
+
+	const handleAssignWork = async (folderId: number, workId: number) => {
+		const { error } = await updateFolderBudget(folderId, { work_id: workId });
+		if (!error) {
+			toast({
+				title: 'Obra asignada',
+				description: 'La obra ha sido asignada a la carpeta de presupuestos.',
+			});
+			refresh();
+		} else {
+			const errorMessage = translateError(error);
+			toast({
+				title: 'Error',
+				description:
+					errorMessage || 'Ocurrió un error al asignar la obra. Por favor, intentá nuevamente.',
+				variant: 'destructive',
+			});
+		}
 	};
 
 	const handleCreateBudgetSubmit = async (formData: any) => {
@@ -223,6 +238,7 @@ export function ClientBudgetsTab({
 						<FolderCard
 							key={folder.id}
 							folder={folder}
+							works={works}
 							isOpen={!!openFolders[folder.id]}
 							onToggle={(open) => setOpenFolders((prev) => ({ ...prev, [folder.id]: open }))}
 							isLoading={isLoading}
@@ -231,6 +247,7 @@ export function ClientBudgetsTab({
 							onDeleteFolder={handleDeleteFolder}
 							onViewPdf={handleViewPdf}
 							onOpenDetail={handleOpenBudgetDetail}
+							onAssignWork={handleAssignWork}
 						/>
 					))}
 				</div>
@@ -252,13 +269,6 @@ export function ClientBudgetsTab({
 				description={`¿Estás seguro de que quieres eliminar esta carpeta y sus ${deleteFolderConfirm.budgetCount} presupuesto(s)? Esta acción no se puede deshacer.`}
 				onConfirm={confirmDeleteFolder}
 				isLoading={isLoading}
-			/>
-
-			<PdfPreviewModal
-				isOpen={pdfPreview.open}
-				onOpenChange={closePdfPreview}
-				budget={pdfPreview.budget}
-				pdfUrl={pdfPreview.pdfUrl}
 			/>
 
 			<ClientBudgetsDollarUpdateModal

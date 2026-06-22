@@ -109,8 +109,8 @@ describe('ClientManagement', () => {
 		expect(screen.getByText('Pérez Juan')).toBeInTheDocument();
 	});
 
-	it('hides add button for colocador role', () => {
-		(useAuth as jest.Mock).mockReturnValue({ user: { role: 'Colocador' } });
+	it('hides add button for Taller role', () => {
+		(useAuth as jest.Mock).mockReturnValue({ user: { role: 'Taller' } });
 		render(<ClientManagement />);
 
 		expect(screen.queryByText('Nuevo cliente')).not.toBeInTheDocument();

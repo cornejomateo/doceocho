@@ -9,7 +9,6 @@ import {
 	BudgetFormData,
 	DeleteBudgetConfirmState,
 	DeleteFolderConfirmState,
-	PdfPreviewState,
 	BudgetDetailModalState,
 } from '@/components/business/reports/budgets/types';
 import { FORM_DEFAULTS } from '../../constants/budgets/constants';
@@ -38,11 +37,7 @@ export function useClientBudgetsState(clientId: number) {
 		folderId: null,
 		budgetCount: 0,
 	});
-	const [pdfPreview, setPdfPreview] = useState<PdfPreviewState>({
-		open: false,
-		budget: null,
-		pdfUrl: null,
-	});
+
 	const [isClientBudgetsUpdateModalOpen, setIsClientBudgetsUpdateModalOpen] = useState(false);
 	const [budgetDetailModal, setBudgetDetailModal] = useState<BudgetDetailModalState>({
 		open: false,
@@ -181,8 +176,6 @@ export function useClientBudgetsState(clientId: number) {
 		setDeleteBudgetConfirm,
 		deleteFolderConfirm,
 		setDeleteFolderConfirm,
-		pdfPreview,
-		setPdfPreview,
 		isClientBudgetsUpdateModalOpen,
 		setIsClientBudgetsUpdateModalOpen,
 		budgetDetailModal,
