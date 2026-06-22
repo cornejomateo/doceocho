@@ -23,6 +23,9 @@ jest.mock('@/components/ui/badge', () => ({
 }));
 
 jest.mock('@/components/ui/use-toast', () => ({ useToast: jest.fn() }));
+jest.mock('@/components/provider/auth-provider', () => ({
+	useAuth: () => ({ user: { role: 'Admin' } }),
+}));
 jest.mock('@/lib/calendar/events', () => ({
 	updateEvent: jest.fn().mockResolvedValue({ error: null }),
 }));
@@ -44,7 +47,7 @@ describe('EventDetailsModal', () => {
 			id: 33,
 			title: 'Prueba evento',
 			date: '05-05-2025',
-			client: 'ACME',
+			client_name: 'ACME',
 			location: 'Ciudad',
 			address: 'Calle 1',
 			description: 'Desc',

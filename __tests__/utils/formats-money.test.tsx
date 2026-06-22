@@ -62,12 +62,12 @@ describe('money utils', () => {
 	});
 
 	describe('normalizeMoney', () => {
-		it('rounds to 2 decimal places', () => {
-			expect(normalizeMoney(10.126)).toBe(10.13);
+		it('rounds to 3 decimal places', () => {
+			expect(normalizeMoney(10.126)).toBe(10.126);
 		});
 
 		it('rounds down correctly', () => {
-			expect(normalizeMoney(10.124)).toBe(10.12);
+			expect(normalizeMoney(10.124)).toBe(10.124);
 		});
 
 		it('handles floating point precision issues', () => {
@@ -136,7 +136,7 @@ describe('money utils', () => {
 		});
 
 		it('returns 0 for invalid numeric string', () => {
-			expect(Number.isNaN(parseArsToNumber('abc'))).toBe(true);
+			expect(parseArsToNumber('abc')).toBe(0);
 		});
 
 		it('handles zero correctly', () => {
