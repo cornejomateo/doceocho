@@ -79,3 +79,10 @@ ON public.events_types
 FOR UPDATE
 TO authenticated
 USING (true);
+
+ALTER TABLE public.events
+ADD constraint events_work_id_fkey
+FOREIGN KEY (work_id)
+REFERENCES public.works(id)
+ON UPDATE CASCADE
+ON DELETE SET NULL;
