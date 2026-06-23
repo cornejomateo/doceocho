@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { handleAuthError } from '@/helpers/users/handle-errors';
+import { requireAdmin } from '@/helpers/users/auth-admin';
 
 export async function POST(req: Request) {
 	try {
+		const token = req.headers.get('authorization')?.replace('Bearer ', '');
+		await requireAdmin(token);
+
 		const { username, password, role } = await req.json();
 
 		if (!username || !password || !role) {
@@ -43,7 +48,54 @@ export async function POST(req: Request) {
 
 		return NextResponse.json({ success: true });
 	} catch (err: any) {
-		console.error('Error creating user:', err);
+		const authError = handleAuthError(err);
+		if (authError) {
+			return authError;
+		}
+		return NextResponse.json(
+			{ error: err.message || 'Error interno del servidor' },
+			{ status: 500 }
+		);
+	}
+}
+
+export async function GET(req: Request) {
+	try {
+		const token = req.headers.get('authorization')?.replace('Bearer ', '');
+		await requireAdmin(token);
+
+		const supabase = createClient(
+			process.env.NEXT_PUBLIC_SUPABASE_URL!,
+			process.env.SUPABASE_SERVICE_ROLE_KEY!
+		);
+
+		const { searchParams } = new URL(req.url);
+		const uid = searchParams.get('uid');
+
+		if (uid) {
+			const { data, error } = await supabase
+				.from('users')
+				.select('*')
+				.eq('uid_user', uid)
+				.maybeSingle();
+
+			if (error) {
+				return NextResponse.json({ error: 'Error al obtener usuario' }, { status: 500 });
+			}
+
+			return NextResponse.json({ data });
+		}
+
+		const { data, error } = await supabase.from('users').select('*').order('username');
+
+		if (error) {
+			return NextResponse.json({ error: 'Error al listar usuarios' }, { status: 500 });
+		}
+
+		return NextResponse.json({ data });
+	} catch (err: any) {
+		const authError = handleAuthError(err);
+		if (authError) return authError;
 		return NextResponse.json(
 			{ error: err.message || 'Error interno del servidor' },
 			{ status: 500 }
@@ -53,7 +105,11 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
 	try {
-		const { uid_user, password } = await req.json();
+		const token = req.headers.get('authorization')?.replace('Bearer ', '');
+		await requireAdmin(token);
+
+		const body = await req.json();
+		const { uid_user, password, username, role } = body;
 
 		if (!uid_user) {
 			return NextResponse.json({ error: 'Falta uid_user' }, { status: 400 });
@@ -64,20 +120,39 @@ export async function PUT(req: Request) {
 			process.env.SUPABASE_SERVICE_ROLE_KEY!
 		);
 
-		const updates: Record<string, string> = {};
-		if (password) updates.password = password;
-
-		if (Object.keys(updates).length > 0) {
-			const { error: authError } = await supabase.auth.admin.updateUserById(uid_user, updates);
+		if (password) {
+			const { error: authError } = await supabase.auth.admin.updateUserById(uid_user, {
+				password,
+			});
 
 			if (authError) {
 				return NextResponse.json({ error: authError.message }, { status: 400 });
 			}
 		}
 
+		const dbUpdates: Record<string, any> = {};
+		if (username !== undefined) dbUpdates.username = username;
+		if (role !== undefined) dbUpdates.role = role;
+
+		if (Object.keys(dbUpdates).length > 0) {
+			const { data, error: dbError } = await supabase
+				.from('users')
+				.update(dbUpdates)
+				.eq('uid_user', uid_user)
+				.select()
+				.single();
+
+			if (dbError) {
+				return NextResponse.json({ error: dbError.message }, { status: 400 });
+			}
+
+			return NextResponse.json({ data });
+		}
+
 		return NextResponse.json({ success: true });
 	} catch (err: any) {
-		console.error('Error updating user:', err);
+		const authError = handleAuthError(err);
+		if (authError) return authError;
 		return NextResponse.json(
 			{ error: err.message || 'Error interno del servidor' },
 			{ status: 500 }
@@ -87,6 +162,9 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
 	try {
+		const token = req.headers.get('authorization')?.replace('Bearer ', '');
+		await requireAdmin(token);
+
 		const { uid_user } = await req.json();
 
 		if (!uid_user) {
@@ -112,7 +190,10 @@ export async function DELETE(req: Request) {
 
 		return NextResponse.json({ success: true });
 	} catch (err: any) {
-		console.error('Error deleting user:', err);
+		const authError = handleAuthError(err);
+		if (authError) {
+			return authError;
+		}
 		return NextResponse.json(
 			{ error: err.message || 'Error interno del servidor' },
 			{ status: 500 }

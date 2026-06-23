@@ -4,7 +4,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { UserRole } from '@/constants/users/user-role';
-import { getUser } from '@/lib/users/users';
 import { getSupabaseClient } from '@/lib/supabase-client';
 
 type SessionUser = {
@@ -19,65 +18,80 @@ type AuthContextType = {
 	signOutUser: () => Promise<void>;
 };
 
-const SESSION_STORAGE_KEY = 'sessionUser';
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+async function fetchProfile(): Promise<SessionUser | null> {
+	const supabase = getSupabaseClient();
+	const { data } = await supabase.auth.getSession();
+	const token = data.session?.access_token;
+	if (!token) return null;
+
+	const res = await fetch('/api/me', {
+		headers: { Authorization: `Bearer ${token}` },
+	});
+
+	if (!res.ok) return null;
+
+	const json = await res.json();
+	if (!json.data) return null;
+
+	return {
+		username: json.data.username,
+		role: json.data.role as UserRole,
+	};
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<SessionUser | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [isMounted, setIsMounted] = useState(false);
 	const supabase = getSupabaseClient();
 
 	const router = useRouter();
 
 	useEffect(() => {
-		setIsMounted(true);
-
-		const restoreSession = async () => {
-			try {
-				const {
-					data: { session },
-				} = await supabase.auth.getSession();
-
-				if (!session) {
-					localStorage.removeItem(SESSION_STORAGE_KEY);
-					setUser(null);
-					return;
-				}
-
-				const raw = localStorage.getItem(SESSION_STORAGE_KEY);
-
-				if (raw) {
-					const parsed: SessionUser = JSON.parse(raw);
-					setUser(parsed);
-				}
-			} catch (error) {
-				console.error(error);
-				localStorage.removeItem(SESSION_STORAGE_KEY);
-				setUser(null);
-			} finally {
-				setLoading(false);
-			}
+		const init = async () => {
+			const profile = await fetchProfile();
+			if (profile) setUser(profile);
+			setLoading(false);
 		};
 
-		restoreSession();
+		init();
+
+		const {
+			data: { subscription },
+		} = supabase.auth.onAuthStateChange(async (_event, session) => {
+			if (!session) {
+				setUser(null);
+				return;
+			}
+
+			const profile = await fetchProfile();
+			if (profile) setUser(profile);
+		});
+
+		return () => {
+			subscription.unsubscribe();
+		};
 	}, []);
 
 	async function signIn(username: string, password: string): Promise<SessionUser> {
 		setLoading(true);
 
 		try {
-			// Search user in DB to get email for Supabase login
-			const res = await getUser(username);
+			const response = await fetch('/api/login', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ username }),
+			});
 
-			if (!res.data) {
-				throw new Error('Usuario no encontrado');
+			const res = await response.json();
+
+			if (!response.ok || !res.data) {
+				throw new Error(res.error || 'Usuario o contraseña incorrectos');
 			}
 
-			// sign in REAL
 			const { error } = await supabase.auth.signInWithPassword({
-				email: res.data.mail || '',
+				email: res.data.mail,
 				password,
 			});
 
@@ -92,11 +106,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			setUser(sessionUser);
 
-			localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionUser));
-
-			router.refresh();
-
 			return sessionUser;
+		} catch (err: any) {
+			throw err;
 		} finally {
 			setLoading(false);
 		}
@@ -110,17 +122,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			setUser(null);
 
-			localStorage.removeItem(SESSION_STORAGE_KEY);
-
 			router.push('/login');
 			router.refresh();
 		} finally {
 			setLoading(false);
 		}
-	}
-
-	if (!isMounted) {
-		return null;
 	}
 
 	return (

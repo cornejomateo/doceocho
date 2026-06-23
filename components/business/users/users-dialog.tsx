@@ -36,7 +36,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { Trash2, Plus, Edit } from 'lucide-react';
+import { Trash2, Plus, Edit, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { translateError } from '@/lib/error-translator';
 import {
@@ -48,7 +48,7 @@ import {
 	updateUserPassword,
 } from '@/lib/users/users';
 import { cn } from '@/lib/utils';
-import { roles } from '@/constants/users/user-role';
+import { roles, UserRole } from '@/constants/users/user-role';
 
 interface UsersDialogProps {
 	open: boolean;
@@ -67,6 +67,7 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 		role: '',
 	});
 	const [saving, setSaving] = useState(false);
+	const [showPassword, setShowPassword] = useState(false);
 	const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
 	const loadUsers = async () => {
@@ -110,7 +111,7 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 		if (editingUser) {
 			const { error: updateError } = await updateUser(editingUser.uid_user!, {
 				username: formData.username,
-				role: formData.role,
+				role: formData.role as UserRole,
 			});
 
 			if (updateError) {
@@ -154,7 +155,7 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 			const { error } = await createUser({
 				username: formData.username,
 				password: formData.password,
-				role: formData.role,
+				role: formData.role as UserRole,
 			});
 
 			if (error) {
@@ -183,7 +184,7 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 	const handleUpdateRole = async (user: User, newRole: string) => {
 		if (!user.uid_user) return;
 
-		const { error } = await updateUser(user.uid_user, { role: newRole });
+		const { error } = await updateUser(user.uid_user, { role: newRole as UserRole });
 
 		if (error) {
 			toast({
@@ -349,13 +350,23 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 									</span>
 								)}
 							</Label>
-							<Input
-								id="password"
-								type="password"
-								value={formData.password}
-								onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
-								className="bg-background"
-							/>
+							<div className="relative">
+								<Input
+									id="password"
+									type={showPassword ? 'text' : 'password'}
+									value={formData.password}
+									onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
+									className="bg-background pr-10"
+								/>
+								<button
+									type="button"
+									onClick={() => setShowPassword((p) => !p)}
+									className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+									tabIndex={-1}
+								>
+									{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+								</button>
+							</div>
 						</div>
 						<div className="grid gap-2">
 							<Label htmlFor="role" className="text-foreground">
