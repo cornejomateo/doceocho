@@ -36,7 +36,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { Trash2, Plus, Shield, ShieldHalf, Edit } from 'lucide-react';
+import { Trash2, Plus, Edit } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { translateError } from '@/lib/error-translator';
 import {
@@ -48,6 +48,7 @@ import {
 	updateUserPassword,
 } from '@/lib/users/users';
 import { cn } from '@/lib/utils';
+import { roles } from '@/constants/users/user-role';
 
 interface UsersDialogProps {
 	open: boolean;
@@ -289,8 +290,11 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 															<SelectValue />
 														</SelectTrigger>
 														<SelectContent>
-															<SelectItem value="Admin">Admin</SelectItem>
-															<SelectItem value="Taller">Taller</SelectItem>
+															{roles.map((role) => (
+																<SelectItem key={role} value={role}>
+																	{role}
+																</SelectItem>
+															))}
 														</SelectContent>
 													</Select>
 												</div>
@@ -338,10 +342,10 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 						</div>
 						<div className="grid gap-2">
 							<Label htmlFor="password" className="text-foreground">
-								Contraseña{' '}
+								Contraseña{''}
 								{editingUser && (
 									<span className="text-muted-foreground font-normal">
-										(dejá en blanco para no cambiar)
+										(La contraseña no se muestra por seguridad, dejá en blanco para no cambiar)
 									</span>
 								)}
 							</Label>
