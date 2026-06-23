@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
 	try {
-		const { username, mail, password, role } = await req.json();
+		const { username, password, role } = await req.json();
 
 		if (!username || !password || !role) {
 			return NextResponse.json(
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 			process.env.SUPABASE_SERVICE_ROLE_KEY!
 		);
 
-		const email = mail || `${username}@gmail.com`;
+		const email = `${username}@gmail.com`;
 
 		const { data: authData, error: authError } = await supabase.auth.admin.createUser({
 			email,
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
 	try {
-		const { uid_user, password, email } = await req.json();
+		const { uid_user, password } = await req.json();
 
 		if (!uid_user) {
 			return NextResponse.json({ error: 'Falta uid_user' }, { status: 400 });
@@ -66,7 +66,6 @@ export async function PUT(req: Request) {
 
 		const updates: Record<string, string> = {};
 		if (password) updates.password = password;
-		if (email) updates.email = email;
 
 		if (Object.keys(updates).length > 0) {
 			const { error: authError } = await supabase.auth.admin.updateUserById(uid_user, updates);
@@ -99,16 +98,16 @@ export async function DELETE(req: Request) {
 			process.env.SUPABASE_SERVICE_ROLE_KEY!
 		);
 
-		const { error: dbError } = await supabase.from('users').delete().eq('uid_user', uid_user);
-
-		if (dbError) {
-			return NextResponse.json({ error: dbError.message }, { status: 400 });
-		}
-
 		const { error: authError } = await supabase.auth.admin.deleteUser(uid_user);
 
 		if (authError) {
 			return NextResponse.json({ error: authError.message }, { status: 400 });
+		}
+
+		const { error: dbError } = await supabase.from('users').delete().eq('uid_user', uid_user);
+
+		if (dbError) {
+			return NextResponse.json({ error: dbError.message }, { status: 400 });
 		}
 
 		return NextResponse.json({ success: true });

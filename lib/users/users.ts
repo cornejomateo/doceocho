@@ -109,7 +109,7 @@ export async function deleteUser(uid_user: string): Promise<{ error: string | nu
 
 export async function updateUser(
 	uid_user: string,
-	changes: Partial<Pick<User, 'username' | 'role' | 'mail'>>
+	changes: Partial<Pick<User, 'username' | 'role'>>
 ): Promise<{ data: User | null; error: any }> {
 	const supabase = getSupabaseClient();
 	const { data, error } = await supabase
