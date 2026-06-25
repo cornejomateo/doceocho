@@ -4,6 +4,8 @@ create table public.users (
   role character varying not null,
   uid_user character varying null,
   mail text null,
+  name text null,
+  last_name text null,
   constraint users_pkey primary key (id),
   constraint users_username_key unique (username)
 ) TABLESPACE pg_default;
