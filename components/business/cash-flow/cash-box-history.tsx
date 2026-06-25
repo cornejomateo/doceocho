@@ -109,23 +109,25 @@ export function CashBoxHistory({ cashBoxes, loading, onRefresh }: CashBoxHistory
 				return (
 					<Card key={box.id} className="bg-card border-border">
 						<div className="p-6">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-4">
-									<div className="rounded-full bg-secondary p-3">
+							<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+								<div className="flex items-center gap-4 min-w-0">
+									<div className="rounded-full bg-secondary p-3 flex-shrink-0">
 										<History className="h-5 w-5 text-muted-foreground" />
 									</div>
-									<div>
-										<div className="flex items-center gap-2">
-											<h4 className="font-semibold text-foreground">{formatCreatedAt(box.date)}</h4>
+									<div className="min-w-0 flex-1">
+										<div className="flex items-center gap-2 flex-wrap">
+											<h4 className="font-semibold text-foreground truncate">
+												{formatCreatedAt(box.date)}
+											</h4>
 											<Badge variant="secondary">Cerrada</Badge>
 										</div>
-										<p className="text-sm text-muted-foreground mt-1">
+										<p className="text-sm text-muted-foreground mt-1 truncate">
 											Saldo final: {formatCurrency(Number(box.closing_balance) || 0)}
 										</p>
 									</div>
 								</div>
-								<div className="flex items-center gap-4">
-									<div className="text-right">
+								<div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 w-full sm:w-auto">
+									<div className="text-right sm:text-left">
 										<p className="text-sm text-green-500">
 											Ingresos: {formatCurrency(totalIncome)}
 										</p>
@@ -135,7 +137,7 @@ export function CashBoxHistory({ cashBoxes, loading, onRefresh }: CashBoxHistory
 										variant="ghost"
 										size="sm"
 										onClick={() => toggleExpand(box.id)}
-										className="gap-2"
+										className="gap-2 w-full sm:w-auto justify-center"
 									>
 										{isExpanded ? (
 											<>
