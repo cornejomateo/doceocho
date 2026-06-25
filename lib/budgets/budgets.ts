@@ -84,7 +84,7 @@ export async function getBudgetsByFolderBudgetIds(
 				folder_budget:folder_budgets!inner (
 					id,
 					work_id,
-					work:works!inner (
+					work:works (
 						address,
 						locality
 					)
@@ -103,7 +103,6 @@ export async function getBudgetsByFolderBudgetIds(
 			if (!folderBudget) return null;
 
 			const work = Array.isArray(folderBudget.work) ? folderBudget.work[0] : folderBudget.work;
-			if (!work) return null;
 
 			return {
 				id: b.id,
@@ -120,10 +119,12 @@ export async function getBudgetsByFolderBudgetIds(
 				folder_budget: {
 					id: folderBudget.id,
 					work_id: folderBudget.work_id,
-					work: {
-						address: work.address,
-						locality: work.locality,
-					},
+					work: work
+						? {
+								address: work.address,
+								locality: work.locality,
+							}
+						: null,
 				},
 			} as BudgetWithWork;
 		})

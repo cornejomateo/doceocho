@@ -26,6 +26,8 @@ export function WorkForm({ onSubmit, onCancel }: WorkFormProps) {
 		status: 'pending',
 		architect: '',
 		furniture: '',
+		zone: '',
+		hood: '',
 	});
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -86,6 +88,28 @@ export function WorkForm({ onSubmit, onCancel }: WorkFormProps) {
 						value={formData.architect || ''}
 						onChange={handleChange}
 						placeholder="Nombre del arquitecto"
+					/>
+				</div>
+
+				<div className="space-y-2">
+					<Label htmlFor="zone">Zona</Label>
+					<Input
+						id="zone"
+						name="zone"
+						value={formData.zone || ''}
+						onChange={handleChange}
+						placeholder="Ej: Zona Norte"
+					/>
+				</div>
+
+				<div className="space-y-2">
+					<Label htmlFor="hood">Barrio</Label>
+					<Input
+						id="hood"
+						name="hood"
+						value={formData.hood || ''}
+						onChange={handleChange}
+						placeholder="Ej: Centro"
 					/>
 				</div>
 			</div>

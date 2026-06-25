@@ -36,13 +36,13 @@ export function useLoadEvents() {
 					description: event.description || '',
 					client_id: event.client_id,
 					client_name: event.client_name,
-					location: event.location || 'Sin ubicación',
-					address: event.address || 'Sin dirección',
 					status: event.status,
 					is_overdue: event.is_overdue || false,
 					remember: event.remember || false,
 					type_id: event.type_id,
 					type: eventType?.name || 'otros',
+					work_id: event.work_id,
+					work_location: event.work_location,
 				};
 			});
 		},
