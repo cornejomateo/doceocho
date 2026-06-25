@@ -49,6 +49,7 @@ import {
 } from '@/lib/users/users';
 import { cn } from '@/lib/utils';
 import { roles, UserRole } from '@/constants/users/user-role';
+import { useAuth } from '@/components/provider/auth-provider';
 
 interface UsersDialogProps {
 	open: boolean;
@@ -71,6 +72,9 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 	const [saving, setSaving] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 	const [userToDelete, setUserToDelete] = useState<User | null>(null);
+	const { user: currentUser } = useAuth();
+
+	const isCurrentUser = (user: User) => user.username === currentUser?.username;
 
 	const loadUsers = async () => {
 		setLoading(true);
@@ -120,6 +124,8 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 			const { error: updateError } = await updateUser(editingUser.uid_user!, {
 				username: formData.username,
 				role: formData.role as UserRole,
+				name: formData.name,
+				last_name: formData.last_name,
 			});
 
 			if (updateError) {
@@ -275,63 +281,71 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 							<Table>
 								<TableHeader>
 									<TableRow>
-										<TableHead>Usuario</TableHead>
-										<TableHead>Apellido</TableHead>
-										<TableHead>Nombre</TableHead>
-										<TableHead>Rol</TableHead>
-										<TableHead className="w-[200px]">Acciones</TableHead>
+										<TableHead className="text-center">Usuario</TableHead>
+										<TableHead className="text-center">Apellido</TableHead>
+										<TableHead className="text-center">Nombre</TableHead>
+										<TableHead className="text-center">Rol</TableHead>
+										<TableHead className="text-center w-[200px]">Acciones</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
 									{users.map((user) => (
 										<TableRow key={user.uid_user || user.username}>
-											<TableCell className="font-medium">{user.username}</TableCell>
-											<TableCell>{user.last_name || '-'}</TableCell>
-											<TableCell>{user.name || '-'}</TableCell>
-											<TableCell>
-												<div className="flex items-center gap-2">
+											<TableCell className="font-medium text-center">{user.username}</TableCell>
+											<TableCell className="text-center">{user.last_name || '-'}</TableCell>
+											<TableCell className="text-center">{user.name || '-'}</TableCell>
+											<TableCell className="text-center">
+												<div className="flex items-center gap-2 justify-center">
 													<Select
 														value={user.role}
 														onValueChange={(value) => handleUpdateRole(user, value)}
 													>
-														<SelectTrigger
-															className={cn(
-																'h-8 w-[130px]',
-																user.role === 'Admin' ? 'border-primary/30 text-primary' : ''
-															)}
-														>
-															<SelectValue />
-														</SelectTrigger>
-														<SelectContent>
-															{roles.map((role) => (
-																<SelectItem key={role} value={role}>
-																	{role}
-																</SelectItem>
-															))}
-														</SelectContent>
+														{user.username !== currentUser?.username ? (
+															<>
+																<SelectTrigger
+																	className={cn(
+																		'h-8 w-[130px] text-center',
+																		user.role === 'Admin' ? 'border-primary/30 text-primary' : ''
+																	)}
+																>
+																	<SelectValue />
+																</SelectTrigger>
+																<SelectContent>
+																	{roles.map((role) => (
+																		<SelectItem key={role} value={role}>
+																			{role}
+																		</SelectItem>
+																	))}
+																</SelectContent>
+															</>
+														) : (
+															<Label className="text-muted-foreground">{user.role}</Label>
+														)}
 													</Select>
 												</div>
 											</TableCell>
-											<TableCell>
-												<div className="flex items-center gap-1">
-													<Button
-														variant="ghost"
-														size="sm"
-														onClick={() => handleEdit(user)}
-														aria-label={`Editar ${user.username}`}
-													>
-														<Edit className="h-4 w-4" />
-													</Button>
-													<Button
-														variant="ghost"
-														size="sm"
-														className="text-destructive hover:text-destructive"
-														onClick={() => setUserToDelete(user)}
-														aria-label={`Eliminar ${user.username}`}
-													>
-														<Trash2 className="h-4 w-4" />
-													</Button>
-												</div>
+											<TableCell className="text-center">
+												{!isCurrentUser(user) && (
+													<div className="flex items-center gap-1 justify-center">
+														<Button
+															variant="ghost"
+															size="sm"
+															onClick={() => handleEdit(user)}
+															aria-label={`Editar ${user.username}`}
+														>
+															<Edit className="h-4 w-4" />
+														</Button>
+														<Button
+															variant="ghost"
+															size="sm"
+															className="text-destructive hover:text-destructive"
+															onClick={() => setUserToDelete(user)}
+															aria-label={`Eliminar ${user.username}`}
+														>
+															<Trash2 className="h-4 w-4" />
+														</Button>
+													</div>
+												)}
 											</TableCell>
 										</TableRow>
 									))}

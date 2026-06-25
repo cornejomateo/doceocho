@@ -120,7 +120,7 @@ export async function deleteUser(uid_user: string): Promise<{ error: string | nu
 
 export async function updateUser(
 	uid_user: string,
-	changes: Partial<Pick<User, 'username' | 'role'>>
+	changes: Partial<Pick<User, 'username' | 'role' | 'name' | 'last_name'>>
 ): Promise<{ data: User | null; error: any }> {
 	try {
 		const body = await apiFetch('/api/users', {

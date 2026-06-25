@@ -109,7 +109,7 @@ export async function PUT(req: Request) {
 		await requireAdmin(token);
 
 		const body = await req.json();
-		const { uid_user, password, username, role } = body;
+		const { uid_user, password, username, role, name, last_name } = body;
 
 		if (!uid_user) {
 			return NextResponse.json({ error: 'Falta uid_user' }, { status: 400 });
@@ -133,6 +133,8 @@ export async function PUT(req: Request) {
 		const dbUpdates: Record<string, any> = {};
 		if (username !== undefined) dbUpdates.username = username;
 		if (role !== undefined) dbUpdates.role = role;
+		if (name !== undefined) dbUpdates.name = name;
+		if (last_name !== undefined) dbUpdates.last_name = last_name;
 
 		if (Object.keys(dbUpdates).length > 0) {
 			const { data, error: dbError } = await supabase
