@@ -150,6 +150,116 @@ describe('useOptimizedRealtime', () => {
 		);
 	});
 
+	it('triggers full fetch on INSERT/UPDATE for balances table', async () => {
+		const fetchFromDb = jest
+			.fn()
+			.mockResolvedValueOnce([{ id: 1, amount: 100 }])
+			.mockResolvedValue([{ id: 1, amount: 200 }]);
+
+		renderHook(() => useOptimizedRealtime('balances', fetchFromDb));
+
+		await waitFor(() => {
+			expect(fetchFromDb).toHaveBeenCalledTimes(1);
+		});
+
+		const processEvent = mockOn.mock.calls[0][2];
+		await act(async () => {
+			processEvent({
+				eventType: 'UPDATE',
+				new: { id: 1, amount: 150 },
+				old: { id: 1, amount: 100 },
+			});
+		});
+
+		expect(fetchFromDb).toHaveBeenCalledTimes(2);
+	});
+
+	it('triggers full fetch on INSERT/UPDATE for folder_budgets table', async () => {
+		const fetchFromDb = jest
+			.fn()
+			.mockResolvedValueOnce([{ id: 1, work_id: null }])
+			.mockResolvedValue([{ id: 1, work_id: 5 }]);
+
+		renderHook(() => useOptimizedRealtime('folder_budgets', fetchFromDb));
+
+		await waitFor(() => {
+			expect(fetchFromDb).toHaveBeenCalledTimes(1);
+		});
+
+		const processEvent = mockOn.mock.calls[0][2];
+		await act(async () => {
+			processEvent({
+				eventType: 'UPDATE',
+				new: { id: 1, work_id: 5 },
+				old: { id: 1, work_id: null },
+			});
+		});
+
+		expect(fetchFromDb).toHaveBeenCalledTimes(2);
+	});
+
+	it('does in-place update for other tables on UPDATE event', async () => {
+		const fetchFromDb = jest.fn().mockResolvedValue([{ id: 1, name: 'Original' }]);
+
+		const { result } = renderHook(() => useOptimizedRealtime('clients', fetchFromDb));
+
+		await waitFor(() => {
+			expect(result.current.data).toEqual([{ id: 1, name: 'Original' }]);
+		});
+
+		const processEvent = mockOn.mock.calls[0][2];
+		await act(async () => {
+			processEvent({
+				eventType: 'UPDATE',
+				new: { id: 1, name: 'Updated' },
+				old: { id: 1, name: 'Original' },
+			});
+		});
+
+		expect(fetchFromDb).toHaveBeenCalledTimes(1);
+		expect(result.current.data).toEqual([{ id: 1, name: 'Updated' }]);
+	});
+
+	it('adds inserted record for other tables on INSERT event', async () => {
+		const fetchFromDb = jest.fn().mockResolvedValue([{ id: 1, name: 'First' }]);
+
+		const { result } = renderHook(() => useOptimizedRealtime('clients', fetchFromDb));
+
+		await waitFor(() => {
+			expect(result.current.data).toEqual([{ id: 1, name: 'First' }]);
+		});
+
+		const processEvent = mockOn.mock.calls[0][2];
+		await act(async () => {
+			processEvent({ eventType: 'INSERT', new: { id: 2, name: 'Second' } });
+		});
+
+		expect(fetchFromDb).toHaveBeenCalledTimes(1);
+		expect(result.current.data).toHaveLength(2);
+		expect(result.current.data[0]).toEqual({ id: 2, name: 'Second' });
+	});
+
+	it('removes deleted record for other tables on DELETE event', async () => {
+		const fetchFromDb = jest.fn().mockResolvedValue([
+			{ id: 1, name: 'First' },
+			{ id: 2, name: 'Second' },
+		]);
+
+		const { result } = renderHook(() => useOptimizedRealtime('clients', fetchFromDb));
+
+		await waitFor(() => {
+			expect(result.current.data).toHaveLength(2);
+		});
+
+		const processEvent = mockOn.mock.calls[0][2];
+		await act(async () => {
+			processEvent({ eventType: 'DELETE', old: { id: 1 } });
+		});
+
+		expect(result.current.data).toHaveLength(1);
+		expect(result.current.data[0]).toEqual({ id: 2, name: 'Second' });
+	});
+
 	it('cleans up realtime subscription on unmount', () => {
 		const fetchFromDb = jest.fn().mockResolvedValue([]);
 

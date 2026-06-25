@@ -53,11 +53,11 @@ export type BudgetWithWork = {
 	type?: string | null;
 	folder_budget: {
 		id: number;
-		work_id: number;
+		work_id: number | null;
 		work: {
-			address: string;
-			locality: string;
-		};
+			address: string | null;
+			locality: string | null;
+		} | null;
 	};
 };
 
@@ -144,6 +144,7 @@ export async function getBudgetsByClientId(
 		.select(
 			`
 				id,
+				created_at,
 				amount_ars,
 				amount_usd,
 				folder_budget:folder_budgets!inner (
@@ -173,6 +174,7 @@ export async function getBudgetsByClientId(
 
 			return {
 				id: b.id,
+				created_at: b.created_at,
 				amount_ars: b.amount_ars,
 				amount_usd: b.amount_usd,
 				folder_budget: {
@@ -183,7 +185,7 @@ export async function getBudgetsByClientId(
 						locality: work.locality,
 					},
 				},
-			};
+			} as BudgetWithWork;
 		})
 		.filter((b): b is BudgetWithWork => b !== null);
 
