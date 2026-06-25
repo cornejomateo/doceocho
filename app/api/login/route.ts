@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 		.single();
 
 	if (error || !user) {
-		return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 401 });
+		return NextResponse.json({ error: 'Usuario o contraseña incorrectos' }, { status: 401 });
 	}
 
 	return NextResponse.json({

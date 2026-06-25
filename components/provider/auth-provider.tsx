@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const res = await response.json();
 
 			if (!response.ok || !res.data) {
-				throw new Error(res.error || 'Usuario no encontrado');
+				throw new Error(res.error || 'Usuario o contraseña incorrectos');
 			}
 
 			const { error } = await supabase.auth.signInWithPassword({
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			});
 
 			if (error) {
-				throw new Error('Contraseña incorrecta');
+				throw new Error('Usuario o contraseña incorrectos');
 			}
 
 			const sessionUser: SessionUser = {
