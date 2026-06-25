@@ -19,6 +19,7 @@ import {
 	Lock,
 	AlertCircle,
 	DollarSign,
+	Settings,
 } from 'lucide-react';
 
 import {
@@ -36,6 +37,7 @@ import { useAuth } from '@/components/provider/auth-provider';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@/constants/users/user-role';
+import { UsersDialog } from '@/components/business/users/users-dialog';
 
 const navigation = [
 	{ name: 'Panel', href: '/', icon: LayoutDashboard, disabled: false },
@@ -51,6 +53,7 @@ const navigation = [
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
+	const [usersDialogOpen, setUsersDialogOpen] = useState(false);
 	const pathname = usePathname() || '/';
 	const router = useRouter();
 	const { user, loading, signOutUser } = useAuth();
@@ -196,6 +199,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 						})}
 					</nav>
 
+					<div className="px-3">
+						{user?.role === 'Admin' && (
+							<Button
+								variant="ghost"
+								size="sm"
+								className="w-full justify-start gap-2 mb-2 text-muted-foreground hover:text-foreground"
+								onClick={() => setUsersDialogOpen(true)}
+							>
+								<Settings className="h-4 w-4" />
+								Configurar usuarios
+							</Button>
+						)}
+					</div>
 					<div className="border-t border-border p-4">
 						<div className="flex items-center gap-3">
 							<div className="min-w-0 flex-1">
@@ -227,6 +243,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 					</div>
 				</div>
 			</aside>
+
+			<UsersDialog open={usersDialogOpen} onOpenChange={setUsersDialogOpen} />
 
 			<div className="lg:pl-64">
 				<header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:px-6">
