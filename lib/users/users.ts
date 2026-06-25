@@ -1,7 +1,7 @@
 import { UserRole } from '@/constants/users/user-role';
 
 export type User = {
-	uid_user?: string;
+	uid_user: string;
 	username: string;
 	name?: string;
 	last_name?: string;

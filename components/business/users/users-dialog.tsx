@@ -50,6 +50,7 @@ import {
 import { cn } from '@/lib/utils';
 import { roles, UserRole } from '@/constants/users/user-role';
 import { useAuth } from '@/components/provider/auth-provider';
+import { title } from 'process';
 
 interface UsersDialogProps {
 	open: boolean;
@@ -77,18 +78,26 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 	const isCurrentUser = (user: User) => user.username === currentUser?.username;
 
 	const loadUsers = async () => {
-		setLoading(true);
-		const { data, error } = await listUsers();
-		if (error) {
+		try {
+			const { data, error } = await listUsers();
+			if (error) {
+				toast({
+					title: 'Error al cargar usuarios',
+					description: translateError(error) || 'Ocurrió un error al cargar los usuarios',
+					variant: 'destructive',
+				});
+			} else {
+				setUsers(data ?? []);
+			}
+		} catch (error: any) {
 			toast({
 				title: 'Error al cargar usuarios',
-				description: translateError(error),
+				description: translateError(error?.message) || 'Ocurrió un error al cargar los usuarios',
 				variant: 'destructive',
 			});
-		} else {
-			setUsers(data ?? []);
+		} finally {
+			setLoading(false);
 		}
-		setLoading(false);
 	};
 
 	useEffect(() => {
@@ -131,7 +140,7 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 			if (updateError) {
 				toast({
 					title: 'Error al actualizar usuario',
-					description: translateError(updateError),
+					description: translateError(updateError) || 'Ocurrió un error al actualizar el usuario',
 					variant: 'destructive',
 				});
 				setSaving(false);
@@ -216,29 +225,24 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 	};
 
 	const confirmDelete = async () => {
-		if (!userToDelete?.uid_user) return;
-
 		const user = userToDelete;
-		setUserToDelete(null);
-
-		let error;
-		if (user.uid_user) {
-			({ error } = await deleteUser(user.uid_user));
-		} else {
+		if (!user?.uid_user) {
 			toast({
 				title: 'Error al eliminar usuario',
 				description: 'El usuario no tiene un ID válido.',
 				variant: 'destructive',
 			});
+			setUserToDelete(null);
 			return;
 		}
-
+		const { error } = await deleteUser(user.uid_user);
 		if (error) {
 			toast({
 				title: 'Error al eliminar usuario',
 				description: translateError(error),
 				variant: 'destructive',
 			});
+			return;
 		} else {
 			toast({
 				title: 'Usuario eliminado',
@@ -362,8 +366,12 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 							<Input
 								id="username"
 								value={formData.username}
-								pattern="^\S+$"
-								onChange={(e) => setFormData((p) => ({ ...p, username: e.target.value }))}
+								onChange={(e) =>
+									setFormData((p) => ({
+										...p,
+										username: e.target.value.replace(/\s/g, ''),
+									}))
+								}
 								className="bg-background"
 								placeholder="ej: juanperez"
 							/>

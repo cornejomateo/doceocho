@@ -184,12 +184,6 @@ export async function DELETE(req: Request) {
 			return NextResponse.json({ error: authError.message }, { status: 400 });
 		}
 
-		const { error: dbError } = await supabase.from('users').delete().eq('uid_user', uid_user);
-
-		if (dbError) {
-			return NextResponse.json({ error: dbError.message }, { status: 400 });
-		}
-
 		return NextResponse.json({ success: true });
 	} catch (err: any) {
 		const authError = handleAuthError(err);
