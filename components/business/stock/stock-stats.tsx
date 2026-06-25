@@ -22,21 +22,21 @@ export function StockStats({ totalItems, lastAddedItem }: StockStatsProps) {
 	const displayItem = getItemDisplay();
 
 	return (
-		<div className="flex justify-start">
-			<Card className="bg-card border-border w-100 h-32 mr-4 p-4">
+		<div className="flex flex-col sm:flex-row justify-start gap-4">
+			<Card className="bg-card border-border flex-1 min-w-0 h-32 p-4">
 				<div className="flex items-center p-2">
-					<div className="mr-3 rounded-lg bg-secondary p-2 text-chart-2">
+					<div className="mr-3 rounded-lg bg-secondary p-2 text-chart-2 flex-shrink-0">
 						<PackagePlus className="h-5 w-5" />
 					</div>
-					<div>
+					<div className="min-w-0 flex-1">
 						<p className="text-xs font-medium text-muted-foreground">Último agregado</p>
 						{displayItem ? (
 							<div className="space-y-0.5">
-								<p className="text-lg font-medium text-foreground">
+								<p className="text-lg font-medium text-foreground truncate">
 									{displayItem.line}, {displayItem.code}
 								</p>
 								{displayItem.color && (
-									<p className="text-sm text-muted-foreground">
+									<p className="text-sm text-muted-foreground truncate">
 										{displayItem.color}
 										{displayItem.extra ? ` • ${displayItem.extra}` : ''}
 									</p>
@@ -48,9 +48,9 @@ export function StockStats({ totalItems, lastAddedItem }: StockStatsProps) {
 					</div>
 				</div>
 			</Card>
-			<Card className="bg-card border-border w-100 h-32 mr-4 p-4">
+			<Card className="bg-card border-border flex-1 min-w-0 h-32 p-4">
 				<div className="flex items-center p-2">
-					<div className="mr-3 rounded-lg bg-secondary p-2 text-chart-2">
+					<div className="mr-3 rounded-lg bg-secondary p-2 text-chart-2 flex-shrink-0">
 						<Layers className="h-5 w-5" />
 					</div>
 					<div>
