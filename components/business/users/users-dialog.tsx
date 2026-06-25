@@ -65,6 +65,8 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 		username: '',
 		password: '',
 		role: '',
+		name: '',
+		last_name: '',
 	});
 	const [saving, setSaving] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
@@ -90,13 +92,19 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 			loadUsers();
 			setShowForm(false);
 			setEditingUser(null);
-			setFormData({ username: '', password: '', role: '' });
+			setFormData({ username: '', password: '', role: '', name: '', last_name: '' });
 		}
 	}, [open]);
 
 	const handleEdit = (user: User) => {
 		setEditingUser(user);
-		setFormData({ username: user.username, password: '', role: user.role });
+		setFormData({
+			username: user.username,
+			password: '',
+			role: user.role,
+			name: user.name || '',
+			last_name: user.last_name || '',
+		});
 		setShowForm(true);
 	};
 
@@ -176,7 +184,7 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 
 		setShowForm(false);
 		setEditingUser(null);
-		setFormData({ username: '', password: '', role: '' });
+		setFormData({ username: '', password: '', role: '', name: '', last_name: '' });
 		await loadUsers();
 		setSaving(false);
 	};
@@ -236,7 +244,7 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-card max-w-2xl max-h-[80vh] overflow-y-auto">
+			<DialogContent className="bg-card !max-w-3xl max-h-[80vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle className="text-foreground">
 						{showForm ? (editingUser ? 'Editar usuario' : 'Nuevo usuario') : 'Configurar usuarios'}
@@ -268,6 +276,8 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 								<TableHeader>
 									<TableRow>
 										<TableHead>Usuario</TableHead>
+										<TableHead>Apellido</TableHead>
+										<TableHead>Nombre</TableHead>
 										<TableHead>Rol</TableHead>
 										<TableHead className="w-[200px]">Acciones</TableHead>
 									</TableRow>
@@ -276,6 +286,8 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 									{users.map((user) => (
 										<TableRow key={user.uid_user || user.username}>
 											<TableCell className="font-medium">{user.username}</TableCell>
+											<TableCell>{user.last_name || '-'}</TableCell>
+											<TableCell>{user.name || '-'}</TableCell>
 											<TableCell>
 												<div className="flex items-center gap-2">
 													<Select
@@ -336,9 +348,34 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 							<Input
 								id="username"
 								value={formData.username}
+								pattern="^\S+$"
 								onChange={(e) => setFormData((p) => ({ ...p, username: e.target.value }))}
 								className="bg-background"
 								placeholder="ej: juanperez"
+							/>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="last_name" className="text-foreground">
+								Apellido
+							</Label>
+							<Input
+								id="last_name"
+								value={formData.last_name}
+								onChange={(e) => setFormData((p) => ({ ...p, last_name: e.target.value }))}
+								className="bg-background"
+								placeholder="ej: Pérez"
+							/>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="name" className="text-foreground">
+								Nombre
+							</Label>
+							<Input
+								id="name"
+								value={formData.name}
+								onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+								className="bg-background"
+								placeholder="ej: Juan"
 							/>
 						</div>
 						<div className="grid gap-2">
@@ -391,7 +428,7 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 								onClick={() => {
 									setShowForm(false);
 									setEditingUser(null);
-									setFormData({ username: '', password: '', role: '' });
+									setFormData({ username: '', password: '', role: '', name: '', last_name: '' });
 								}}
 							>
 								Cancelar

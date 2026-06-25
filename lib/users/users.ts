@@ -3,6 +3,8 @@ import { UserRole } from '@/constants/users/user-role';
 export type User = {
 	uid_user?: string;
 	username: string;
+	name?: string;
+	last_name?: string;
 	role: UserRole;
 	mail?: string;
 };
@@ -12,6 +14,8 @@ export type CreateUserInput = {
 	password: string;
 	role: UserRole;
 	mail?: string;
+	name?: string;
+	last_name?: string;
 };
 
 async function getAuthHeaders() {

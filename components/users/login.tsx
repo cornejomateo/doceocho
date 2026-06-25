@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/components/provider/auth-provider';
 import type { UserRole } from '@/constants/users/user-role';
-import { Lock, User } from 'lucide-react';
+import { Lock, User, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 
 export default function LoginPage() {
@@ -14,6 +14,7 @@ export default function LoginPage() {
 	const router = useRouter();
 	const [usuario, setUsuario] = useState('');
 	const [contraseña, setContraseña] = useState('');
+	const [showPassword, setShowPassword] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -115,10 +116,18 @@ export default function LoginPage() {
 							<Input
 								value={contraseña}
 								onChange={(e) => setContraseña(e.target.value)}
-								type="password"
+								type={showPassword ? 'text' : 'password'}
 								placeholder="Contraseña"
-								className="pl-10 bg-gray-700/50 text-white border-gray-600 focus:ring-2 focus:ring-[#1d4344]/40 focus:border-[#1d4344] transition-all duration-200 placeholder-gray-400"
+								className="pl-10 pr-10 bg-gray-700/50 text-white border-gray-600 focus:ring-2 focus:ring-[#1d4344]/40 focus:border-[#1d4344] transition-all duration-200 placeholder-gray-400"
 							/>
+							<button
+								type="button"
+								onClick={() => setShowPassword((p) => !p)}
+								className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+								tabIndex={-1}
+							>
+								{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+							</button>
 						</div>
 					</div>
 
