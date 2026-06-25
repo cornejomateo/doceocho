@@ -11,12 +11,12 @@ export async function POST(req: Request) {
 
 	const { data: user, error } = await adminSupabase
 		.from('users')
-		.select('mail, username, role')
+		.select('mail, username, role, name, last_name')
 		.eq('username', username)
 		.single();
 
 	if (error || !user) {
-		return NextResponse.json({ error: 'Usuario o contraseña incorrectos' }, { status: 401 });
+		return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 401 });
 	}
 
 	return NextResponse.json({
@@ -24,6 +24,8 @@ export async function POST(req: Request) {
 			mail: user.mail,
 			username: user.username,
 			role: user.role,
+			name: user.name,
+			last_name: user.last_name,
 		},
 	});
 }

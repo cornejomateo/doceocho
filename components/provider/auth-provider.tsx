@@ -8,6 +8,8 @@ import { getSupabaseClient } from '@/lib/supabase-client';
 
 type SessionUser = {
 	username: string;
+	name: string;
+	last_name: string;
 	role: UserRole;
 };
 
@@ -38,6 +40,8 @@ async function fetchProfile(): Promise<SessionUser | null> {
 	return {
 		username: json.data.username,
 		role: json.data.role as UserRole,
+		name: json.data.name || '-',
+		last_name: json.data.last_name || '-',
 	};
 }
 
@@ -87,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const res = await response.json();
 
 			if (!response.ok || !res.data) {
-				throw new Error(res.error || 'Usuario o contraseña incorrectos');
+				throw new Error(res.error || 'Usuario no encontrado');
 			}
 
 			const { error } = await supabase.auth.signInWithPassword({
@@ -96,12 +100,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			});
 
 			if (error) {
-				throw new Error('Usuario o contraseña incorrectos');
+				throw new Error('Contraseña incorrecta');
 			}
 
 			const sessionUser: SessionUser = {
 				username: res.data.username,
 				role: res.data.role as UserRole,
+				name: res.data.name || '-',
+				last_name: res.data.last_name || '-',
 			};
 
 			setUser(sessionUser);
