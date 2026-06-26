@@ -11,7 +11,6 @@ import { Suspense } from 'react';
 import { AuthProvider } from '@/components/provider/auth-provider';
 import { ThemeProvider } from '@/components/provider/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
-import { ServiceWorkerRegister } from '@/components/service-worker-register';
 
 export const metadata: Metadata = {
 	title: 'Doce ocho - Sistema de Gestión',
@@ -54,7 +53,6 @@ export default function RootLayout({
 					</AuthProvider>
 					<Toaster />
 					<Analytics />
-					<ServiceWorkerRegister />
 				</ThemeProvider>
 			</body>
 		</html>

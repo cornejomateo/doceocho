@@ -21,7 +21,6 @@ import {
 	AlertCircle,
 	DollarSign,
 	Settings,
-	MessageSquare,
 } from 'lucide-react';
 
 import {
@@ -40,7 +39,6 @@ import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@/constants/users/user-role';
 import { UsersDialog } from '@/components/business/users/users-dialog';
-import { useChatUnreadCount } from '@/hooks/chat/use-chat-unread-count';
 
 const navigation = [
 	{ name: 'Panel', href: '/', icon: LayoutDashboard, disabled: false },
@@ -52,7 +50,6 @@ const navigation = [
 	{ name: 'Reportes de Presupuestos', href: '/budgets', icon: FileText, disabled: false },
 	{ name: 'Reportes', href: '/reports', icon: BarChart3, disabled: false },
 	{ name: 'Flujo de Fondos', href: '/cash-flow', icon: DollarSign, disabled: false },
-	{ name: 'Chat', href: '/chat', icon: MessageSquare, disabled: false },
 ] as const;
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -62,12 +59,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname() || '/';
 	const router = useRouter();
 	const { user, loading, signOutUser } = useAuth();
-	const totalUnreadCount = useChatUnreadCount();
 
 	const allowedByRole = useMemo(() => {
 		return {
-			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos', 'Chat', 'Obras'],
-			Taller: ['Insumos', 'Clientes', 'Calendario', 'Chat'],
+			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos', 'Obras'],
+			Taller: ['Insumos', 'Clientes', 'Calendario'],
 		} as Record<UserRole, string[]>;
 	}, []);
 
@@ -199,14 +195,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 												onClick={() => setSidebarOpen(false)}
 											>
 												<item.icon className="h-5 w-5" />
-												<span className="flex items-center gap-2">
-													{item.name}
-													{item.name === 'Chat' && totalUnreadCount > 0 && (
-														<div className="bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-															{totalUnreadCount > 99 ? '99+' : totalUnreadCount}
-														</div>
-													)}
-												</span>
+												{item.name}
 											</Link>
 										)}
 									</div>
@@ -264,7 +253,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 			<div className={cn('transition-all duration-200', sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64')}>
 				{' '}
-			//<div className={cn('lg:pl-64', pathname === '/chat' ? 'flex h-screen flex-col' : '')}>
 				<header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:px-6">
 					<Button
 						variant="ghost"
@@ -291,10 +279,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 					</div>
 				</header>
 				<main className="p-4 lg:p-6">{children}</main>
-
-				//<main className={cn('p-4 lg:p-6', pathname === '/chat' ? 'flex-1 overflow-hidden' : '')}>
-				//	{children}
-				//</main>
 			</div>
 		</div>
 	);
