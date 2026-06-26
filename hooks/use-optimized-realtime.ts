@@ -121,7 +121,10 @@ export function useOptimizedRealtime<T extends { id: number }>(
 
 			// For tables that require joined relational data, do a full refresh on INSERT/UPDATE
 			// to avoid incomplete realtime payloads without nested relations.
-			if (table === 'balances' && (eventType === 'INSERT' || eventType === 'UPDATE')) {
+			if (
+				(table === 'balances' || table === 'folder_budgets') &&
+				(eventType === 'INSERT' || eventType === 'UPDATE')
+			) {
 				fetchData(true);
 				return;
 			}

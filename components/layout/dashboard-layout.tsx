@@ -14,11 +14,13 @@ import {
 	ClipboardCheck,
 	Calendar,
 	BarChart3,
-	Menu,
+	ChevronLeft,
+	ChevronRight,
 	X,
 	Lock,
 	AlertCircle,
 	DollarSign,
+	Settings,
 	MessageSquare,
 } from 'lucide-react';
 
@@ -37,6 +39,7 @@ import { useAuth } from '@/components/provider/auth-provider';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@/constants/users/user-role';
+import { UsersDialog } from '@/components/business/users/users-dialog';
 import { useChatUnreadCount } from '@/hooks/chat/use-chat-unread-count';
 
 const navigation = [
@@ -54,6 +57,8 @@ const navigation = [
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
+	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+	const [usersDialogOpen, setUsersDialogOpen] = useState(false);
 	const pathname = usePathname() || '/';
 	const router = useRouter();
 	const { user, loading, signOutUser } = useAuth();
@@ -61,7 +66,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 	const allowedByRole = useMemo(() => {
 		return {
-			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos', 'Chat'],
+			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos', 'Chat', 'Obras'],
 			Taller: ['Insumos', 'Clientes', 'Calendario', 'Chat'],
 		} as Record<UserRole, string[]>;
 	}, []);
@@ -133,8 +138,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 			<aside
 				className={cn(
-					'fixed inset-y-0 left-0 z-50 w-64 transform border-r border-border bg-card transition-transform duration-200 ease-in-out lg:translate-x-0',
-					sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+					'fixed inset-y-0 left-0 z-50 bg-card border-r border-border transition-all duration-200',
+					sidebarCollapsed ? 'lg:w-0 lg:overflow-hidden lg:invisible' : 'lg:w-64 lg:visible',
+					sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+					'lg:translate-x-0'
 				)}
 			>
 				<div className="flex h-full flex-col">
@@ -153,6 +160,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 							variant="ghost"
 							size="icon"
 							className="lg:hidden"
+							aria-label="Cerrar menú"
 							onClick={() => setSidebarOpen(false)}
 						>
 							<X className="h-5 w-5" />
@@ -207,6 +215,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 						})}
 					</nav>
 
+					<div className="px-3">
+						{user?.role === 'Admin' && (
+							<Button
+								variant="ghost"
+								size="sm"
+								className="w-full justify-start gap-2 mb-2 text-muted-foreground hover:text-foreground"
+								onClick={() => setUsersDialogOpen(true)}
+							>
+								<Settings className="h-4 w-4" />
+								Configurar usuarios
+							</Button>
+						)}
+					</div>
 					<div className="border-t border-border p-4">
 						<div className="flex items-center gap-3">
 							<div className="min-w-0 flex-1">
@@ -239,15 +260,28 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 				</div>
 			</aside>
 
-			<div className={cn('lg:pl-64', pathname === '/chat' ? 'flex h-screen flex-col' : '')}>
+			<UsersDialog open={usersDialogOpen} onOpenChange={setUsersDialogOpen} />
+
+			<div className={cn('transition-all duration-200', sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64')}>
+				{' '}
+			//<div className={cn('lg:pl-64', pathname === '/chat' ? 'flex h-screen flex-col' : '')}>
 				<header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:px-6">
 					<Button
 						variant="ghost"
 						size="icon"
-						className="lg:hidden"
-						onClick={() => setSidebarOpen(true)}
+						onClick={() => {
+							if (window.innerWidth >= 1024) {
+								setSidebarCollapsed(!sidebarCollapsed);
+							} else {
+								setSidebarOpen(!sidebarOpen);
+							}
+						}}
 					>
-						<Menu className="h-5 w-5" />
+						{sidebarCollapsed ? (
+							<ChevronRight className="h-5 w-5" />
+						) : (
+							<ChevronLeft className="h-5 w-5" />
+						)}
 					</Button>
 					<div className="flex-1">
 						<h1 className="text-lg font-semibold text-foreground">Sistema de Gestión</h1>
@@ -256,10 +290,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 						<ThemeToggle />
 					</div>
 				</header>
+				<main className="p-4 lg:p-6">{children}</main>
 
-				<main className={cn('p-4 lg:p-6', pathname === '/chat' ? 'flex-1 overflow-hidden' : '')}>
-					{children}
-				</main>
+				//<main className={cn('p-4 lg:p-6', pathname === '/chat' ? 'flex-1 overflow-hidden' : '')}>
+				//	{children}
+				//</main>
 			</div>
 		</div>
 	);

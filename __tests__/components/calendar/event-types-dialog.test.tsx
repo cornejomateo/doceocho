@@ -96,7 +96,7 @@ describe('EventTypesDialog', () => {
 		await waitFor(() => {
 			expect(createEventType).toHaveBeenCalledWith({
 				name: 'Visita',
-				color: '#3b82f6',
+				color: '#7D8573',
 			});
 		});
 

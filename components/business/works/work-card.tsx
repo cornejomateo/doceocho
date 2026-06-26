@@ -15,6 +15,8 @@ import {
 	Clock,
 	MessageCircle,
 	StickyNote,
+	Map,
+	Home,
 } from 'lucide-react';
 import { statusConfig } from '@/constants/type-config';
 import { WorkWithProgress } from '@/lib/works/works';
@@ -91,7 +93,7 @@ export function WorkCard({
 							</p>
 						</div>
 
-						<div className="grid gap-2 md:grid-cols-3 text-sm">
+						<div className="grid gap-2 md:grid-cols-4 text-sm">
 							<div className="flex items-center text-muted-foreground">
 								<AddressLink
 									address={work.address || null}
@@ -99,6 +101,18 @@ export function WorkCard({
 									className="text-sm"
 								/>
 							</div>
+							{work.zone && (
+								<div className="flex items-center gap-2 text-muted-foreground">
+									<Map className="h-4 w-4 flex-shrink-0" />
+									<span>Zona: {work.zone}</span>
+								</div>
+							)}
+							{work.hood && (
+								<div className="flex items-center gap-2 text-muted-foreground">
+									<Home className="h-4 w-4 flex-shrink-0" />
+									<span>Barrio: {work.hood}</span>
+								</div>
+							)}
 							<div className="flex items-center gap-2 text-muted-foreground">
 								<Calendar className="h-4 w-4 flex-shrink-0" />
 								<span>{formatCreatedAt(work.created_at)}</span>

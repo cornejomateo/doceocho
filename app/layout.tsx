@@ -1,7 +1,10 @@
 import type React from 'react';
 import type { Metadata } from 'next';
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
+import '@fontsource/open-sauce-one/300.css';
+import '@fontsource/open-sauce-one/400.css';
+import '@fontsource/open-sauce-one/500.css';
+import '@fontsource/open-sauce-one/600.css';
+import '@fontsource/open-sauce-one/700.css';
 import { Analytics } from '@vercel/analytics/next';
 import '../styles/globals.css';
 import { Suspense } from 'react';
@@ -28,7 +31,7 @@ export default function RootLayout({
 				<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-doce8.png" />
 				<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-doce8.png" />
 				<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-doce8.png" />
-				<meta name="theme-color" content="#0f172a" />
+				<meta name="theme-color" content="#4F5C4D" />
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -38,9 +41,7 @@ export default function RootLayout({
 					content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"
 				/>
 			</head>
-			<body
-				className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased bg-background text-foreground min-h-screen`}
-			>
+			<body className={`font-sans antialiased bg-background text-foreground min-h-screen`}>
 				<ThemeProvider
 					attribute="class"
 					defaultTheme="light"
