@@ -33,3 +33,7 @@ jobs:
       - name: Build
         if: success()
         run: npm run build
+
+      - name: Audit production dependencies
+        if: success()
+        run: npm audit --omit=dev --audit-level=high
