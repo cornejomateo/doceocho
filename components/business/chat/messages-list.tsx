@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, MessageSquare, Edit2, Trash2, MessageCircle } from 'lucide-react';
-import { MessageWithUser } from '@/types/chat';
+import { MessageWithUser } from '@/lib/chat/chat-types';
 import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
 import { QuoteMessage } from './quote-message';
 
@@ -12,7 +12,7 @@ interface MessagesListProps {
 	messages: MessageWithUser[];
 	filteredMessages: MessageWithUser[];
 	searchTerm: string;
-	currentUsername: string;
+	currentUserId: string;
 	editingMessage: { id: number; content: string } | null;
 	messagesScrollRef: React.RefObject<HTMLDivElement | null>;
 	onEditMessage: (messageId: number, newContent: string) => void;
@@ -25,7 +25,7 @@ export function MessagesList({
 	messages,
 	filteredMessages,
 	searchTerm,
-	currentUsername,
+	currentUserId,
 	editingMessage,
 	messagesScrollRef,
 	onEditMessage,
@@ -54,7 +54,7 @@ export function MessagesList({
 							key={message.id}
 							message={message}
 							messages={messages}
-							currentUsername={currentUsername}
+							currentUserId={currentUserId}
 							editingMessage={editingMessage}
 							onEditMessage={onEditMessage}
 							onDeleteMessage={onDeleteMessage}
@@ -77,7 +77,7 @@ export function MessagesList({
 interface MessageItemProps {
 	message: MessageWithUser;
 	messages: MessageWithUser[];
-	currentUsername: string;
+	currentUserId: string;
 	editingMessage: { id: number; content: string } | null;
 	onEditMessage: (messageId: number, newContent: string) => void;
 	onDeleteMessage: (messageId: number) => void;
@@ -88,14 +88,14 @@ interface MessageItemProps {
 function MessageItem({
 	message,
 	messages,
-	currentUsername,
+	currentUserId,
 	editingMessage,
 	onEditMessage,
 	onDeleteMessage,
 	onSetEditingMessage,
 	onReplyTo,
 }: MessageItemProps) {
-	const isOwnMessage = message.user_id === currentUsername;
+	const isOwnMessage = message.user_id === currentUserId;
 	const quotedMessage = message.reply_to ? messages.find((m) => m.id === message.reply_to) : null;
 
 	return (

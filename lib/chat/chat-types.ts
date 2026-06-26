@@ -9,7 +9,7 @@ export type Channel = {
 export type ChannelMember = {
 	id: number;
 	joined_at: string;
-	user_id: string;
+	user_id: string; // public.users.user_uid
 	channel_id: number;
 	last_read_message_id: number | null;
 };
@@ -20,16 +20,21 @@ export type Message = {
 	content: string | null;
 	edited_at: string | null;
 	deleted_at: string | null;
-	user_id: string;
+	user_id: string; // public.users.user_uid
 	channel_id: number;
 	reply_to: number | null;
 };
 
+export type UserProfile = {
+	user_uid: string;
+	username: string | null;
+	name: string | null;
+	last_name: string | null;
+	role: string | null;
+};
+
 export type MessageWithUser = Message & {
-	users?: {
-		username: string | null;
-		role: string | null;
-	} | null;
+	users?: UserProfile | null;
 };
 
 export type ChannelWithMembers = Channel & {

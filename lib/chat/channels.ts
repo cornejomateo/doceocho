@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../supabase-client';
-import { Channel, ChannelWithMembers, ChannelWithLastMessage } from '@/types/chat';
+import { Channel, ChannelWithMembers, ChannelWithLastMessage } from '@/lib/chat/chat-types';
 
 const TABLE = 'channels';
 
@@ -19,10 +19,15 @@ export async function getChannelById(id: number): Promise<{ data: Channel | null
 }
 
 export async function createChannel(
-	channel: Omit<Channel, 'id' | 'created_at'>
+	name: string,
+	description: string
 ): Promise<{ data: Channel | null; error: any }> {
 	const supabase = getSupabaseClient();
-	const { data, error } = await supabase.from(TABLE).insert(channel).select().single();
+	const { data, error } = await supabase
+		.from(TABLE)
+		.insert({ name, description })
+		.select()
+		.single();
 	return { data, error };
 }
 
@@ -71,7 +76,7 @@ export async function getChannelsForUser(userId: string): Promise<{
 	const { data: unreadData, error: unreadError } = await supabase.rpc(
 		'get_unread_counts_by_channel',
 		{
-			p_username: userId,
+			p_user_id: userId,
 		}
 	);
 

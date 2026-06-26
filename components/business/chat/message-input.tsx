@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Send } from 'lucide-react';
 import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
 import { QuoteMessage } from './quote-message';
-import { MessageWithUser } from '@/types/chat';
+import { MessageWithUser } from '@/lib/chat/chat-types';
 
 interface MessageInputProps {
 	newMessage: string;

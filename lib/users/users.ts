@@ -4,6 +4,7 @@ export type User = {
 	username: string;
 	role: string;
 	mail?: string;
+	uid_user: string;
 };
 
 export async function getUser(username: string): Promise<{ data: User | null; error: any }> {
@@ -32,4 +33,24 @@ export async function listUsers(): Promise<{ data: User[] | null; error: any }> 
 		.select('*')
 		.order('username', { ascending: true });
 	return { data, error };
+}
+
+export async function getUserByUid(uid: string): Promise<{ data: User | null; error: any }> {
+	const supabase = getSupabaseClient();
+
+	const { data, error } = await supabase
+		.from('users')
+		.select('*')
+		.eq('uid_user', uid)
+		.maybeSingle();
+
+	if (error) {
+		return { data: null, error: 'Error al buscar usuario' };
+	}
+
+	if (!data) {
+		return { data: null, error: 'Usuario no encontrado' };
+	}
+
+	return { data, error: null };
 }

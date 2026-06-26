@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChannelWithLastMessage, MessageWithUser } from '@/types/chat';
+import { ChannelWithLastMessage, MessageWithUser } from '@/lib/chat/chat-types';
 import { getUserChannelsAction, deleteChannelAction } from '@/actions/chat/channels';
 import {
 	sendMessageAction,
@@ -12,14 +12,14 @@ import { SCROLL_DELAY } from '@/constants/chat/chat.constants';
 import { updateLastReadMessage } from '@/lib/chat/channel-members';
 
 interface UseChatManagementProps {
-	currentUsername: string;
+	currentUserUid: string;
 	currentUserRole: string;
 	messages: MessageWithUser[];
 	messagesLoading: boolean;
 }
 
 export function useChatManagement({
-	currentUsername,
+	currentUserUid,
 	currentUserRole,
 	messages,
 }: UseChatManagementProps) {
@@ -48,32 +48,41 @@ export function useChatManagement({
 
 	const loadChannels = useCallback(
 		async (isBackgroundUpdate = false) => {
-			if (!currentUsername) return;
-			if (!isBackgroundUpdate) {
-				setLoading(true);
-			}
-			const result = await getUserChannelsAction(currentUsername);
-			if (result.success && result.data) {
-				setChannels(result.data);
-			}
-			if (!isBackgroundUpdate) {
-				setLoading(false);
-				setInitialLoadDone(true);
+			try {
+				if (!currentUserUid) {
+					if (!isBackgroundUpdate) {
+						setLoading(false);
+						setInitialLoadDone(true);
+					}
+					return;
+				}
+				if (!isBackgroundUpdate) {
+					setLoading(true);
+				}
+				const result = await getUserChannelsAction(currentUserUid);
+				if (result.success && result.data) {
+					setChannels(result.data);
+				}
+			} finally {
+				if (!isBackgroundUpdate) {
+					setLoading(false);
+					setInitialLoadDone(true);
+				}
 			}
 		},
-		[currentUsername]
+		[currentUserUid]
 	);
 
 	const loadMembers = async (channelId: number) => {
-		if (!currentUsername) return;
-		const result = await getChannelMembersAction(channelId, currentUsername);
+		if (!currentUserUid) return;
+		const result = await getChannelMembersAction(channelId);
 		if (result.success && result.data) {
 			setMembers(result.data);
 		}
 	};
 
 	const handleSendMessage = async (channelId: number) => {
-		if (!channelId || !currentUsername || !newMessage.trim() || sending) return;
+		if (!channelId || !currentUserUid || !newMessage.trim() || sending) return;
 
 		setSending(true);
 
@@ -84,7 +93,7 @@ export function useChatManagement({
 			const result = await sendMessageAction(
 				channelId,
 				messageContent,
-				currentUsername,
+				currentUserUid,
 				replyingTo?.id
 			);
 
@@ -116,7 +125,7 @@ export function useChatManagement({
 		setSelectedChannel(channel);
 
 		if (channel.last_message_id) {
-			await updateLastReadMessage(channel.last_message_id, channel.id, currentUsername);
+			await updateLastReadMessage(channel.last_message_id, channel.id, currentUserUid);
 		}
 
 		setSearchTerm('');
@@ -150,26 +159,26 @@ export function useChatManagement({
 	};
 
 	const handleDeleteMessage = async (messageId: number) => {
-		if (!currentUsername) return;
+		if (!currentUserUid) return;
 
 		if (!confirm('¿Estás seguro de que quieres eliminar este mensaje?')) {
 			return;
 		}
 
-		await deleteMessageAction(messageId, currentUsername);
+		await deleteMessageAction(messageId, currentUserUid);
 	};
 
 	const handleEditMessage = async (messageId: number, newContent: string) => {
-		if (!currentUsername) return;
+		if (!currentUserUid) return;
 
-		const result = await editMessageAction(messageId, newContent, currentUsername);
+		const result = await editMessageAction(messageId, newContent, currentUserUid);
 		if (result.success) {
 			setEditingMessage(null);
 		}
 	};
 
 	const handleDeleteChannel = async (channelId: number, channelName: string) => {
-		if (!currentUsername) return;
+		if (!currentUserUid) return;
 
 		if (
 			!confirm(
@@ -179,7 +188,7 @@ export function useChatManagement({
 			return;
 		}
 
-		const result = await deleteChannelAction(channelId, currentUsername);
+		const result = await deleteChannelAction(channelId, currentUserUid);
 		if (result.success) {
 			if (selectedChannel?.id === channelId) {
 				setSelectedChannel(null);
@@ -191,7 +200,7 @@ export function useChatManagement({
 	};
 
 	const handleCleanupMessages = async () => {
-		if (!selectedChannel || !currentUsername || !cleanupDate) return;
+		if (!selectedChannel || !currentUserUid || !cleanupDate) return;
 
 		if (
 			!confirm(
@@ -206,7 +215,7 @@ export function useChatManagement({
 		const result = await cleanChannelMessagesAction(
 			selectedChannel.id,
 			cleanupDate,
-			currentUsername
+			currentUserUid
 		);
 		if (result.success) {
 			alert(`Se eliminaron ${result.deletedCount || 0} mensajes del canal.`);
@@ -218,19 +227,15 @@ export function useChatManagement({
 	};
 
 	useEffect(() => {
-		if (!selectedChannel || !currentUsername) return;
+		if (!selectedChannel || !currentUserUid) return;
 		if (!selectedChannel.last_message_id) return;
 
-		void updateLastReadMessage(
-			selectedChannel.last_message_id,
-			selectedChannel.id,
-			currentUsername
-		);
+		void updateLastReadMessage(selectedChannel.last_message_id, selectedChannel.id, currentUserUid);
 
 		setChannels((prev) =>
 			prev.map((ch) => (ch.id === selectedChannel.id ? { ...ch, unread_count: 0 } : ch))
 		);
-	}, [selectedChannel, currentUsername]);
+	}, [selectedChannel, currentUserUid]);
 
 	useEffect(() => {
 		if (!selectedChannel || !messages.length) return;

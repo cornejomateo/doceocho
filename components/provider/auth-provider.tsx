@@ -10,6 +10,7 @@ import { getSupabaseClient } from '@/lib/supabase-client';
 type SessionUser = {
 	username: string;
 	role: UserRole;
+	id: string;
 };
 
 type AuthContextType = {
@@ -88,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const sessionUser: SessionUser = {
 				username: res.data.username,
 				role: res.data.role as UserRole,
+				id: res.data.user_uid,
 			};
 
 			setUser(sessionUser);

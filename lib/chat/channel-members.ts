@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../supabase-client';
-import { ChannelMember } from '@/types/chat';
+import { ChannelMember } from '@/lib/chat/chat-types';
 
 const TABLE = 'channel_members';
 
@@ -10,13 +10,15 @@ export async function getChannelMembers(
 	const { data, error } = await supabase
 		.from(TABLE)
 		.select(
-			`
-			*,
+			`*,
 			users!inner (
 				username,
-				role
+				role,
+				name,
+				last_name,
+				user_uid
 			)
-		`
+			`
 		)
 		.eq('channel_id', channelId)
 		.order('joined_at', { ascending: true });
@@ -29,6 +31,7 @@ export async function addChannelMember(
 	userId: string
 ): Promise<{ data: ChannelMember | null; error: any }> {
 	const supabase = getSupabaseClient();
+	console.log('Adding member to channel:', channelId, userId);
 	const { data, error } = await supabase
 		.from(TABLE)
 		.insert({ channel_id: channelId, user_id: userId })
@@ -87,18 +90,21 @@ export async function getUserChannels(userId: string): Promise<{
 export async function updateLastReadMessage(
 	message_id: number,
 	channel_id: number,
-	username: string
+	userId: string
 ): Promise<{ success: boolean; error?: any }> {
 	try {
 		const supabase = getSupabaseClient();
-		return supabase
+
+		const { error } = await supabase
 			.from('channel_members')
 			.update({
 				last_read_message_id: message_id,
 			})
-			.eq('user_id', username)
+			.eq('user_id', userId)
 			.eq('channel_id', channel_id)
 			.or(`last_read_message_id.is.null,last_read_message_id.lt.${message_id}`);
+
+		return { success: !error, error };
 	} catch (error) {
 		return { success: false, error };
 	}

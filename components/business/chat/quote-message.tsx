@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { MessageWithUser } from '@/types/chat';
+import { MessageWithUser } from '@/lib/chat/chat-types';
 import { Button } from '@/components/ui/button';
 
 interface QuoteMessageProps {

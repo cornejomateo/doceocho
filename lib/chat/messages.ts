@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../supabase-client';
-import { Message, MessageWithUser } from '@/types/chat';
+import { Message, MessageWithUser } from '@/lib/chat/chat-types';
 
 const TABLE = 'messages';
 
@@ -11,13 +11,14 @@ export async function getMessagesByChannel(
 	const { data, error } = await supabase
 		.from(TABLE)
 		.select(
+			`*,
+				users!inner (
+					username,
+					role,
+					name,
+					last_name
+				)
 			`
-			*,
-			users!inner (
-				username,
-				role
-			)
-		`
 		)
 		.eq('channel_id', channelId)
 		.order('created_at', { ascending: false })
@@ -41,7 +42,9 @@ export async function getMessageById(
 			*,
 			users!inner (
 				username,
-				role
+				role,
+				name,
+				last_name
 			)
 		`
 		)

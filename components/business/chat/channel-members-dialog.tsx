@@ -9,7 +9,6 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserPlus, UserMinus, Users } from 'lucide-react';
@@ -18,7 +17,7 @@ import {
 	removeMemberFromChannelAction,
 	getAvailableUsersAction,
 } from '@/actions/chat/channel-members';
-import { ChannelWithLastMessage } from '@/types/chat';
+import { ChannelWithLastMessage } from '@/lib/chat/chat-types';
 
 interface ChannelMembersDialogProps {
 	open: boolean;
@@ -26,7 +25,7 @@ interface ChannelMembersDialogProps {
 	channel: ChannelWithLastMessage | null;
 	members: any[];
 	onMembersUpdated: () => void;
-	currentUsername: string;
+	currentUserId: string;
 	currentUserRole: string;
 }
 
@@ -36,7 +35,7 @@ export function ChannelMembersDialog({
 	channel,
 	members,
 	onMembersUpdated,
-	currentUsername,
+	currentUserId,
 	currentUserRole,
 }: ChannelMembersDialogProps) {
 	const [availableUsers, setAvailableUsers] = useState<any[]>([]);
@@ -52,7 +51,7 @@ export function ChannelMembersDialog({
 
 	const loadAvailableUsers = async () => {
 		setLoading(true);
-		const result = await getAvailableUsersAction(currentUsername);
+		const result = await getAvailableUsersAction(currentUserId);
 		if (result.success && result.data) {
 			setAvailableUsers(result.data);
 		}
@@ -65,7 +64,7 @@ export function ChannelMembersDialog({
 		setLoading(true);
 		setError('');
 
-		const result = await addMemberToChannelAction(channel.id, selectedUser, currentUsername);
+		const result = await addMemberToChannelAction(channel.id, selectedUser, currentUserId);
 
 		if (result.success) {
 			setSelectedUser('');
@@ -83,7 +82,7 @@ export function ChannelMembersDialog({
 		setLoading(true);
 		setError('');
 
-		const result = await removeMemberFromChannelAction(channel.id, username, currentUsername);
+		const result = await removeMemberFromChannelAction(channel.id, username, currentUserId);
 
 		if (result.success) {
 			onMembersUpdated();
@@ -159,7 +158,7 @@ export function ChannelMembersDialog({
 													</div>
 												</div>
 											</div>
-											{currentUserRole === 'Admin' && member.user_id !== currentUsername && (
+											{currentUserRole === 'Admin' && member.user_id !== currentUserId && (
 												<Button
 													variant="ghost"
 													size="icon"

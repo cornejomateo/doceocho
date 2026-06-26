@@ -5,7 +5,7 @@ import {
 	removeChannelMember,
 	getChannelMembers,
 } from '@/lib/chat/channel-members';
-import { getUser, listUsers } from '@/lib/users/users';
+import { getUser, getUserByUid, listUsers } from '@/lib/users/users';
 
 export async function addMemberToChannelAction(
 	channelId: number,
@@ -23,8 +23,7 @@ export async function addMemberToChannelAction(
 			return { success: false, error: 'Usuario no encontrado' };
 		}
 
-		const result = await addChannelMember(channelId, targetUserResult.data.username);
-
+		const result = await addChannelMember(channelId, targetUserResult.data.uid_user);
 		if (result.error) {
 			return { success: false, error: result.error.message };
 		}
@@ -34,6 +33,7 @@ export async function addMemberToChannelAction(
 		return { success: false, error: e.message };
 	}
 }
+
 export async function removeMemberFromChannelAction(
 	channelId: number,
 	username: string,
@@ -50,8 +50,7 @@ export async function removeMemberFromChannelAction(
 			return { success: false, error: 'Usuario no encontrado' };
 		}
 
-		const result = await removeChannelMember(channelId, targetUserResult.data.username);
-
+		const result = await removeChannelMember(channelId, targetUserResult.data.uid_user);
 		if (result.error) {
 			return { success: false, error: result.error.message };
 		}
@@ -62,36 +61,26 @@ export async function removeMemberFromChannelAction(
 	}
 }
 
-export async function getChannelMembersAction(
-	channelId: number,
-	currentUsername: string
-): Promise<{ success: boolean; error?: string; data?: any[] }> {
+export async function getChannelMembersAction(channelId: number) {
 	try {
-		// Get current user
-		const userResult = await getUser(currentUsername);
-		if (!userResult.data) {
-			return { success: false, error: 'Usuario no encontrado' };
-		}
-
-		// Get channel members
 		const result = await getChannelMembers(channelId);
 
 		if (result.error) {
-			return { success: false, error: result.error.message || 'Error al obtener los miembros' };
+			return { success: false, error: result.error.message };
 		}
 
-		return { success: true, data: result.data || undefined };
-	} catch (error: any) {
-		return { success: false, error: error.message || 'Error al obtener los miembros' };
+		return { success: true, data: result.data || [] };
+	} catch (e: any) {
+		return { success: false, error: e.message };
 	}
 }
 
 export async function getAvailableUsersAction(
-	currentUsername: string
+	currentUserId: string
 ): Promise<{ success: boolean; error?: string; data?: any[] }> {
 	try {
 		// Get current user
-		const userResult = await getUser(currentUsername);
+		const userResult = await getUserByUid(currentUserId);
 		if (!userResult.data) {
 			return { success: false, error: 'Usuario no encontrado' };
 		}

@@ -9,19 +9,17 @@ import {
 } from '@/lib/chat/channels';
 import { addChannelMember, isUserInChannel } from '@/lib/chat/channel-members';
 import { markChannelMessagesAsRead } from '@/lib/chat/message-reads';
-import { getUser } from '@/lib/users/users';
-import { getSupabaseClient } from '@/lib/supabase-client';
-import { UserRole } from '@/constants/users/user-role';
-import { Channel } from '@/types/chat';
+import { getUserByUid } from '@/lib/users/users';
+import { Channel } from '@/lib/chat/chat-types';
 
 export async function createChannelAction(
 	name: string,
 	description: string,
-	currentUsername: string
+	currentUserId: string
 ): Promise<{ success: boolean; error?: string; data?: Channel }> {
 	try {
 		// Get current user
-		const userResult = await getUser(currentUsername);
+		const userResult = await getUserByUid(currentUserId);
 		if (!userResult.data) {
 			return { success: false, error: 'Usuario no encontrado' };
 		}
@@ -32,7 +30,7 @@ export async function createChannelAction(
 		}
 
 		// Create channel
-		const result = await createChannel({ name, description });
+		const result = await createChannel(name, description);
 
 		if (result.error) {
 			return { success: false, error: result.error.message || 'Error al crear el canal' };
@@ -40,7 +38,7 @@ export async function createChannelAction(
 
 		// Add the admin as a member
 		if (result.data) {
-			const memberResult = await addChannelMember(result.data.id, userResult.data.username);
+			const memberResult = await addChannelMember(result.data.id, userResult.data.uid_user);
 			if (memberResult.error) {
 				return {
 					success: false,
@@ -61,11 +59,11 @@ export async function updateChannelAction(
 	channelId: number,
 	name: string,
 	description: string,
-	currentUsername: string
+	currentUserId: string
 ): Promise<{ success: boolean; error?: string; data?: Channel }> {
 	try {
 		// Get current user
-		const userResult = await getUser(currentUsername);
+		const userResult = await getUserByUid(currentUserId);
 		if (!userResult.data) {
 			return { success: false, error: 'Usuario no encontrado' };
 		}
@@ -90,11 +88,11 @@ export async function updateChannelAction(
 
 export async function deleteChannelAction(
 	channelId: number,
-	currentUsername: string
+	currentUserId: string
 ): Promise<{ success: boolean; error?: string }> {
 	try {
 		// Get current user
-		const userResult = await getUser(currentUsername);
+		const userResult = await getUserByUid(currentUserId);
 		if (!userResult.data) {
 			return { success: false, error: 'Usuario no encontrado' };
 		}
@@ -118,17 +116,17 @@ export async function deleteChannelAction(
 }
 
 export async function getUserChannelsAction(
-	currentUsername: string
+	currentUserId: string
 ): Promise<{ success: boolean; error?: string; data?: any[] }> {
 	try {
 		// Get current user
-		const userResult = await getUser(currentUsername);
+		const userResult = await getUserByUid(currentUserId);
 		if (!userResult.data) {
 			return { success: false, error: 'Usuario no encontrado' };
 		}
 
 		// Get user's channels
-		const result = await getChannelsForUser(userResult.data.username);
+		const result = await getChannelsForUser(userResult.data.uid_user);
 
 		if (result.error) {
 			return { success: false, error: result.error.message || 'Error al obtener los canales' };
@@ -142,11 +140,11 @@ export async function getUserChannelsAction(
 
 export async function getChannelByIdAction(
 	channelId: number,
-	currentUsername: string
+	currentUserId: string
 ): Promise<{ success: boolean; error?: string; data?: Channel; isMember?: boolean }> {
 	try {
 		// Get current user
-		const userResult = await getUser(currentUsername);
+		const userResult = await getUserByUid(currentUserId);
 		if (!userResult.data) {
 			return { success: false, error: 'Usuario no encontrado' };
 		}
@@ -159,7 +157,7 @@ export async function getChannelByIdAction(
 		}
 
 		// Check if user is member or admin
-		const isMemberResult = await isUserInChannel(channelId, userResult.data.username);
+		const isMemberResult = await isUserInChannel(channelId, userResult.data.uid_user);
 		const isAdmin = userResult.data.role === 'Admin';
 
 		if (!isMemberResult.data && !isAdmin) {
@@ -167,7 +165,7 @@ export async function getChannelByIdAction(
 		}
 
 		// Mark messages as read when user opens channel
-		await markChannelMessagesAsRead(channelId, userResult.data.username);
+		await markChannelMessagesAsRead(channelId, userResult.data.uid_user);
 
 		return { success: true, data: channelResult.data, isMember: isMemberResult.data };
 	} catch (error: any) {

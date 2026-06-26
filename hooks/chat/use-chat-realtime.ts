@@ -1,7 +1,6 @@
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { useEffect, useState, useCallback } from 'react';
-import { MessageWithUser } from '@/types/chat';
-import { getMessagesByChannel } from '@/lib/chat/messages';
+import { MessageWithUser } from '@/lib/chat/chat-types';
 import { getMessagesAction } from '@/actions/chat/messages';
 import { useAuth } from '@/components/provider/auth-provider';
 
@@ -18,12 +17,15 @@ export function useChatRealtime(channelId: number | null) {
 			setLoading(false);
 			return;
 		}
+		console.time(`channel-${channelId}`);
 
 		setLoading(true);
 		setError(null);
 
 		try {
-			const result = await getMessagesAction(channelId, user.username);
+			const result = await getMessagesAction(channelId, user.id);
+			console.timeEnd(`channel-${channelId}`);
+
 			if (result.error) {
 				setError(result.error || 'Error al cargar mensajes');
 			} else if (result.data) {
@@ -57,27 +59,30 @@ export function useChatRealtime(channelId: number | null) {
 					const { eventType, new: newRecord, old: oldRecord } = payload;
 
 					if (eventType === 'INSERT') {
-						// Fetch the new message with user data
-						const { data: newMessageWithUser } = await supabase
+						const { data } = await supabase
 							.from('messages')
 							.select(
 								`
-								*,
-								users:user_id (
-									username,
-									role
-								)
-							`
+									*,
+									users (
+										username,
+										role,
+										name,
+										last_name
+									)
+								`
 							)
 							.eq('id', newRecord.id)
 							.single();
 
-						if (newMessageWithUser) {
-							setMessages((prev) => [...prev, newMessageWithUser as MessageWithUser]);
+						if (data) {
+							setMessages((prev) => [...prev, data as MessageWithUser]);
 						}
 					} else if (eventType === 'UPDATE') {
 						setMessages((prev) =>
-							prev.map((msg) => (msg.id === newRecord.id ? { ...msg, ...newRecord } : msg))
+							prev.map((msg) =>
+								msg.id === newRecord.id ? { ...msg, ...newRecord, users: msg.users } : msg
+							)
 						);
 					} else if (eventType === 'DELETE') {
 						setMessages((prev) => prev.filter((msg) => msg.id !== oldRecord.id));

@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Trash2 } from 'lucide-react';
-import { ChannelWithLastMessage } from '@/types/chat';
+import { ChannelWithLastMessage } from '@/lib/chat/chat-types';
 import { CHAT_CONSTANTS, MAX_UNREAD_DISPLAY } from '../../../constants/chat/chat.constants';
 
 interface ChatSidebarProps {

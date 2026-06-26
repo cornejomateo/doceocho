@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Search, X, Users, Calendar } from 'lucide-react';
-import { ChannelWithLastMessage } from '@/types/chat';
+import { ChannelWithLastMessage } from '@/lib/chat/chat-types';
 import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
 
 interface ChatHeaderProps {

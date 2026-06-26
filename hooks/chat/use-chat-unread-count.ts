@@ -7,14 +7,14 @@ export function useChatUnreadCount() {
 	const [totalUnreadCount, setTotalUnreadCount] = useState(0);
 
 	useEffect(() => {
-		if (!user?.username) return;
+		if (!user?.id) return;
 
 		const fetchUnreadCount = async () => {
 			try {
 				const supabase = getSupabaseClient();
 
 				const { data, error } = await supabase.rpc('get_unread_messages_count', {
-					p_username: user.username,
+					p_user_id: user.id,
 				});
 
 				if (error) {
@@ -57,7 +57,7 @@ export function useChatUnreadCount() {
 		return () => {
 			supabase.removeChannel(channel);
 		};
-	}, [user?.username]);
+	}, [user?.id]);
 
 	return totalUnreadCount;
 }

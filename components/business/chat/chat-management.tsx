@@ -29,7 +29,7 @@ export function ChatManagement() {
 	} = usePushNotifications();
 
 	const chatManagement = useChatManagement({
-		currentUsername: user?.username || '',
+		currentUserUid: user?.id || '',
 		currentUserRole: user?.role || '',
 		messages: [],
 		messagesLoading: false,
@@ -107,7 +107,7 @@ export function ChatManagement() {
 							messages={messages}
 							filteredMessages={filteredMessages}
 							searchTerm={chatManagement.searchTerm}
-							currentUsername={user.username}
+							currentUserId={user.id}
 							editingMessage={chatManagement.editingMessage}
 							messagesScrollRef={chatManagement.messagesScrollRef}
 							onEditMessage={chatManagement.handleEditMessage}
@@ -157,7 +157,7 @@ export function ChatManagement() {
 							chatManagement.loadMembers(chatManagement.selectedChannel.id);
 						}
 					}}
-					currentUsername={user.username}
+					currentUserId={user.id}
 					currentUserRole={user.role}
 				/>
 			)}
