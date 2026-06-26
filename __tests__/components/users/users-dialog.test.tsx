@@ -8,6 +8,7 @@ import {
 	updateUserPassword,
 } from '@/lib/users/users';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/components/provider/auth-provider';
 
 jest.mock('@/lib/users/users', () => ({
 	listUsers: jest.fn(),
@@ -19,6 +20,10 @@ jest.mock('@/lib/users/users', () => ({
 
 jest.mock('@/components/ui/use-toast', () => ({
 	useToast: jest.fn(),
+}));
+
+jest.mock('@/components/provider/auth-provider', () => ({
+	useAuth: jest.fn(),
 }));
 
 jest.mock('@/lib/error-translator', () => ({
@@ -95,6 +100,9 @@ jest.mock('@/components/ui/select', () => ({
 
 function setup(users: any[] = []) {
 	(listUsers as jest.Mock).mockResolvedValue({ data: users, error: null });
+	(useAuth as jest.Mock).mockReturnValue({
+		user: { username: 'admin1', role: 'Admin', name: 'Admin', last_name: 'User' },
+	});
 	render(<UsersDialog open onOpenChange={jest.fn()} />);
 	return {
 		waitForUsers: () =>
@@ -209,7 +217,12 @@ describe('UsersDialog', () => {
 		fireEvent.click(screen.getByText('Guardar cambios'));
 
 		await waitFor(() => {
-			expect(updateUser).toHaveBeenCalledWith('1', { username: 'user1-editado', role: 'Admin' });
+			expect(updateUser).toHaveBeenCalledWith('1', {
+				username: 'user1-editado',
+				role: 'Admin',
+				name: '',
+				last_name: '',
+			});
 		});
 		expect(updateUserPassword).not.toHaveBeenCalled();
 		expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Usuario actualizado' }));
@@ -228,7 +241,12 @@ describe('UsersDialog', () => {
 		fireEvent.click(screen.getByText('Guardar cambios'));
 
 		await waitFor(() => {
-			expect(updateUser).toHaveBeenCalledWith('1', { username: 'user1', role: 'Taller' });
+			expect(updateUser).toHaveBeenCalledWith('1', {
+				username: 'user1',
+				role: 'Taller',
+				name: '',
+				last_name: '',
+			});
 		});
 		expect(updateUserPassword).toHaveBeenCalledWith('1', 'newpass123');
 		expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Usuario actualizado' }));

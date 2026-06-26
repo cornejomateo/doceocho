@@ -46,7 +46,7 @@ describe('WorksList', () => {
 		);
 
 		expect(
-			screen.getByPlaceholderText('Buscar por dirección, arquitecto o estado...')
+			screen.getByPlaceholderText('Buscar por dirección, arquitecto, zona, barrio o estado...')
 		).toBeInTheDocument();
 	});
 
@@ -149,7 +149,9 @@ describe('WorksList', () => {
 			/>
 		);
 
-		const searchInput = screen.getByPlaceholderText('Buscar por dirección, arquitecto o estado...');
+		const searchInput = screen.getByPlaceholderText(
+			'Buscar por dirección, arquitecto, zona, barrio o estado...'
+		);
 		fireEvent.change(searchInput, { target: { value: 'Calle 1' } });
 
 		expect(screen.getByText('Calle 1')).toBeInTheDocument();
