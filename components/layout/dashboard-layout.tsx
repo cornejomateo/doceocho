@@ -21,6 +21,7 @@ import {
 	AlertCircle,
 	DollarSign,
 	Settings,
+	MessageSquare,
 } from 'lucide-react';
 
 import {
@@ -39,6 +40,7 @@ import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@/constants/users/user-role';
 import { UsersDialog } from '@/components/business/users/users-dialog';
+import { useChatUnreadCount } from '@/hooks/chat/use-chat-unread-count';
 
 const navigation = [
 	{ name: 'Panel', href: '/', icon: LayoutDashboard, disabled: false },
@@ -50,7 +52,8 @@ const navigation = [
 	{ name: 'Reportes de Presupuestos', href: '/budgets', icon: FileText, disabled: false },
 	{ name: 'Reportes', href: '/reports', icon: BarChart3, disabled: false },
 	{ name: 'Flujo de Fondos', href: '/cash-flow', icon: DollarSign, disabled: false },
-] as const;
+	{ name: 'Chat', href: '/chat', icon: MessageSquare, disabled: false },
+];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -59,11 +62,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname() || '/';
 	const router = useRouter();
 	const { user, loading, signOutUser } = useAuth();
+	const totalUnreadCount = useChatUnreadCount();
 
 	const allowedByRole = useMemo(() => {
 		return {
-			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos', 'Obras'],
-			Taller: ['Insumos', 'Clientes', 'Calendario'],
+			Admin: ['Panel', 'Insumos', 'Clientes', 'Calendario', 'Flujo de Fondos', 'Obras', 'Chat'],
+			Taller: ['Insumos', 'Clientes', 'Calendario', 'Chat'],
 		} as Record<UserRole, string[]>;
 	}, []);
 
@@ -195,7 +199,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 												onClick={() => setSidebarOpen(false)}
 											>
 												<item.icon className="h-5 w-5" />
-												{item.name}
+												<span className="flex items-center gap-2">
+													{item.name}
+													{item.name === 'Chat' && totalUnreadCount > 0 && (
+														<div className="bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+															{totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+														</div>
+													)}
+												</span>
 											</Link>
 										)}
 									</div>

@@ -16,7 +16,8 @@ export async function getMessagesByChannel(
 					username,
 					role,
 					name,
-					last_name
+					last_name,
+					uid_user
 				)
 			`
 		)
@@ -44,7 +45,8 @@ export async function getMessageById(
 				username,
 				role,
 				name,
-				last_name
+				last_name,
+				uid_user
 			)
 		`
 		)

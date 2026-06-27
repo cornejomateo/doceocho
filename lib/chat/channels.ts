@@ -1,56 +1,66 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../supabase-client';
 import { Channel, ChannelWithMembers, ChannelWithLastMessage } from '@/lib/chat/chat-types';
 
 const TABLE = 'channels';
 
-export async function listChannels(): Promise<{ data: Channel[] | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase
+export async function listChannels(
+	supabase?: SupabaseClient
+): Promise<{ data: Channel[] | null; error: any }> {
+	const client = supabase ?? getSupabaseClient();
+	const { data, error } = await client
 		.from(TABLE)
 		.select('*')
 		.order('created_at', { ascending: false });
 	return { data, error };
 }
 
-export async function getChannelById(id: number): Promise<{ data: Channel | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase.from(TABLE).select('*').eq('id', id).single();
+export async function getChannelById(
+	id: number,
+	supabase?: SupabaseClient
+): Promise<{ data: Channel | null; error: any }> {
+	const client = supabase ?? getSupabaseClient();
+	const { data, error } = await client.from(TABLE).select('*').eq('id', id).single();
 	return { data, error };
 }
 
 export async function createChannel(
 	name: string,
-	description: string
+	description: string,
+	supabase?: SupabaseClient
 ): Promise<{ data: Channel | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase
-		.from(TABLE)
-		.insert({ name, description })
-		.select()
-		.single();
+	const client = supabase ?? getSupabaseClient();
+	const { data, error } = await client.from(TABLE).insert({ name, description }).select().single();
 	return { data, error };
 }
 
 export async function updateChannel(
 	id: number,
-	changes: Partial<Channel>
+	changes: Partial<Channel>,
+	supabase?: SupabaseClient
 ): Promise<{ data: Channel | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase.from(TABLE).update(changes).eq('id', id).select().single();
+	const client = supabase ?? getSupabaseClient();
+	const { data, error } = await client.from(TABLE).update(changes).eq('id', id).select().single();
 	return { data, error };
 }
 
-export async function deleteChannel(id: number): Promise<{ data: null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { error } = await supabase.from(TABLE).delete().eq('id', id);
+export async function deleteChannel(
+	id: number,
+	supabase?: SupabaseClient
+): Promise<{ data: null; error: any }> {
+	const client = supabase ?? getSupabaseClient();
+	const { error } = await client.from(TABLE).delete().eq('id', id);
 	return { data: null, error };
 }
 
-export async function getChannelsForUser(userId: string): Promise<{
+export async function getChannelsForUser(
+	userId: string,
+	client?: SupabaseClient
+): Promise<{
 	data: ChannelWithLastMessage[] | null;
 	error: any;
 }> {
-	const supabase = getSupabaseClient();
+	const supabase = client ?? getSupabaseClient();
 
 	const { data, error } = await supabase
 		.from('channel_members')

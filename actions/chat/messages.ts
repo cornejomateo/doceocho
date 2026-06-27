@@ -6,22 +6,23 @@ import {
 	getMessagesByChannel,
 	getMessageById,
 } from '@/lib/chat/messages';
-import { getUserByUid } from '@/lib/users/users';
-import { isUserInChannel } from '@/lib/chat/channel-members';
 import { Message } from '@/lib/chat/chat-types';
-import { getSupabaseClient } from '@/lib/supabase-client';
+import { getServerSupabaseClient } from '@/lib/get-server-supabase-client';
 import { sendPushNotificationToChannel } from '@/actions/push/send-notification';
 import { after } from 'next/server';
+import { getCurrentUser } from '@/lib/auth';
+import { isUserInChannel } from '@/lib/chat/channel-members';
+import { getSupabaseClient } from '@/lib/supabase-client';
 
 export async function sendMessageAction(
 	channelId: number,
 	content: string,
-	currentUserId: string,
 	replyToId?: number
 ): Promise<{ success: boolean; error?: string; data?: any }> {
 	try {
-		// Validate content (cheap, no DB)
-		const trimmed = content?.trim();
+		const user = await getCurrentUser();
+
+		const trimmed = content.trim();
 
 		if (!trimmed) {
 			return { success: false, error: 'El mensaje no puede estar vacío' };
@@ -29,13 +30,12 @@ export async function sendMessageAction(
 
 		const supabase = getSupabaseClient();
 
-		// INSERT ONLY (fast path)
 		const { data, error } = await supabase
 			.from('messages')
 			.insert({
 				content: trimmed,
 				channel_id: channelId,
-				user_id: currentUserId,
+				user_id: user.id,
 				reply_to: replyToId ?? null,
 				edited_at: null,
 				deleted_at: null,
@@ -45,165 +45,172 @@ export async function sendMessageAction(
 
 		if (error) {
 			return { success: false, error: error.message };
+			console.log('Error al enviar mensaje:', error);
 		}
 
-		// Async side effects (NO bloquean request)
 		after(async () => {
 			try {
-				// push notifications (async only)
 				const { data: channel } = await supabase
 					.from('channels')
 					.select('name')
 					.eq('id', channelId)
 					.single();
 
-				await sendPushNotificationToChannel(
-					channelId,
-					currentUserId,
-					trimmed,
-					channel?.name || 'Canal'
-				);
+				await sendPushNotificationToChannel(channelId, user.id, trimmed, channel?.name || 'Canal');
 			} catch (err: any) {
-				console.error('Push notification error:', err.message);
+				console.error(err);
 			}
 		});
 
 		return { success: true, data };
-	} catch (error: any) {
-		return { success: false, error: error.message || 'Error al enviar el mensaje' };
+	} catch (err: any) {
+		return { success: false, error: err.message };
 	}
 }
 
 export async function editMessageAction(
 	messageId: number,
-	content: string,
-	currentUserId: string
+	content: string
 ): Promise<{ success: boolean; error?: string; data?: Message }> {
 	try {
-		// Get current user
-		const userResult = await getUserByUid(currentUserId);
-		if (!userResult.data) {
-			return { success: false, error: 'Usuario no encontrado' };
-		}
+		const user = await getCurrentUser();
 
-		// Get message to check ownership
 		const messageResult = await getMessageById(messageId);
-		if (messageResult.error || !messageResult.data) {
+
+		if (!messageResult.data) {
 			return { success: false, error: 'Mensaje no encontrado' };
 		}
 
-		// Check if user is the message owner or admin
-		const isOwner = messageResult.data.user_id === currentUserId;
-		const isAdmin = userResult.data.role === 'Admin';
+		const isOwner = messageResult.data.user_id === user.id;
+		const isAdminUser = await checkIsAdmin(user.id);
 
-		if (!isOwner && !isAdmin) {
+		if (!isOwner && !isAdminUser) {
 			return { success: false, error: 'No tienes permiso para editar este mensaje' };
 		}
 
-		// Validate content
-		if (!content || content.trim().length === 0) {
-			return { success: false, error: 'El mensaje no puede estar vacío' };
+		if (!content.trim()) {
+			return {
+				success: false,
+				error: 'El mensaje no puede estar vacío',
+			};
 		}
 
-		// Update message
-		const result = await updateMessage(messageId, { content: content.trim() });
+		const result = await updateMessage(messageId, {
+			content: content.trim(),
+		});
 
 		if (result.error) {
-			return { success: false, error: result.error.message || 'Error al editar el mensaje' };
+			return {
+				success: false,
+				error: result.error.message,
+			};
 		}
 
-		return { success: true, data: result.data || undefined };
-	} catch (error: any) {
-		return { success: false, error: error.message || 'Error al editar el mensaje' };
+		return {
+			success: true,
+			data: result.data || undefined,
+		};
+	} catch (err: any) {
+		return {
+			success: false,
+			error: err.message,
+		};
 	}
 }
 
 export async function deleteMessageAction(
-	messageId: number,
-	currentUserId: string
+	messageId: number
 ): Promise<{ success: boolean; error?: string; data?: Message }> {
 	try {
-		// Get current user
-		const userResult = await getUserByUid(currentUserId);
-		if (!userResult.data) {
-			return { success: false, error: 'Usuario no encontrado' };
-		}
+		const user = await getCurrentUser();
 
-		// Get message to check ownership
 		const messageResult = await getMessageById(messageId);
-		if (messageResult.error || !messageResult.data) {
-			return { success: false, error: 'Mensaje no encontrado' };
+
+		if (!messageResult.data) {
+			return {
+				success: false,
+				error: 'Mensaje no encontrado',
+			};
 		}
 
-		// Check if user is the message owner or admin
-		const isOwner = messageResult.data.user_id === currentUserId;
-		const isAdmin = userResult.data.role === 'Admin';
+		const isOwner = messageResult.data.user_id === user.id;
+		const isAdminUser = await checkIsAdmin(user.id);
 
-		if (!isOwner && !isAdmin) {
-			return { success: false, error: 'No tienes permiso para eliminar este mensaje' };
+		if (!isOwner && !isAdminUser) {
+			return {
+				success: false,
+				error: 'No tienes permiso para eliminar este mensaje',
+			};
 		}
 
-		// Soft delete message
 		const result = await deleteMessage(messageId);
 
 		if (result.error) {
-			return { success: false, error: result.error.message || 'Error al eliminar el mensaje' };
+			return {
+				success: false,
+				error: result.error.message,
+			};
 		}
 
-		return { success: true, data: result.data || undefined };
-	} catch (error: any) {
-		return { success: false, error: error.message || 'Error al eliminar el mensaje' };
+		return {
+			success: true,
+			data: result.data || undefined,
+		};
+	} catch (err: any) {
+		return {
+			success: false,
+			error: err.message,
+		};
 	}
 }
 
 export async function getMessagesAction(
-	channelId: number,
-	currentUserId: string
+	channelId: number
 ): Promise<{ success: boolean; error?: string; data?: any[] }> {
 	try {
-		// Get current user
-		const userResult = await getUserByUid(currentUserId);
-		console.log('User result:', userResult);
-		if (!userResult.data) {
-			return { success: false, error: 'Usuario no encontrado' };
+		const user = await getCurrentUser();
+
+		const isMemberResult = await isUserInChannel(channelId, user.id);
+		const isAdminUser = await checkIsAdmin(user.id);
+
+		if (!isMemberResult.data && !isAdminUser) {
+			return {
+				success: false,
+				error: 'No tienes acceso a este canal',
+			};
 		}
 
-		// Check if user is member of the channel
-		const isMemberResult = await isUserInChannel(channelId, currentUserId);
-		const isAdmin = userResult.data.role === 'Admin';
-
-		if (!isMemberResult.data && !isAdmin) {
-			return { success: false, error: 'No tienes acceso a este canal' };
-		}
-
-		// Get messages
 		const result = await getMessagesByChannel(channelId);
-		console.log(result);
 
 		if (result.error) {
-			return { success: false, error: result.error.message || 'Error al obtener los mensajes' };
+			return {
+				success: false,
+				error: result.error.message,
+			};
 		}
 
-		return { success: true, data: result.data || undefined };
-	} catch (error: any) {
-		return { success: false, error: error.message || 'Error al obtener los mensajes' };
+		return {
+			success: true,
+			data: result.data || undefined,
+		};
+	} catch (err: any) {
+		return {
+			success: false,
+			error: err.message,
+		};
 	}
 }
 
 export async function cleanChannelMessagesAction(
 	channelId: number,
-	cleanupDate: string,
-	currentUserId: string
+	cleanupDate: string
 ): Promise<{ success: boolean; error?: string; deletedCount?: number }> {
 	try {
-		// Get current user
-		const userResult = await getUserByUid(currentUserId);
-		if (!userResult.data) {
-			return { success: false, error: 'Usuario no encontrado' };
-		}
+		const user = await getCurrentUser();
 
-		// Only admin can clean channel messages
-		if (userResult.data.role !== 'Admin') {
+		const isAdminUser = await checkIsAdmin(user.id);
+
+		if (!isAdminUser) {
 			return {
 				success: false,
 				error: 'Solo los administradores pueden limpiar mensajes del canal',
@@ -212,30 +219,44 @@ export async function cleanChannelMessagesAction(
 
 		const supabase = getSupabaseClient();
 
-		// Get all messages before the cleanup date
-		const { data: messagesToDelete, error: fetchError } = await supabase
+		const { data: messagesToDelete, error } = await supabase
 			.from('messages')
 			.select('id')
 			.eq('channel_id', channelId)
 			.lt('created_at', cleanupDate);
 
-		if (fetchError) {
-			return { success: false, error: fetchError.message || 'Error al obtener mensajes' };
+		if (error) {
+			return {
+				success: false,
+				error: error.message,
+			};
 		}
 
-		if (!messagesToDelete || messagesToDelete.length === 0) {
-			return { success: true, deletedCount: 0 };
+		if (!messagesToDelete?.length) {
+			return {
+				success: true,
+				deletedCount: 0,
+			};
 		}
 
-		const messageIds = messagesToDelete.map((m) => m.id);
-
-		// Hard delete the messages
-		for (const messageId of messageIds) {
-			await supabase.from('messages').delete().eq('id', messageId);
+		for (const message of messagesToDelete) {
+			await supabase.from('messages').delete().eq('id', message.id);
 		}
 
-		return { success: true, deletedCount: messageIds.length };
-	} catch (error: any) {
-		return { success: false, error: error.message || 'Error al limpiar mensajes del canal' };
+		return {
+			success: true,
+			deletedCount: messagesToDelete.length,
+		};
+	} catch (err: any) {
+		return {
+			success: false,
+			error: err.message,
+		};
 	}
+}
+
+async function checkIsAdmin(userId: string): Promise<boolean> {
+	const supabase = await getServerSupabaseClient();
+	const { data } = await supabase.from('users').select('role').eq('uid_user', userId).single();
+	return data?.role === 'Admin';
 }

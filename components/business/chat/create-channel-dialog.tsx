@@ -40,9 +40,9 @@ export function CreateChannelDialog({
 		setLoading(true);
 		setError('');
 
-		const result = await createChannelAction(name, description, user.id);
+		const result = await createChannelAction(name, description);
 
-		if (result.success) {
+		if (!result.error) {
 			setName('');
 			setDescription('');
 			onChannelCreated();

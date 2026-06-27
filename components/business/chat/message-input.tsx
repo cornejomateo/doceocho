@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send } from 'lucide-react';
-import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
+import { CHAT_CONSTANTS } from '@/constants/chat/chat.constants';
 import { QuoteMessage } from './quote-message';
 import { MessageWithUser } from '@/lib/chat/chat-types';
 

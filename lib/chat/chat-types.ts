@@ -20,13 +20,13 @@ export type Message = {
 	content: string | null;
 	edited_at: string | null;
 	deleted_at: string | null;
-	user_id: string; // public.users.user_uid
+	user_id: string; // public.users.uid_user
 	channel_id: number;
 	reply_to: number | null;
 };
 
 export type UserProfile = {
-	user_uid: string;
+	uid_user: string;
 	username: string | null;
 	name: string | null;
 	last_name: string | null;

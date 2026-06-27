@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const sessionUser: SessionUser = {
 				username: res.data.username,
 				role: res.data.role as UserRole,
-				id: res.data.user_uid,
+				id: res.data.uid_user,
 				name: res.data.name || '-',
 				last_name: res.data.last_name || '-',
 			};

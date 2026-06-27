@@ -25,7 +25,6 @@ interface ChannelMembersDialogProps {
 	channel: ChannelWithLastMessage | null;
 	members: any[];
 	onMembersUpdated: () => void;
-	currentUserId: string;
 	currentUserRole: string;
 }
 
@@ -35,7 +34,6 @@ export function ChannelMembersDialog({
 	channel,
 	members,
 	onMembersUpdated,
-	currentUserId,
 	currentUserRole,
 }: ChannelMembersDialogProps) {
 	const [availableUsers, setAvailableUsers] = useState<any[]>([]);
@@ -51,7 +49,7 @@ export function ChannelMembersDialog({
 
 	const loadAvailableUsers = async () => {
 		setLoading(true);
-		const result = await getAvailableUsersAction(currentUserId);
+		const result = await getAvailableUsersAction();
 		if (result.success && result.data) {
 			setAvailableUsers(result.data);
 		}
@@ -64,9 +62,9 @@ export function ChannelMembersDialog({
 		setLoading(true);
 		setError('');
 
-		const result = await addMemberToChannelAction(channel.id, selectedUser, currentUserId);
+		const result = await addMemberToChannelAction(channel.id, selectedUser);
 
-		if (result.success) {
+		if (!result.error) {
 			setSelectedUser('');
 			onMembersUpdated();
 		} else {
@@ -82,9 +80,9 @@ export function ChannelMembersDialog({
 		setLoading(true);
 		setError('');
 
-		const result = await removeMemberFromChannelAction(channel.id, username, currentUserId);
+		const result = await removeMemberFromChannelAction(channel.id, username);
 
-		if (result.success) {
+		if (!result.error) {
 			onMembersUpdated();
 		} else {
 			setError(result.error || 'Error al remover miembro');
@@ -158,7 +156,7 @@ export function ChannelMembersDialog({
 													</div>
 												</div>
 											</div>
-											{currentUserRole === 'Admin' && member.user_id !== currentUserId && (
+											{currentUserRole === 'Admin' && (
 												<Button
 													variant="ghost"
 													size="icon"

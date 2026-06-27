@@ -2,7 +2,7 @@
 
 import { configureWebPush, sendPushNotification } from '@/lib/push/vapid';
 import { getChannelPushSubscriptions } from '@/lib/push/subscriptions';
-import { getUserByUid } from '@/lib/users/users';
+import { getSupabaseClient } from '@/lib/supabase-client';
 
 export async function sendPushNotificationToChannel(
 	channelId: number,
@@ -10,32 +10,46 @@ export async function sendPushNotificationToChannel(
 	message: string,
 	channelName: string
 ) {
+	const supabase = getSupabaseClient();
 	try {
-		// Configure web-push
 		const configured = configureWebPush();
+
 		if (!configured) {
-			return { success: false, error: 'VAPID keys are not configured', sentCount: 0 };
+			return {
+				success: false,
+				error: 'VAPID keys are not configured',
+				sentCount: 0,
+			};
 		}
 
-		// Get all push subscriptions for channel members (excluding sender)
 		const { data: subscriptions, error } = await getChannelPushSubscriptions(
 			channelId,
 			senderUserId
 		);
 
 		if (error) {
-			return { success: false, error, sentCount: 0 };
+			return {
+				success: false,
+				error,
+				sentCount: 0,
+			};
 		}
 
-		if (!subscriptions || subscriptions.length === 0) {
-			return { success: true, sentCount: 0 };
+		if (!subscriptions?.length) {
+			return {
+				success: true,
+				sentCount: 0,
+			};
 		}
 
-		// Get sender info
-		const senderResult = await getUserByUid(senderUserId);
-		const senderName = senderResult.data?.username || 'Usuario';
+		const { data: senderProfile } = await supabase
+			.from('users')
+			.select('username')
+			.eq('uid_user', senderUserId)
+			.single();
 
-		// Send notification to all subscriptions
+		const senderName = senderProfile?.username ?? 'Usuario';
+
 		let sentCount = 0;
 
 		for (const subscription of subscriptions) {
@@ -55,9 +69,16 @@ export async function sendPushNotificationToChannel(
 			}
 		}
 
-		return { success: true, sentCount };
+		return {
+			success: true,
+			sentCount,
+		};
 	} catch (error: any) {
-		console.error('Error sending push notifications:', error);
-		return { success: false, error: error.message };
+		console.error(error);
+
+		return {
+			success: false,
+			error: error.message,
+		};
 	}
 }

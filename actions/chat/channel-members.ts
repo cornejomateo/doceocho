@@ -5,52 +5,51 @@ import {
 	removeChannelMember,
 	getChannelMembers,
 } from '@/lib/chat/channel-members';
-import { getUser, getUserByUid, listUsers } from '@/lib/users/users';
+import { getServerSupabaseClient } from '@/lib/get-server-supabase-client';
+import { getUser, listUsers } from '@/lib/users/users';
 
-export async function addMemberToChannelAction(
-	channelId: number,
-	username: string,
-	currentUserRole: string
-) {
-	try {
-		if (currentUserRole !== 'Admin') {
-			return { success: false, error: 'Solo admins' };
-		}
+export async function addMemberToChannelAction(channelId: number, username: string) {
+	const supabase = await getServerSupabaseClient();
 
-		const targetUserResult = await getUser(username);
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
 
-		if (!targetUserResult.data) {
-			return { success: false, error: 'Usuario no encontrado' };
-		}
-
-		const result = await addChannelMember(channelId, targetUserResult.data.uid_user);
-		if (result.error) {
-			return { success: false, error: result.error.message };
-		}
-
-		return { success: true, data: result.data };
-	} catch (e: any) {
-		return { success: false, error: e.message };
+	if (!user) {
+		return { success: false, error: 'No autenticado' };
 	}
+
+	if (!(await checkIsAdmin(user.id))) {
+		return { success: false, error: 'Solo admins' };
+	}
+
+	const targetUserResult = await getUser(username);
+
+	if (!targetUserResult.data) {
+		return { success: false, error: 'Usuario no encontrado' };
+	}
+
+	return await addChannelMember(channelId, targetUserResult.data.uid_user, supabase);
 }
 
-export async function removeMemberFromChannelAction(
-	channelId: number,
-	username: string,
-	currentUserRole: string
-) {
-	try {
-		if (currentUserRole !== 'Admin') {
-			return { success: false, error: 'Solo admins' };
-		}
+export async function removeMemberFromChannelAction(channelId: number, username: string) {
+	const supabase = await getServerSupabaseClient();
 
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return { success: false, error: 'No autenticado' };
+	}
+	try {
 		const targetUserResult = await getUser(username);
 
 		if (!targetUserResult.data) {
 			return { success: false, error: 'Usuario no encontrado' };
 		}
 
-		const result = await removeChannelMember(channelId, targetUserResult.data.uid_user);
+		const result = await removeChannelMember(channelId, targetUserResult.data.uid_user, supabase);
 		if (result.error) {
 			return { success: false, error: result.error.message };
 		}
@@ -62,8 +61,17 @@ export async function removeMemberFromChannelAction(
 }
 
 export async function getChannelMembersAction(channelId: number) {
+	const supabase = await getServerSupabaseClient();
+
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return { success: false, error: 'No autenticado' };
+	}
 	try {
-		const result = await getChannelMembers(channelId);
+		const result = await getChannelMembers(channelId, supabase);
 
 		if (result.error) {
 			return { success: false, error: result.error.message };
@@ -75,30 +83,38 @@ export async function getChannelMembersAction(channelId: number) {
 	}
 }
 
-export async function getAvailableUsersAction(
-	currentUserId: string
-): Promise<{ success: boolean; error?: string; data?: any[] }> {
-	try {
-		// Get current user
-		const userResult = await getUserByUid(currentUserId);
-		if (!userResult.data) {
-			return { success: false, error: 'Usuario no encontrado' };
-		}
+async function checkIsAdmin(userId: string): Promise<boolean> {
+	const supabase = await getServerSupabaseClient();
+	const { data } = await supabase.from('users').select('role').eq('uid_user', userId).single();
+	return data?.role === 'Admin';
+}
 
-		// Check if current user is admin
-		if (userResult.data.role !== 'Admin') {
-			return { success: false, error: 'Solo los administradores pueden ver usuarios disponibles' };
-		}
+export async function getAvailableUsersAction() {
+	const supabase = await getServerSupabaseClient();
 
-		// Get all users from the users table
-		const result = await listUsers();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
 
-		if (result.error) {
-			return { success: false, error: result.error.message || 'Error al obtener los usuarios' };
-		}
-
-		return { success: true, data: result.data || [] };
-	} catch (error: any) {
-		return { success: false, error: error.message || 'Error al obtener los usuarios' };
+	if (!user) {
+		return { success: false, error: 'No autenticado' };
 	}
+
+	if (!(await checkIsAdmin(user.id))) {
+		return { success: false, error: 'Solo admins' };
+	}
+
+	const result = await listUsers();
+
+	if (result.error) {
+		return {
+			success: false,
+			error: result.error.message || 'Error al obtener los usuarios',
+		};
+	}
+
+	return {
+		success: true,
+		data: result.data || [],
+	};
 }

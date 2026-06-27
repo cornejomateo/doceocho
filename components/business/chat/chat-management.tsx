@@ -11,11 +11,11 @@ import { ChatSidebar } from './chat-sidebar';
 import { ChatHeader } from './chat-header';
 import { MessagesList } from './messages-list';
 import { MessageInput } from './message-input';
-import { PushNotificationSettings } from './push-notification-settings';
-import { CleanupMessagesDialog } from './cleanup-messages-dialog';
+import { PushNotificationSettings } from '@/components/business/chat/push-notification-settings';
+import { CleanupMessagesDialog } from '@/components/business/chat/cleanup-messages-dialog';
 import { CreateChannelDialog } from './create-channel-dialog';
 import { ChannelMembersDialog } from './channel-members-dialog';
-import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
+import { CHAT_CONSTANTS } from '@/constants/chat/chat.constants';
 
 export function ChatManagement() {
 	const { user } = useAuth();
@@ -157,7 +157,6 @@ export function ChatManagement() {
 							chatManagement.loadMembers(chatManagement.selectedChannel.id);
 						}
 					}}
-					currentUserId={user.id}
 					currentUserRole={user.role}
 				/>
 			)}

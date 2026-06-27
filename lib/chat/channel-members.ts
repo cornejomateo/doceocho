@@ -1,13 +1,15 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../supabase-client';
 import { ChannelMember } from '@/lib/chat/chat-types';
 
 const TABLE = 'channel_members';
 
 export async function getChannelMembers(
-	channelId: number
+	channelId: number,
+	supabase?: SupabaseClient
 ): Promise<{ data: ChannelMember[] | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase
+	const client = supabase ?? getSupabaseClient();
+	const { data, error } = await client
 		.from(TABLE)
 		.select(
 			`*,
@@ -16,7 +18,7 @@ export async function getChannelMembers(
 				role,
 				name,
 				last_name,
-				user_uid
+				uid_user
 			)
 			`
 		)
@@ -28,11 +30,11 @@ export async function getChannelMembers(
 
 export async function addChannelMember(
 	channelId: number,
-	userId: string
+	userId: string,
+	supabase?: SupabaseClient
 ): Promise<{ data: ChannelMember | null; error: any }> {
-	const supabase = getSupabaseClient();
-	console.log('Adding member to channel:', channelId, userId);
-	const { data, error } = await supabase
+	const client = supabase ?? getSupabaseClient();
+	const { data, error } = await client
 		.from(TABLE)
 		.insert({ channel_id: channelId, user_id: userId })
 		.select()
@@ -43,10 +45,11 @@ export async function addChannelMember(
 
 export async function removeChannelMember(
 	channelId: number,
-	userId: string
+	userId: string,
+	supabase?: SupabaseClient
 ): Promise<{ data: null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { error } = await supabase
+	const client = supabase ?? getSupabaseClient();
+	const { error } = await client
 		.from(TABLE)
 		.delete()
 		.eq('channel_id', channelId)
@@ -56,10 +59,11 @@ export async function removeChannelMember(
 
 export async function isUserInChannel(
 	channelId: number,
-	userId: string
+	userId: string,
+	supabase?: SupabaseClient
 ): Promise<{ data: boolean; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase
+	const client = supabase ?? getSupabaseClient();
+	const { data, error } = await client
 		.from(TABLE)
 		.select('*')
 		.eq('channel_id', channelId)

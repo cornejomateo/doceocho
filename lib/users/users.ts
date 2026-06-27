@@ -1,7 +1,7 @@
 import { UserRole } from '@/constants/users/user-role';
+import { getSupabaseClient } from '@/lib/supabase-client';
 
 export type User = {
-	uid_user: string;
 	username: string;
 	name?: string;
 	last_name?: string;
@@ -20,10 +20,10 @@ export type CreateUserInput = {
 };
 
 async function getAuthHeaders() {
-	const { getSupabaseClient } = await import('../supabase-client');
+	const supabase = getSupabaseClient();
 	const {
 		data: { session },
-	} = await getSupabaseClient().auth.getSession();
+	} = await supabase.auth.getSession();
 
 	if (!session?.access_token) {
 		throw new Error('No autenticado');
@@ -51,7 +51,7 @@ async function apiFetch(path: string, options?: RequestInit) {
 }
 
 export async function getUser(username: string): Promise<{ data: User | null; error: any }> {
-	const supabase = (await import('../supabase-client')).getSupabaseClient();
+	const supabase = getSupabaseClient();
 	const { data, error } = await supabase
 		.from('users')
 		.select('*')
@@ -137,19 +137,38 @@ export async function updateUser(
 export async function getUserByUid(uid: string): Promise<{ data: User | null; error: any }> {
 	const supabase = getSupabaseClient();
 
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	console.log(user);
+
 	const { data, error } = await supabase
 		.from('users')
 		.select('*')
 		.eq('uid_user', uid)
 		.maybeSingle();
 
+	console.log('getUserByUid', { uid, data, error });
 	if (error) {
 		return { data: null, error: 'Error al buscar usuario' };
 	}
-
 	if (!data) {
 		return { data: null, error: 'Usuario no encontrado' };
 	}
 
 	return { data, error: null };
+}
+
+export async function isAdmin(userId: string) {
+	const supabase = getSupabaseClient();
+	const { data, error } = await supabase
+		.from('users')
+		.select('role')
+		.eq('uid_user', userId)
+		.single();
+
+	if (error || !data) return false;
+
+	return data.role === 'Admin';
 }

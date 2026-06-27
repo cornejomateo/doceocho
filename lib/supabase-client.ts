@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 let supabase: SupabaseClient | null = null;
 
@@ -14,11 +15,7 @@ function getSupabaseClient(): SupabaseClient {
 		);
 	}
 
-	supabase = createClient(url, anonKey, {
-		// Add any global options here
-		auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-		global: { headers: { 'x-client-platform': 'web' } },
-	});
+	supabase = createBrowserClient(url, anonKey);
 
 	return supabase;
 }
