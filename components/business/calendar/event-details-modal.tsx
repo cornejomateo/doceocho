@@ -8,16 +8,17 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, MapPin, User, FileText, ChevronDown } from 'lucide-react';
+import { CalendarIcon, MapPin, User, FileText, ChevronDown, Home } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { statusOptionsEvents } from '@/constants/calendar/status';
 import { Event, updateEvent } from '@/lib/calendar/events';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Bell } from 'lucide-react';
 import { translateError } from '@/lib/error-translator';
 import { EventType, resolveEventType } from '@/lib/calendar/event-types';
 import { useAuth } from '@/components/provider/auth-provider';
+import { getWorkById, Work } from '@/lib/works/works';
 
 interface EventDetailsModalProps {
 	isOpen: boolean;
@@ -39,6 +40,27 @@ export function EventDetailsModal({
 	const [currentStatus, setCurrentStatus] = useState(event.status || 'Pendiente');
 
 	const [currentRemember, setCurrentRemember] = useState(event.remember || false);
+
+	const [workData, setWorkData] = useState<Work | null>(null);
+	const [isLoadingWork, setIsLoadingWork] = useState(false);
+
+	useEffect(() => {
+		if (event.work_id) {
+			setIsLoadingWork(true);
+			getWorkById(event.work_id).then(({ data, error }) => {
+				if (error) {
+					console.error('Error fetching work data:', error);
+					setWorkData(null);
+				} else {
+					setWorkData(data);
+				}
+				setIsLoadingWork(false);
+			});
+		} else {
+			setWorkData(null);
+			setIsLoadingWork(false);
+		}
+	}, [event.work_id]);
 
 	const { user } = useAuth();
 	const isAuthorized = user?.role === 'Admin';
@@ -144,25 +166,54 @@ export function EventDetailsModal({
 							</div>
 						</div>
 
-						{event.location && (
+						{isLoadingWork ? (
+							<div className="flex items-center gap-2 text-sm text-muted-foreground">
+								<span>Cargando datos de la obra...</span>
+							</div>
+						) : workData ? (
+							<>
+								<div className="flex items-start gap-3">
+									<MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+									<div>
+										<p className="text-sm text-muted-foreground">Localidad</p>
+										<p className="text-sm">{workData.locality || 'Sin localidad'}</p>
+									</div>
+								</div>
+								<div className="flex items-start gap-3">
+									<MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+									<div>
+										<p className="text-sm text-muted-foreground">Dirección</p>
+										<p className="text-sm">{workData.address || 'Sin dirección'}</p>
+									</div>
+								</div>
+								{workData.zone && (
+									<div className="flex items-start gap-3">
+										<MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+										<div>
+											<p className="text-sm text-muted-foreground">Zona</p>
+											<p className="text-sm">{workData.zone}</p>
+										</div>
+									</div>
+								)}
+								{workData.hood && (
+									<div className="flex items-start gap-3">
+										<Home className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+										<div>
+											<p className="text-sm text-muted-foreground">Barrio</p>
+											<p className="text-sm">{workData.hood}</p>
+										</div>
+									</div>
+								)}
+							</>
+						) : event.work_location ? (
 							<div className="flex items-start gap-3">
 								<MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
 								<div>
-									<p className="text-sm text-muted-foreground">Localidad</p>
-									<p className="text-sm">{event.location}</p>
+									<p className="text-sm text-muted-foreground">Ubicación de obra</p>
+									<p className="text-sm">{event.work_location}</p>
 								</div>
 							</div>
-						)}
-
-						{event.address && (
-							<div className="flex items-start gap-3">
-								<MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-								<div>
-									<p className="text-sm text-muted-foreground">Dirección</p>
-									<p className="text-sm">{event.address}</p>
-								</div>
-							</div>
-						)}
+						) : null}
 
 						<div className="flex items-start gap-3">
 							<FileText className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />

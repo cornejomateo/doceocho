@@ -46,10 +46,8 @@ export interface BudgetHandlers {
 	) => Promise<void>;
 	handleViewPdf: (
 		budget: BudgetWithWork,
-		setPdfPreview: (state: any) => void,
 		setIsLoading: (loading: boolean) => void
 	) => Promise<void>;
-	closePdfPreview: (pdfPreview: any, setPdfPreview: (state: any) => void) => void;
 	handleOpenBudgetDetail: (
 		budget: BudgetWithWork,
 		setBudgetDetailModal: (state: any) => void
@@ -256,17 +254,15 @@ export const budgetHandlers: BudgetHandlers = {
 		}
 	},
 
-	async handleViewPdf(
-		budget: BudgetWithWork,
-		setPdfPreview: (state: any) => void,
-		setIsLoading: (loading: boolean) => void
-	) {
+	async handleViewPdf(budget: BudgetWithWork, setIsLoading: (loading: boolean) => void) {
 		if (!budget.pdf_path) return;
 
 		try {
 			setIsLoading(true);
 			const supabase = getSupabaseClient();
-			const { data, error } = await supabase.storage.from('clients').download(budget.pdf_path);
+			const { data, error } = await supabase.storage
+				.from('clients')
+				.createSignedUrl(budget.pdf_path, 3600);
 
 			if (error) {
 				toast({
@@ -277,18 +273,12 @@ export const budgetHandlers: BudgetHandlers = {
 				return;
 			}
 
-			const url = URL.createObjectURL(data);
-			setPdfPreview({ open: true, budget, pdfUrl: url });
+			if (data?.signedUrl) {
+				window.open(data.signedUrl, '_blank');
+			}
 		} finally {
 			setIsLoading(false);
 		}
-	},
-
-	closePdfPreview(pdfPreview: any, setPdfPreview: (state: any) => void) {
-		if (pdfPreview.pdfUrl) {
-			URL.revokeObjectURL(pdfPreview.pdfUrl);
-		}
-		setPdfPreview({ open: false, budget: null, pdfUrl: null });
 	},
 
 	handleOpenBudgetDetail(budget: BudgetWithWork, setBudgetDetailModal: (state: any) => void) {

@@ -16,6 +16,8 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, MapPin, Clock, User, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from './use-toast';
+import { translateError } from '@/lib/error-translator';
 
 interface Client {
 	id: number;
@@ -100,9 +102,19 @@ export function EmailNotificationModal({
 			};
 
 			await onSendEmail(emailData);
+			toast({
+				title: 'Email enviado',
+				description: 'El email ha sido enviado correctamente.',
+			});
 			onOpenChange(false);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Error al enviar el email');
+			toast({
+				title: 'Error',
+				description: translateError(err),
+				variant: 'destructive',
+			});
+			console.error('Error sending email:', err);
 		} finally {
 			setIsSending(false);
 		}
@@ -197,7 +209,7 @@ El equipo de Doceocho`;
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<Mail className="h-5 w-5" />
-						Enviar Notificación por Email
+						Enviar notificación por Email
 					</DialogTitle>
 					<DialogDescription>
 						Envíe una notificación al cliente sobre la llegada del equipo de colocación
@@ -267,9 +279,7 @@ El equipo de Doceocho`;
 
 						{/* Arrival Time Information */}
 						<div className="border-t pt-4">
-							<h4 className="font-medium text-sm mb-3">
-								Fecha y Hora de Llegada (De los colocadores)
-							</h4>
+							<h4 className="font-medium text-sm mb-3">Fecha y hora de llegada</h4>
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 								<div className="space-y-2">
 									<Label htmlFor="scheduledDate">Fecha de llegada</Label>

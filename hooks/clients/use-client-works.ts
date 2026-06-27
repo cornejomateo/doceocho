@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { createWork, deleteWork, getWorksByClientId, updateWork } from '@/lib/works/works';
 import { Work } from '@/lib/works/works';
 
@@ -6,7 +6,7 @@ export function useClientWorks(clientId?: number) {
 	const [works, setWorks] = useState<Work[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 
-	const loadWorks = async () => {
+	const loadWorks = useCallback(async () => {
 		if (!clientId) return;
 
 		setIsLoading(true);
@@ -20,7 +20,7 @@ export function useClientWorks(clientId?: number) {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [clientId]);
 
 	const create = async (workData: Omit<Work, 'id' | 'created_at' | 'client_id'>) => {
 		if (!clientId) return;

@@ -233,8 +233,8 @@ export function SuppliesTable({
 										<td className="px-2 py-2 text-center text-sm text-foreground">
 											{item.supply_code || '-'}
 										</td>
-										<td className="max-w-[380px] px-2 py-2 text-sm text-foreground">
-											<p className="break-words whitespace-pre-line text-justify">
+										<td className="max-w-[200px] sm:max-w-[380px] px-2 py-2 text-sm text-foreground">
+											<p className="break-words whitespace-pre-line text-justify truncate">
 												{item.supply_description || '-'}
 											</p>
 										</td>

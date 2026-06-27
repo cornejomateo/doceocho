@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 
 interface EmailRequest {
-	clientId: string;
-	workId: string;
+	clientId: number;
+	workId: number;
 	to: string;
 	subject: string;
 	message: string;

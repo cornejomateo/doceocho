@@ -272,7 +272,7 @@ export function ClientBudgetsDollarUpdateModal({
 												>
 													<div className="flex items-center justify-between mb-1">
 														<span className="text-xs font-medium truncate flex-1 mr-2">
-															#{budget.number || 'sin número'} - {budget.version || 'Sin variante'}
+															#{budget.number || 'sin número'}
 														</span>
 														<Badge variant="outline" className="text-xs shrink-0">
 															{budget.type || 'Otros'}

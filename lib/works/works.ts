@@ -14,6 +14,8 @@ export type Work = {
 	general_note?: string | null;
 	balance_id?: string | null;
 	furniture?: string | null;
+	zone?: string | null;
+	hood?: string | null;
 	clients?: {
 		name: string;
 		last_name: string;
@@ -66,7 +68,6 @@ export async function listWorks(): Promise<{ data: Work[] | null; error: any }> 
 			data: null,
 			error: error instanceof Error ? error : new Error('Error desconocido'),
 		};
-		return { data: null, error };
 	}
 }
 
