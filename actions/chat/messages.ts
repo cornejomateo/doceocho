@@ -1,14 +1,13 @@
 'use server';
 
 import {
-	createMessage,
 	updateMessage,
 	deleteMessage,
 	getMessagesByChannel,
 	getMessageById,
 } from '@/lib/chat/messages';
-import { getUser, getUserByUid } from '@/lib/users/users';
-import { isUserInChannel, updateLastReadMessage } from '@/lib/chat/channel-members';
+import { getUserByUid } from '@/lib/users/users';
+import { isUserInChannel } from '@/lib/chat/channel-members';
 import { Message } from '@/lib/chat/chat-types';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { sendPushNotificationToChannel } from '@/actions/push/send-notification';
