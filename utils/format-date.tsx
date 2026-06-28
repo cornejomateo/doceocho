@@ -22,12 +22,29 @@ export function formatShortDate(value: string | null | undefined) {
 
 export const formatCreatedAtChat = (dateValue: unknown) => {
 	if (!dateValue) return 'N/A';
-	const d = new Date(String(dateValue));
-	if (isNaN(d.getTime())) return 'N/A';
-	const day = String(d.getUTCDate()).padStart(2, '0');
-	const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-	const year = d.getUTCFullYear();
-	const hours = String(d.getUTCHours()).padStart(2, '0');
-	const minutes = String(d.getUTCMinutes()).padStart(2, '0');
-	return `${day}/${month}/${year} ${hours}:${minutes}`;
+
+	const date = new Date(String(dateValue));
+	if (isNaN(date.getTime())) return 'N/A';
+
+	const now = new Date();
+
+	const isToday =
+		date.getDate() === now.getDate() &&
+		date.getMonth() === now.getMonth() &&
+		date.getFullYear() === now.getFullYear();
+
+	if (isToday) {
+		return date.toLocaleTimeString('es-AR', {
+			hour: '2-digit',
+			minute: '2-digit',
+		});
+	}
+
+	return date.toLocaleString('es-AR', {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+	});
 };
