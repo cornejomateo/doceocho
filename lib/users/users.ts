@@ -1,5 +1,6 @@
 import { UserRole } from '@/constants/users/user-role';
 import { getSupabaseClient } from '@/lib/supabase-client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type User = {
 	username: string;
@@ -50,9 +51,12 @@ async function apiFetch(path: string, options?: RequestInit) {
 	return body;
 }
 
-export async function getUser(username: string): Promise<{ data: User | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase
+export async function getUser(
+	username: string,
+	supabase?: SupabaseClient
+): Promise<{ data: User | null; error: any }> {
+	const client = supabase ?? getSupabaseClient();
+	const { data, error } = await client
 		.from('users')
 		.select('*')
 		.eq('username', username)

@@ -13,11 +13,22 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserPlus, UserMinus, Users } from 'lucide-react';
 import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
 	addMemberToChannelAction,
 	removeMemberFromChannelAction,
 	getAvailableUsersAction,
-} from '@/actions/chat/channel-members';
+} from '@/lib/chat/channel-members';
 import { ChannelWithLastMessage } from '@/lib/chat/chat-types';
+import { toast } from '@/components/ui/use-toast';
 
 interface ChannelMembersDialogProps {
 	open: boolean;
@@ -40,6 +51,9 @@ export function ChannelMembersDialog({
 	const [selectedUser, setSelectedUser] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
+	const [memberToRemove, setMemberToRemove] = useState<{ userId: string; username: string } | null>(
+		null
+	);
 
 	useEffect(() => {
 		if (open) {
@@ -62,118 +76,168 @@ export function ChannelMembersDialog({
 		setLoading(true);
 		setError('');
 
+		const targetUser = availableUsers.find((u) => u.uid_user === selectedUser);
+
 		const result = await addMemberToChannelAction(channel.id, selectedUser);
 
 		if (!result.error) {
 			setSelectedUser('');
 			onMembersUpdated();
+			toast({
+				title: 'Miembro agregado',
+				description: `${targetUser?.username || 'Usuario'} fue agregado al canal.`,
+			});
 		} else {
 			setError(result.error || 'Error al agregar miembro');
+			toast({
+				title: 'Error al agregar miembro',
+				description: result.error,
+				variant: 'destructive',
+			});
 		}
 
 		setLoading(false);
 	};
 
-	const handleRemoveMember = async (username: string) => {
+	const handleRemoveMember = async (userId: string, username: string) => {
 		if (!channel) return;
 
 		setLoading(true);
 		setError('');
 
-		const result = await removeMemberFromChannelAction(channel.id, username);
+		const result = await removeMemberFromChannelAction(channel.id, userId);
 
 		if (!result.error) {
 			onMembersUpdated();
+			toast({ title: 'Miembro removido', description: `${username} fue removido del canal.` });
 		} else {
 			setError(result.error || 'Error al remover miembro');
+			toast({
+				title: 'Error al remover miembro',
+				description: result.error,
+				variant: 'destructive',
+			});
 		}
 
 		setLoading(false);
 	};
 
-	const existingMemberUsernames = members.map((m) => m.user_id);
-	const availableToAdd = availableUsers.filter(
-		(u) => !existingMemberUsernames.includes(u.username)
-	);
+	const existingMemberIds = members.map((m) => m.users?.uid_user || m.user_id);
+	const availableToAdd = availableUsers.filter((u) => !existingMemberIds.includes(u.uid_user));
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-md">
-				<DialogHeader>
-					<DialogTitle>Miembros del canal</DialogTitle>
-					<DialogDescription>
-						{channel?.name || 'Canal'} - {members.length} miembro{members.length !== 1 ? 's' : ''}
-					</DialogDescription>
-				</DialogHeader>
-				<div className="space-y-4 py-4">
-					{/* Add Member Section */}
-					<div className="space-y-2">
-						<Label>Agregar miembro</Label>
-						<div className="flex gap-2">
-							<select
-								className="flex-1 px-3 py-2 border rounded-md"
-								value={selectedUser}
-								onChange={(e) => setSelectedUser(e.target.value)}
-							>
-								<option value="">Seleccionar usuario</option>
-								{availableToAdd.map((user) => (
-									<option key={user.username} value={user.username}>
-										{user.username} ({user.role})
-									</option>
-								))}
-							</select>
-							<Button onClick={handleAddMember} disabled={loading || !selectedUser} size="icon">
-								<UserPlus className="h-4 w-4" />
-							</Button>
+		<>
+			<Dialog open={open} onOpenChange={onOpenChange}>
+				<DialogContent className="max-w-md">
+					<DialogHeader>
+						<DialogTitle>Miembros del canal</DialogTitle>
+						<DialogDescription>
+							{channel?.name || 'Canal'} - {members.length} miembro{members.length !== 1 ? 's' : ''}
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-4 py-4">
+						{/* Add Member Section */}
+						<div className="space-y-2">
+							<Label>Agregar miembro</Label>
+							<div className="flex gap-2">
+								<select
+									className="flex-1 px-3 py-2 border rounded-md"
+									value={selectedUser}
+									onChange={(e) => setSelectedUser(e.target.value)}
+								>
+									<option value="">Seleccionar usuario</option>
+									{availableToAdd.map((user) => (
+										<option key={user.uid_user} value={user.uid_user}>
+											{user.username} ({user.role})
+										</option>
+									))}
+								</select>
+								<Button onClick={handleAddMember} disabled={loading || !selectedUser} size="icon">
+									<UserPlus className="h-4 w-4" />
+								</Button>
+							</div>
 						</div>
-					</div>
 
-					{error && <div className="text-sm text-destructive">{error}</div>}
+						{error && <div className="text-sm text-destructive">{error}</div>}
 
-					{/* Members List */}
-					<div className="space-y-2">
-						<Label>Miembros actuales</Label>
-						<ScrollArea className="h-64 border rounded-md p-2">
-							{members.length === 0 ? (
-								<div className="text-center text-sm text-muted-foreground py-4">
-									No hay miembros en este canal
-								</div>
-							) : (
-								<div className="space-y-2">
-									{members.map((member) => (
-										<div
-											key={member.id}
-											className="flex items-center justify-between p-2 bg-muted rounded"
-										>
-											<div className="flex items-center gap-2">
-												<Users className="h-4 w-4 text-muted-foreground" />
-												<div>
-													<div className="font-medium">
-														{member.users?.username || member.user_id}
-													</div>
-													<div className="text-xs text-muted-foreground">
-														{member.users?.role || 'Usuario'}
+						{/* Members List */}
+						<div className="space-y-2">
+							<Label>Miembros actuales</Label>
+							<ScrollArea className="h-64 border rounded-md p-2">
+								{members.length === 0 ? (
+									<div className="text-center text-sm text-muted-foreground py-4">
+										No hay miembros en este canal
+									</div>
+								) : (
+									<div className="space-y-2">
+										{members.map((member) => (
+											<div
+												key={member.id}
+												className="flex items-center justify-between p-2 bg-muted rounded"
+											>
+												<div className="flex items-center gap-2">
+													<Users className="h-4 w-4 text-muted-foreground" />
+													<div>
+														<div className="font-medium">
+															{member.users?.username || member.user_id}
+														</div>
+														<div className="text-xs text-muted-foreground">
+															{member.users?.role || 'Usuario'}
+														</div>
 													</div>
 												</div>
+												{currentUserRole === 'Admin' && (
+													<Button
+														variant="ghost"
+														size="icon"
+														onClick={() =>
+															setMemberToRemove({
+																userId: member.user_id,
+																username: member.users?.username || 'Usuario',
+															})
+														}
+														disabled={loading}
+													>
+														<UserMinus className="h-4 w-4 text-destructive" />
+													</Button>
+												)}
 											</div>
-											{currentUserRole === 'Admin' && (
-												<Button
-													variant="ghost"
-													size="icon"
-													onClick={() => handleRemoveMember(member.user_id)}
-													disabled={loading}
-												>
-													<UserMinus className="h-4 w-4 text-destructive" />
-												</Button>
-											)}
-										</div>
-									))}
-								</div>
-							)}
-						</ScrollArea>
+										))}
+									</div>
+								)}
+							</ScrollArea>
+						</div>
 					</div>
-				</div>
-			</DialogContent>
-		</Dialog>
+				</DialogContent>
+			</Dialog>
+
+			<AlertDialog
+				open={!!memberToRemove}
+				onOpenChange={(open) => !open && setMemberToRemove(null)}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Remover miembro</AlertDialogTitle>
+						<AlertDialogDescription>
+							¿Estás seguro de que querés remover a <strong>{memberToRemove?.username}</strong> del
+							canal?
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={() => {
+								if (memberToRemove) {
+									handleRemoveMember(memberToRemove.userId, memberToRemove.username);
+									setMemberToRemove(null);
+								}
+							}}
+						>
+							Remover
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</>
 	);
 }

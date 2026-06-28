@@ -21,7 +21,10 @@ export function QuoteMessage({ message, onCancel, showCancel = true }: QuoteMess
 			<div className="flex-1 min-w-0">
 				<div className="flex items-center gap-2 mb-1">
 					<span className="text-xs font-semibold text-primary">
-						{message.users?.username || 'Usuario'}
+						{message.users
+							? `${message.users.name || message.users.username || ''} ${message.users.last_name || ''}`.trim() ||
+								'Usuario'
+							: 'Usuario'}
 					</span>
 				</div>
 				<p className="text-sm text-muted-foreground truncate">

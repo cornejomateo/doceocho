@@ -13,8 +13,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { createChannelAction } from '@/actions/chat/channels';
+import { createChannelAction } from '@/lib/chat/channels';
 import { useAuth } from '@/components/provider/auth-provider';
+import { toast } from '@/components/ui/use-toast';
 
 interface CreateChannelDialogProps {
 	open: boolean;
@@ -48,6 +49,7 @@ export function CreateChannelDialog({
 			onChannelCreated();
 		} else {
 			setError(result.error || 'Error al crear el canal');
+			toast({ title: 'Error al crear canal', description: result.error, variant: 'destructive' });
 		}
 
 		setLoading(false);

@@ -1,15 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChannelWithLastMessage, MessageWithUser } from '@/lib/chat/chat-types';
-import { getUserChannelsAction, deleteChannelAction } from '@/actions/chat/channels';
+import { getUserChannelsAction, deleteChannelAction } from '@/lib/chat/channels';
 import {
 	sendMessageAction,
 	deleteMessageAction,
 	editMessageAction,
 	cleanChannelMessagesAction,
-} from '@/actions/chat/messages';
-import { getChannelMembersAction } from '@/actions/chat/channel-members';
+} from '@/lib/chat/messages';
+import { getChannelMembersAction, updateLastReadMessage } from '@/lib/chat/channel-members';
 import { SCROLL_DELAY } from '@/constants/chat/chat.constants';
-import { updateLastReadMessage } from '@/lib/chat/channel-members';
+import { toast } from '@/components/ui/use-toast';
+
+type ChannelsCacheEntry = {
+	data: ChannelWithLastMessage[];
+	timestamp: number;
+};
+
+let channelsCache: ChannelsCacheEntry | null = null;
+const CHANNELS_CACHE_TTL = 30_000;
 
 interface UseChatManagementProps {
 	currentUserUid: string;
@@ -43,6 +51,12 @@ export function useChatManagement({
 	const messagesScrollRef = useRef<HTMLDivElement>(null);
 	const [scrolledToUnread, setScrolledToUnread] = useState(false);
 	const [replyingTo, setReplyingTo] = useState<MessageWithUser | null>(null);
+	const [pendingDeleteMessage, setPendingDeleteMessage] = useState<number | null>(null);
+	const [pendingDeleteChannel, setPendingDeleteChannel] = useState<{
+		id: number;
+		name: string;
+	} | null>(null);
+	const [pendingCleanupMessages, setPendingCleanupMessages] = useState(false);
 
 	const totalUnreadCount = channels.reduce((sum, ch) => sum + (ch.unread_count || 0), 0);
 
@@ -56,11 +70,24 @@ export function useChatManagement({
 					}
 					return;
 				}
-				if (!isBackgroundUpdate) {
+
+				const isFresh = channelsCache && Date.now() - channelsCache.timestamp < CHANNELS_CACHE_TTL;
+
+				if (channelsCache && !isBackgroundUpdate) {
+					setChannels(channelsCache.data);
+					setLoading(false);
+					setInitialLoadDone(true);
+				}
+
+				if (isFresh) return;
+
+				if (!channelsCache) {
 					setLoading(true);
 				}
-				const result = await getUserChannelsAction(currentUserUid);
+
+				const result = await getUserChannelsAction();
 				if (result.success && result.data) {
+					channelsCache = { data: result.data, timestamp: Date.now() };
 					setChannels(result.data);
 				}
 			} finally {
@@ -90,15 +117,15 @@ export function useChatManagement({
 		setNewMessage('');
 
 		try {
-			const result = await sendMessageAction(
-				channelId,
-				messageContent,
-				currentUserUid,
-				replyingTo?.id
-			);
+			const result = await sendMessageAction(channelId, messageContent, replyingTo?.id);
 
 			if (!result.success) {
 				setNewMessage(messageContent);
+				toast({
+					title: 'Error al enviar mensaje',
+					description: result.error,
+					variant: 'destructive',
+				});
 				return;
 			}
 
@@ -110,7 +137,7 @@ export function useChatManagement({
 
 			setTimeout(() => {
 				const scrollArea = messagesScrollRef.current?.querySelector(
-					'[data-radix-scroll-area-viewport]'
+					'[data-slot="scroll-area-viewport"]'
 				);
 				if (scrollArea) {
 					scrollArea.scrollTop = scrollArea.scrollHeight;
@@ -154,75 +181,104 @@ export function useChatManagement({
 	};
 
 	const handleChannelCreated = () => {
+		channelsCache = null;
 		loadChannels();
 		setShowCreateDialog(false);
+		toast({ title: 'Canal creado' });
 	};
 
 	const handleDeleteMessage = async (messageId: number) => {
 		if (!currentUserUid) return;
+		setPendingDeleteMessage(messageId);
+	};
 
-		if (!confirm('¿Estás seguro de que quieres eliminar este mensaje?')) {
-			return;
+	const confirmDeleteMessage = async () => {
+		if (pendingDeleteMessage === null) return;
+		const messageId = pendingDeleteMessage;
+		setPendingDeleteMessage(null);
+
+		const result = await deleteMessageAction(messageId);
+
+		if (result.success) {
+			toast({ title: 'Mensaje eliminado' });
+		} else {
+			toast({
+				title: 'Error al eliminar mensaje',
+				description: result.error,
+				variant: 'destructive',
+			});
 		}
-
-		await deleteMessageAction(messageId, currentUserUid);
 	};
 
 	const handleEditMessage = async (messageId: number, newContent: string) => {
 		if (!currentUserUid) return;
 
-		const result = await editMessageAction(messageId, newContent, currentUserUid);
+		const result = await editMessageAction(messageId, newContent);
 		if (result.success) {
 			setEditingMessage(null);
+			toast({ title: 'Mensaje editado' });
+		} else {
+			toast({
+				title: 'Error al editar mensaje',
+				description: result.error,
+				variant: 'destructive',
+			});
 		}
 	};
 
 	const handleDeleteChannel = async (channelId: number, channelName: string) => {
 		if (!currentUserUid) return;
+		setPendingDeleteChannel({ id: channelId, name: channelName });
+	};
 
-		if (
-			!confirm(
-				`¿Estás seguro de que quieres eliminar el canal "${channelName}"? Esta acción eliminará todos los mensajes y miembros del canal.`
-			)
-		) {
-			return;
-		}
+	const confirmDeleteChannel = async () => {
+		if (!pendingDeleteChannel) return;
+		const { id: channelId, name: channelName } = pendingDeleteChannel;
+		setPendingDeleteChannel(null);
 
-		const result = await deleteChannelAction(channelId, currentUserUid);
+		const result = await deleteChannelAction(channelId);
 		if (result.success) {
 			if (selectedChannel?.id === channelId) {
 				setSelectedChannel(null);
 			}
+			channelsCache = null;
 			loadChannels();
+			toast({
+				title: 'Canal eliminado',
+				description: `El canal "${channelName}" ha sido eliminado.`,
+			});
 		} else {
-			alert(result.error || 'Error al eliminar el canal');
+			toast({
+				title: 'Error al eliminar canal',
+				description: result.error,
+				variant: 'destructive',
+			});
 		}
 	};
 
 	const handleCleanupMessages = async () => {
 		if (!selectedChannel || !currentUserUid || !cleanupDate) return;
+		setPendingCleanupMessages(true);
+	};
 
-		if (
-			!confirm(
-				`¿Estás seguro de que quieres eliminar todos los mensajes anteriores a ${new Date(
-					cleanupDate
-				).toLocaleDateString()}? Esta acción no se puede deshacer.`
-			)
-		) {
-			return;
-		}
+	const confirmCleanupMessages = async () => {
+		if (!selectedChannel || !currentUserUid || !cleanupDate) return;
+		setPendingCleanupMessages(false);
 
-		const result = await cleanChannelMessagesAction(
-			selectedChannel.id,
-			cleanupDate,
-			currentUserUid
-		);
+		const result = await cleanChannelMessagesAction(selectedChannel.id, cleanupDate);
 		if (result.success) {
-			alert(`Se eliminaron ${result.deletedCount || 0} mensajes del canal.`);
+			toast({
+				title: 'Mensajes eliminados',
+				description: `Se eliminaron ${result.deletedCount || 0} mensajes del canal.`,
+			});
 			setShowCleanupDialog(false);
 			setCleanupDate('');
 		} else {
-			alert(result.error || 'Error al limpiar mensajes del canal');
+			toast({
+				title: 'Error al limpiar mensajes',
+				description: result.error || 'Error al limpiar mensajes del canal',
+				variant: 'destructive',
+			});
 		}
 	};
 
@@ -237,17 +293,22 @@ export function useChatManagement({
 		);
 	}, [selectedChannel, currentUserUid]);
 
+	const scrollChannelIdRef = useRef<number | null>(null);
+
 	useEffect(() => {
 		if (!selectedChannel || !messages.length) return;
 
+		scrollChannelIdRef.current = selectedChannel.id;
+
 		const timeout = setTimeout(() => {
 			const scrollArea = messagesScrollRef.current?.querySelector(
-				'[data-radix-scroll-area-viewport]'
+				'[data-slot="scroll-area-viewport"]'
 			);
 
 			if (!scrollArea) return;
 
-			// siempre scroll al final (simple y correcto para tu modelo actual)
+			if (scrollChannelIdRef.current !== selectedChannel.id) return;
+
 			scrollArea.scrollTop = scrollArea.scrollHeight;
 		}, SCROLL_DELAY);
 
@@ -275,6 +336,9 @@ export function useChatManagement({
 		messagesScrollRef,
 		scrolledToUnread,
 		replyingTo,
+		pendingDeleteMessage,
+		pendingDeleteChannel,
+		pendingCleanupMessages,
 
 		// Setters
 		setNewMessage,
@@ -303,6 +367,14 @@ export function useChatManagement({
 		handleCleanupMessages,
 		handleReplyTo,
 		handleCancelReply,
+		confirmDeleteMessage,
+		confirmDeleteChannel,
+		confirmCleanupMessages,
+
+		// Cancel confirmations
+		cancelDeleteMessage: () => setPendingDeleteMessage(null),
+		cancelDeleteChannel: () => setPendingDeleteChannel(null),
+		cancelCleanupMessages: () => setPendingCleanupMessages(false),
 
 		// Computed
 		isAdmin: currentUserRole === 'Admin',

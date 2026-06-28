@@ -1,93 +1,145 @@
-import { getSupabaseClient } from '../supabase-client';
-import { Message, MessageWithUser } from '@/lib/chat/chat-types';
+'use server';
+
+import { getCurrentUser } from '@/lib/auth';
+import { getServerSupabaseClient } from '@/lib/get-server-supabase-client';
+import type { Message, MessageWithUser } from '@/lib/chat/chat-types';
 
 const TABLE = 'messages';
 
-export async function getMessagesByChannel(
-	channelId: number,
-	limit = 50
-): Promise<{ data: MessageWithUser[] | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase
-		.from(TABLE)
-		.select(
-			`*,
+export async function getMessagesAction(
+	channelId: number
+): Promise<{ success: boolean; error?: string; data?: MessageWithUser[] }> {
+	try {
+		const supabase = await getServerSupabaseClient();
+		await getCurrentUser();
+
+		const { data, error } = await supabase
+			.from(TABLE)
+			.select(
+				`id, created_at, content, edited_at, deleted_at, user_id, channel_id, reply_to,
 				users!inner (
 					username,
 					role,
 					name,
-					last_name,
-					uid_user
+					last_name
 				)
 			`
-		)
-		.eq('channel_id', channelId)
-		.order('created_at', { ascending: false })
-		.limit(limit);
-
-	if (error || !data) {
-		return { data: null, error };
-	}
-
-	return { data: data.reverse() as MessageWithUser[], error: null };
-}
-
-export async function getMessageById(
-	id: number
-): Promise<{ data: MessageWithUser | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase
-		.from(TABLE)
-		.select(
-			`
-			*,
-			users!inner (
-				username,
-				role,
-				name,
-				last_name,
-				uid_user
 			)
-		`
-		)
-		.eq('id', id)
-		.single();
+			.eq('channel_id', channelId)
+			.order('created_at', { ascending: false })
+			.limit(50);
 
-	return { data, error };
+		if (error) return { success: false, error: error.message };
+
+		return { success: true, data: (data || []).reverse() as MessageWithUser[] };
+	} catch (error: any) {
+		return { success: false, error: error.message || 'Error al obtener mensajes' };
+	}
 }
 
-export async function createMessage(
-	message: Omit<Message, 'id' | 'created_at'>
-): Promise<{ data: Message | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase.from(TABLE).insert(message).select().single();
-	return { data, error };
+export async function sendMessageAction(
+	channelId: number,
+	content: string,
+	replyToId?: number
+): Promise<{ success: boolean; error?: string; data?: MessageWithUser }> {
+	try {
+		const supabase = await getServerSupabaseClient();
+		const user = await getCurrentUser();
+
+		const trimmed = content.trim();
+		if (!trimmed) return { success: false, error: 'El mensaje no puede estar vacío' };
+
+		const { data, error } = await supabase
+			.from(TABLE)
+			.insert({
+				content: trimmed,
+				channel_id: channelId,
+				user_id: user.id,
+				reply_to: replyToId ?? null,
+				edited_at: null,
+				deleted_at: null,
+			})
+			.select(`*, users!inner(username, role, name, last_name)`)
+			.single();
+
+		if (error) return { success: false, error: error.message };
+
+		return { success: true, data: data as MessageWithUser };
+	} catch (err: any) {
+		return { success: false, error: err.message };
+	}
 }
 
-export async function updateMessage(
-	id: number,
-	changes: Partial<Message>
-): Promise<{ data: Message | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const payload = {
-		...changes,
-		edited_at: new Date().toISOString(),
-	};
-	const { data, error } = await supabase.from(TABLE).update(payload).eq('id', id).select().single();
-	return { data, error };
+export async function editMessageAction(
+	messageId: number,
+	content: string
+): Promise<{ success: boolean; error?: string; data?: Message }> {
+	try {
+		const supabase = await getServerSupabaseClient();
+		const user = await getCurrentUser();
+
+		if (!content.trim()) {
+			return { success: false, error: 'El mensaje no puede estar vacío' };
+		}
+
+		const { data, error } = await supabase
+			.from(TABLE)
+			.update({ content: content.trim(), edited_at: new Date().toISOString() })
+			.eq('id', messageId)
+			.select()
+			.single();
+
+		if (error) return { success: false, error: error.message };
+		return { success: true, data };
+	} catch (err: any) {
+		return { success: false, error: err.message };
+	}
 }
 
-export async function deleteMessage(id: number): Promise<{ data: Message | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const payload = {
-		deleted_at: new Date().toISOString(),
-	};
-	const { data, error } = await supabase.from(TABLE).update(payload).eq('id', id).select().single();
-	return { data, error };
+export async function deleteMessageAction(
+	messageId: number
+): Promise<{ success: boolean; error?: string; data?: Message }> {
+	try {
+		const supabase = await getServerSupabaseClient();
+		await getCurrentUser();
+
+		const { data, error } = await supabase
+			.from(TABLE)
+			.update({ deleted_at: new Date().toISOString() })
+			.eq('id', messageId)
+			.select()
+			.single();
+
+		if (error) return { success: false, error: error.message };
+		return { success: true, data };
+	} catch (err: any) {
+		return { success: false, error: err.message };
+	}
 }
 
-export async function hardDeleteMessage(id: number): Promise<{ data: null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { error } = await supabase.from(TABLE).delete().eq('id', id);
-	return { data: null, error };
+export async function cleanChannelMessagesAction(
+	channelId: number,
+	cleanupDate: string
+): Promise<{ success: boolean; error?: string; deletedCount?: number }> {
+	try {
+		const supabase = await getServerSupabaseClient();
+		await getCurrentUser();
+
+		const { data: messagesToDelete, error } = await supabase
+			.from(TABLE)
+			.select('id')
+			.eq('channel_id', channelId)
+			.lt('created_at', cleanupDate);
+
+		if (error) return { success: false, error: error.message };
+		if (!messagesToDelete?.length) return { success: true, deletedCount: 0 };
+
+		for (const message of messagesToDelete) {
+			await supabase.from(TABLE).delete().eq('id', message.id);
+		}
+
+		return { success: true, deletedCount: messagesToDelete.length };
+	} catch (err: any) {
+		return { success: false, error: err.message };
+	}
 }

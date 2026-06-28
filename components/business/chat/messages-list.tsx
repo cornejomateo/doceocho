@@ -7,6 +7,7 @@ import { Search, MessageSquare, Edit2, Trash2, MessageCircle } from 'lucide-reac
 import { MessageWithUser } from '@/lib/chat/chat-types';
 import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
 import { QuoteMessage } from './quote-message';
+import { formatCreatedAtChat } from '@/utils/format-date';
 
 interface MessagesListProps {
 	messages: MessageWithUser[];
@@ -15,6 +16,7 @@ interface MessagesListProps {
 	currentUserId: string;
 	editingMessage: { id: number; content: string } | null;
 	messagesScrollRef: React.RefObject<HTMLDivElement | null>;
+	messagesLoading: boolean;
 	onEditMessage: (messageId: number, newContent: string) => void;
 	onDeleteMessage: (messageId: number) => void;
 	onSetEditingMessage: (message: { id: number; content: string } | null) => void;
@@ -28,15 +30,20 @@ export function MessagesList({
 	currentUserId,
 	editingMessage,
 	messagesScrollRef,
+	messagesLoading,
 	onEditMessage,
 	onDeleteMessage,
 	onSetEditingMessage,
 	onReplyTo,
 }: MessagesListProps) {
 	return (
-		<ScrollArea ref={messagesScrollRef} className="flex-1 p-3 min-h-0 h-0">
+		<ScrollArea ref={messagesScrollRef} className="max-h-[400px] flex-1 p-3 min-h-0 h-0">
 			<div className="space-y-3">
-				{filteredMessages.length === 0 ? (
+				{messagesLoading ? (
+					<div className="text-center text-muted-foreground py-8">
+						<p>Cargando mensajes...</p>
+					</div>
+				) : filteredMessages.length === 0 ? (
 					searchTerm ? (
 						<div className="text-center text-muted-foreground py-8">
 							<Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -110,7 +117,10 @@ function MessageItem({
 			>
 				{!isOwnMessage && (
 					<div className="text-xs font-medium mb-1 opacity-70">
-						{message.users?.username || 'Usuario'}
+						{message.users
+							? `${message.users.name || message.users.username || ''} ${message.users.last_name || ''}`.trim() ||
+								'Usuario'
+							: 'Usuario'}
 					</div>
 				)}
 				{quotedMessage && (
@@ -139,7 +149,12 @@ function MessageItem({
 						<Button size="sm" onClick={() => onEditMessage(message.id, editingMessage.content)}>
 							{CHAT_CONSTANTS.BUTTONS.SAVE}
 						</Button>
-						<Button size="sm" variant="outline" onClick={() => onSetEditingMessage(null)}>
+						<Button
+							size="sm"
+							variant="outline"
+							className="bg-white text-amber-800 hover:bg-white hover:text-amber-800"
+							onClick={() => onSetEditingMessage(null)}
+						>
 							{CHAT_CONSTANTS.BUTTONS.CANCEL}
 						</Button>
 					</div>
@@ -148,10 +163,7 @@ function MessageItem({
 				)}
 				<div className="text-xs mt-1 opacity-70 flex items-center justify-between gap-2">
 					<span>
-						{new Date(message.created_at).toLocaleTimeString('es-AR', {
-							hour: '2-digit',
-							minute: '2-digit',
-						})}
+						{formatCreatedAtChat(message.created_at)}
 						{message.edited_at && ` ${CHAT_CONSTANTS.MESSAGES.EDITED}`}
 					</span>
 					{!message.deleted_at && (

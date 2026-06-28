@@ -1,154 +1,170 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { getSupabaseClient } from '../supabase-client';
-import { Channel, ChannelWithMembers, ChannelWithLastMessage } from '@/lib/chat/chat-types';
+'use server';
+
+import { getCurrentUser } from '@/lib/auth';
+import { getServerSupabaseClient } from '@/lib/get-server-supabase-client';
+import { addChannelMember } from '@/lib/chat/channel-members';
+import type { Channel, ChannelWithMembers, ChannelWithLastMessage } from '@/lib/chat/chat-types';
 
 const TABLE = 'channels';
 
-export async function listChannels(
-	supabase?: SupabaseClient
-): Promise<{ data: Channel[] | null; error: any }> {
-	const client = supabase ?? getSupabaseClient();
-	const { data, error } = await client
-		.from(TABLE)
-		.select('*')
-		.order('created_at', { ascending: false });
-	return { data, error };
-}
-
-export async function getChannelById(
-	id: number,
-	supabase?: SupabaseClient
-): Promise<{ data: Channel | null; error: any }> {
-	const client = supabase ?? getSupabaseClient();
-	const { data, error } = await client.from(TABLE).select('*').eq('id', id).single();
-	return { data, error };
-}
-
-export async function createChannel(
+export async function createChannelAction(
 	name: string,
-	description: string,
-	supabase?: SupabaseClient
-): Promise<{ data: Channel | null; error: any }> {
-	const client = supabase ?? getSupabaseClient();
-	const { data, error } = await client.from(TABLE).insert({ name, description }).select().single();
-	return { data, error };
-}
-
-export async function updateChannel(
-	id: number,
-	changes: Partial<Channel>,
-	supabase?: SupabaseClient
-): Promise<{ data: Channel | null; error: any }> {
-	const client = supabase ?? getSupabaseClient();
-	const { data, error } = await client.from(TABLE).update(changes).eq('id', id).select().single();
-	return { data, error };
-}
-
-export async function deleteChannel(
-	id: number,
-	supabase?: SupabaseClient
-): Promise<{ data: null; error: any }> {
-	const client = supabase ?? getSupabaseClient();
-	const { error } = await client.from(TABLE).delete().eq('id', id);
-	return { data: null, error };
-}
-
-export async function getChannelsForUser(
-	userId: string,
-	client?: SupabaseClient
-): Promise<{
-	data: ChannelWithLastMessage[] | null;
-	error: any;
-}> {
-	const supabase = client ?? getSupabaseClient();
-
-	const { data, error } = await supabase
-		.from('channel_members')
-		.select(
-			`
-			channel_id,
-			last_read_message_id,
-			channels (
-				id,
-				created_at,
-				name,
-				description,
-				last_message_id
-			)
-		`
-		)
-		.eq('user_id', userId);
-
-	if (error || !data) {
-		return { data: null, error };
-	}
-
-	const { data: unreadData, error: unreadError } = await supabase.rpc(
-		'get_unread_counts_by_channel',
-		{
-			p_user_id: userId,
-		}
-	);
-
-	if (unreadError) {
-		return { data: null, error: unreadError };
-	}
-
-	const unreadMap = new Map(
-		(unreadData || []).map((item: any) => [Number(item.channel_id), Number(item.unread_count)])
-	);
-
-	const channels = data.map((item: any) => ({
-		...item.channels,
-		unread_count: unreadMap.get(item.channel_id) || 0,
-	}));
-
-	return {
-		data: channels,
-		error: null,
-	};
-}
-
-export async function getChannelWithMembers(
-	channelId: number
-): Promise<{ data: ChannelWithMembers | null; error: any }> {
-	const supabase = getSupabaseClient();
-	const { data, error } = await supabase
-		.from(TABLE)
-		.select(
-			`
-			*,
-			channel_members (
-				id,
-				joined_at,
-				user_id,
-				channel_id
-			)
-		`
-		)
-		.eq('id', channelId)
-		.single();
-
-	return { data, error };
-}
-
-export async function updateLastMessage(
-	channelId: number,
-	messageId: number
-): Promise<{ success: boolean; error?: any }> {
+	description: string
+): Promise<{ success: boolean; error?: string; data?: Channel }> {
+	console.log(`[createChannelAction] Creating channel name=${name}`);
 	try {
-		const supabase = getSupabaseClient();
-		const { error } = await supabase
+		const supabase = await getServerSupabaseClient();
+		const user = await getCurrentUser();
+		console.log(`[createChannelAction] Authenticated user userId=${user.id}`);
+
+		const { data, error } = await supabase
 			.from(TABLE)
-			.update({ last_message_id: messageId })
-			.eq('id', channelId);
+			.insert({ name, description })
+			.select()
+			.single();
 
 		if (error) {
-			return { success: false, error };
+			console.error(`[createChannelAction] Error creating channel:`, error.message);
+			return { success: false, error: error.message };
+		}
+		if (!data) {
+			console.error(`[createChannelAction] No data returned when creating channel`);
+			return { success: false, error: 'Error al crear el canal' };
 		}
 
+		console.log(
+			`[createChannelAction] Channel created channelId=${data.id}, adding creator as member`
+		);
+		const memberResult = await addChannelMember(data.id, user.id);
+		if (memberResult.error) {
+			console.error(`[createChannelAction] Error adding creator as member:`, memberResult.error);
+			return { success: false, error: memberResult.error };
+		}
+
+		console.log(`[createChannelAction] Successfully created channel channelId=${data.id}`);
+		return { success: true, data };
+	} catch (error: any) {
+		console.error(`[createChannelAction] Exception:`, error.message);
+		return { success: false, error: error.message || 'Error al crear el canal' };
+	}
+}
+
+export async function updateChannelAction(
+	channelId: number,
+	name: string,
+	description: string
+): Promise<{ success: boolean; error?: string; data?: Channel }> {
+	try {
+		const supabase = await getServerSupabaseClient();
+		await getCurrentUser();
+
+		const { data, error } = await supabase
+			.from(TABLE)
+			.update({ name, description })
+			.eq('id', channelId)
+			.select()
+			.single();
+
+		if (error) return { success: false, error: error.message };
+		return { success: true, data };
+	} catch (error: any) {
+		return { success: false, error: error.message || 'Error al actualizar el canal' };
+	}
+}
+
+export async function deleteChannelAction(
+	channelId: number
+): Promise<{ success: boolean; error?: string }> {
+	try {
+		const supabase = await getServerSupabaseClient();
+		await getCurrentUser();
+
+		const { error } = await supabase.from(TABLE).delete().eq('id', channelId);
+		if (error) return { success: false, error: error.message };
 		return { success: true };
-	} catch (error) {
-		return { success: false, error };
+	} catch (error: any) {
+		return { success: false, error: error.message || 'Error al eliminar el canal' };
+	}
+}
+
+export async function getUserChannelsAction(): Promise<{
+	success: boolean;
+	error?: string;
+	data?: ChannelWithLastMessage[];
+}> {
+	try {
+		const supabase = await getServerSupabaseClient();
+		const user = await getCurrentUser();
+
+		const { data, error } = await supabase
+			.from('channel_members')
+			.select(
+				`
+				channel_id,
+				last_read_message_id,
+				channels (
+					id,
+					created_at,
+					name,
+					description,
+					last_message_id
+				)
+			`
+			)
+			.eq('user_id', user.id);
+
+		if (error) return { success: false, error: error.message };
+		if (!data) return { success: true, data: [] };
+
+		const { data: unreadData, error: unreadError } = await supabase.rpc(
+			'get_unread_counts_by_channel',
+			{ p_user_id: user.id }
+		);
+
+		if (unreadError) return { success: true, data: [] };
+
+		const unreadMap = new Map(
+			(unreadData || []).map((item: any) => [Number(item.channel_id), Number(item.unread_count)])
+		);
+
+		const channels = data.map((item: any) => ({
+			...item.channels,
+			unread_count: unreadMap.get(item.channel_id) || 0,
+			last_read_message_id: item.last_read_message_id,
+		}));
+
+		return { success: true, data: channels };
+	} catch (error: any) {
+		return { success: false, error: error.message || 'Error al obtener los canales' };
+	}
+}
+
+export async function getChannelByIdAction(
+	channelId: number
+): Promise<{ success: boolean; error?: string; data?: Channel; isMember?: boolean }> {
+	try {
+		const supabase = await getServerSupabaseClient();
+		const user = await getCurrentUser();
+
+		const { data: channel, error } = await supabase
+			.from(TABLE)
+			.select('*')
+			.eq('id', channelId)
+			.single();
+
+		if (error || !channel) {
+			return { success: false, error: 'Canal no encontrado' };
+		}
+
+		const { data: membership } = await supabase
+			.from('channel_members')
+			.select('id')
+			.eq('channel_id', channelId)
+			.eq('user_id', user.id)
+			.maybeSingle();
+
+		return { success: true, data: channel, isMember: !!membership };
+	} catch (error: any) {
+		return { success: false, error: error.message || 'Error al obtener el canal' };
 	}
 }

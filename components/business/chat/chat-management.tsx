@@ -15,6 +15,16 @@ import { PushNotificationSettings } from '@/components/business/chat/push-notifi
 import { CleanupMessagesDialog } from '@/components/business/chat/cleanup-messages-dialog';
 import { CreateChannelDialog } from './create-channel-dialog';
 import { ChannelMembersDialog } from './channel-members-dialog';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { CHAT_CONSTANTS } from '@/constants/chat/chat.constants';
 
 export function ChatManagement() {
@@ -43,7 +53,9 @@ export function ChatManagement() {
 		? messages.filter(
 				(msg) =>
 					msg.content?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
-					msg.users?.username?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase())
+					msg.users?.username?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
+					msg.users?.name?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
+					msg.users?.last_name?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase())
 			)
 		: messages;
 
@@ -110,6 +122,7 @@ export function ChatManagement() {
 							currentUserId={user.id}
 							editingMessage={chatManagement.editingMessage}
 							messagesScrollRef={chatManagement.messagesScrollRef}
+							messagesLoading={messagesLoading}
 							onEditMessage={chatManagement.handleEditMessage}
 							onDeleteMessage={chatManagement.handleDeleteMessage}
 							onSetEditingMessage={chatManagement.setEditingMessage}
@@ -168,6 +181,69 @@ export function ChatManagement() {
 				onCleanupDateChange={chatManagement.setCleanupDate}
 				onCleanup={chatManagement.handleCleanupMessages}
 			/>
+
+			<AlertDialog
+				open={chatManagement.pendingDeleteMessage !== null}
+				onOpenChange={() => chatManagement.cancelDeleteMessage()}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Eliminar mensaje</AlertDialogTitle>
+						<AlertDialogDescription>
+							¿Estás seguro de que quieres eliminar este mensaje?
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction onClick={chatManagement.confirmDeleteMessage}>
+							Eliminar
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			<AlertDialog
+				open={chatManagement.pendingDeleteChannel !== null}
+				onOpenChange={() => chatManagement.cancelDeleteChannel()}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Eliminar canal</AlertDialogTitle>
+						<AlertDialogDescription>
+							{chatManagement.pendingDeleteChannel
+								? `¿Estás seguro de que quieres eliminar el canal "${chatManagement.pendingDeleteChannel.name}"? Esta acción eliminará todos los mensajes y miembros del canal.`
+								: ''}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction onClick={chatManagement.confirmDeleteChannel}>
+							Eliminar
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			<AlertDialog
+				open={chatManagement.pendingCleanupMessages}
+				onOpenChange={() => chatManagement.cancelCleanupMessages()}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Limpiar mensajes</AlertDialogTitle>
+						<AlertDialogDescription>
+							¿Estás seguro de que quieres eliminar todos los mensajes anteriores a la fecha
+							seleccionada? Esta acción no se puede deshacer.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction onClick={chatManagement.confirmCleanupMessages}>
+							Eliminar
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }
