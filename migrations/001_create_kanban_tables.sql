@@ -26,7 +26,9 @@ CREATE TABLE IF NOT EXISTS kanban_boards (
     is_favorite BOOLEAN DEFAULT FALSE,
     is_archived BOOLEAN DEFAULT FALSE,
     owner_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    position INTEGER DEFAULT 0
+    position INTEGER DEFAULT 0,
+    due_date_tolerance_yellow INTEGER DEFAULT 2, -- Days before due date to show yellow warning
+    due_date_tolerance_red INTEGER DEFAULT 0 -- Days before due date to show red warning (0 = only on due date)
 );
 
 -- Index for faster queries

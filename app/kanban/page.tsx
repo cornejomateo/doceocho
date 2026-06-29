@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Star, Archive, MoreVertical } from 'lucide-react';
+import { Plus, Search, Star, Archive, MoreVertical, Settings } from 'lucide-react';
 import { useBoards } from '@/components/business/kanban/hooks/use-boards';
 import type { Board } from '@/components/business/kanban/types';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
@@ -61,6 +61,22 @@ export default function KanbanPage() {
 		const newName = prompt('Nuevo nombre del tablero:', board.name);
 		if (newName && newName.trim()) {
 			editBoard(board.id, { name: newName.trim() });
+		}
+	};
+
+	const handleEditTolerance = (board: Board) => {
+		console.log('handleEditTolerance llamado', board);
+		const toleranceYellow = prompt(
+			'Tolerancia de alerta amarilla (días antes de mostrar alerta):',
+			(board.due_date_tolerance_yellow ?? 2).toString()
+		);
+		if (toleranceYellow !== null) {
+			const toleranceNum = parseInt(toleranceYellow, 10);
+			if (!isNaN(toleranceNum) && toleranceNum >= 0) {
+				editBoard(board.id, { due_date_tolerance_yellow: toleranceNum });
+			} else {
+				alert('Por favor ingresa un número válido (0 o mayor)');
+			}
 		}
 	};
 
@@ -123,7 +139,17 @@ export default function KanbanPage() {
 											variant="ghost"
 											size="icon"
 											className="h-6 w-6"
+											onClick={() => handleEditTolerance(board)}
+											title="Configurar tolerancia de fecha"
+										>
+											<Settings className="h-4 w-4" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6"
 											onClick={(e) => handleEditBoard(board, e)}
+											title="Editar nombre"
 										>
 											<MoreVertical className="h-4 w-4" />
 										</Button>

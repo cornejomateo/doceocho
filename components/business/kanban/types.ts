@@ -16,6 +16,8 @@ export interface Board {
 	is_archived: boolean;
 	owner_id: string; // UUID
 	position: number;
+	due_date_tolerance_yellow: number; // Days before due date to show yellow warning
+	due_date_tolerance_red: number; // Days before due date to show red warning
 }
 
 export interface BoardWithMembers extends Board {

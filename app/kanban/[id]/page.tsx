@@ -9,6 +9,7 @@ import { useBoard } from '@/components/business/kanban/hooks/use-board';
 import { moveCard } from '@/lib/kanban/cards';
 import { KanbanList } from '@/components/business/kanban/kanban-list';
 import { CardDetailModal } from '@/components/business/kanban/card-detail-modal';
+import { BoardSettingsModal } from '@/components/business/kanban/board-settings-modal';
 import type { CardFormData } from '@/components/business/kanban/types';
 
 export default function BoardPage() {
@@ -17,6 +18,7 @@ export default function BoardPage() {
 	const boardId = params.id ? Number(params.id) : null;
 	const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
 	const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+	const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 	const userId = '00000000-0000-0000-0000-000000000000'; // TODO: Get actual user UUID from auth
 
 	const { board, lists, loading, error, fetchBoard, addList, editList, removeList, updateBoard } =
@@ -56,6 +58,13 @@ export default function BoardPage() {
 		const newPosition = result.destination.index;
 
 		handleCardMove(cardId, destinationListId, newPosition);
+	};
+
+	const handleSaveSettings = (
+		changes: Partial<{ due_date_tolerance_yellow: number; due_date_tolerance_red: number }>
+	) => {
+		console.log('Guardando configuración:', changes);
+		updateBoard(changes);
 	};
 
 	if (!boardId) {
@@ -122,7 +131,12 @@ export default function BoardPage() {
 							<Button variant="ghost" size="icon">
 								<Archive className="h-5 w-5" />
 							</Button>
-							<Button variant="ghost" size="icon">
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={() => setIsSettingsModalOpen(true)}
+								title="Configurar tolerancia de fecha"
+							>
 								<Settings className="h-5 w-5" />
 							</Button>
 						</div>
@@ -144,6 +158,8 @@ export default function BoardPage() {
 									onCreateCard={(card: CardFormData) => console.log('Card created', card)}
 									onCardClick={handleCardClick}
 									onCardMove={handleCardMove}
+									dueDateToleranceYellow={board.due_date_tolerance_yellow ?? 2}
+									dueDateToleranceRed={board.due_date_tolerance_red ?? 0}
 								/>
 							))}
 							{/* Add List Button */}
@@ -169,6 +185,14 @@ export default function BoardPage() {
 				onOpenChange={setIsCardModalOpen}
 				userId={userId}
 				onCardDeleted={handleCardDeleted}
+			/>
+
+			{/* Board Settings Modal */}
+			<BoardSettingsModal
+				board={board}
+				open={isSettingsModalOpen}
+				onOpenChange={setIsSettingsModalOpen}
+				onSave={handleSaveSettings}
 			/>
 		</div>
 	);

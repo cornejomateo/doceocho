@@ -17,6 +17,8 @@ interface KanbanListProps {
 	onCreateCard: (card: CardFormData) => void;
 	onCardClick: (cardId: number) => void;
 	onCardMove: (cardId: number, newListId: number, newPosition: number) => void;
+	dueDateToleranceYellow?: number; // Days before due date to show yellow warning
+	dueDateToleranceRed?: number; // Days before due date to show red warning
 }
 
 export function KanbanList({
@@ -26,6 +28,8 @@ export function KanbanList({
 	onCreateCard,
 	onCardClick,
 	onCardMove,
+	dueDateToleranceYellow = 2,
+	dueDateToleranceRed = 0,
 }: KanbanListProps) {
 	const { cards, loading, addCard } = useCards(list.id);
 	const [showCreateModal, setShowCreateModal] = useState(false);
@@ -128,7 +132,12 @@ export function KanbanList({
 											{...provided.dragHandleProps}
 											className={`${snapshot.isDragging ? 'rotate-3 shadow-lg' : ''}`}
 										>
-											<KanbanCard card={card} onClick={() => onCardClick(card.id)} />
+											<KanbanCard
+												card={card}
+												onClick={() => onCardClick(card.id)}
+												dueDateToleranceYellow={dueDateToleranceYellow}
+												dueDateToleranceRed={dueDateToleranceRed}
+											/>
 										</div>
 									)}
 								</Draggable>

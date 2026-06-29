@@ -14,6 +14,8 @@ import type { CardWithRelations, Label } from './types';
 interface KanbanCardProps {
 	card: CardWithRelations;
 	onClick: () => void;
+	dueDateToleranceYellow?: number; // Days before due date to show yellow warning
+	dueDateToleranceRed?: number; // Days before due date to show red warning
 }
 
 const PRIORITY_COLORS = {
@@ -32,17 +34,29 @@ const PRIORITY_LABELS = {
 	very_high: 'Muy alta',
 };
 
-export function KanbanCard({ card, onClick }: KanbanCardProps) {
+export function KanbanCard({
+	card,
+	onClick,
+	dueDateToleranceYellow = 2,
+	dueDateToleranceRed = 0,
+}: KanbanCardProps) {
+	const yellowToleranceMs = dueDateToleranceYellow * 24 * 60 * 60 * 1000;
+	const redToleranceMs = dueDateToleranceRed * 24 * 60 * 60 * 1000;
 	const isOverdue = card.due_date && new Date(card.due_date) < new Date() && !card.completed_at;
-	const isDueSoon =
+	const isRedAlert =
+		card.due_date && !isOverdue && new Date(card.due_date) < new Date(Date.now() + redToleranceMs);
+	const isYellowAlert =
 		card.due_date &&
 		!isOverdue &&
-		new Date(card.due_date) < new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+		!isRedAlert &&
+		new Date(card.due_date) < new Date(Date.now() + yellowToleranceMs);
 	const isCompleted = !!card.completed_at;
 
 	const dueDateIcon = isOverdue ? (
 		<AlertTriangle className="h-4 w-4 text-red-500" />
-	) : isDueSoon ? (
+	) : isRedAlert ? (
+		<AlertTriangle className="h-4 w-4 text-red-500" />
+	) : isYellowAlert ? (
 		<AlertTriangle className="h-4 w-4 text-yellow-500" />
 	) : isCompleted ? (
 		<CheckCircle className="h-4 w-4 text-green-500" />
@@ -101,11 +115,13 @@ export function KanbanCard({ card, onClick }: KanbanCardProps) {
 							{dueDateIcon}
 							<span
 								className={
-									isOverdue
+									isOverdue || isRedAlert
 										? 'text-red-500'
-										: isCompleted
-											? 'text-green-500'
-											: 'text-muted-foreground'
+										: isYellowAlert
+											? 'text-yellow-500'
+											: isCompleted
+												? 'text-green-500'
+												: 'text-muted-foreground'
 								}
 							>
 								{formatDate(card.due_date)}
