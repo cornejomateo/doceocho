@@ -126,16 +126,11 @@ export function CardDetailModal({
 								</span>
 							</div>
 						</div>
-						<div className="flex items-center gap-2">
-							{hasUnsavedChanges && (
-								<Button onClick={handleSave} size="sm">
-									Guardar
-								</Button>
-							)}
-							<Button variant="ghost" size="icon" onClick={handleClose}>
-								<X className="h-5 w-5" />
+						{hasUnsavedChanges && (
+							<Button onClick={handleSave} size="sm">
+								Guardar
 							</Button>
-						</div>
+						)}
 					</div>
 				</DialogHeader>
 
