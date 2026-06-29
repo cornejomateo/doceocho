@@ -23,6 +23,8 @@ export const CHAT_CONSTANTS = {
 		SUBSCRIBE: 'Recibir notificaciones',
 		UNSUBSCRIBE: 'Desactivar notificaciones',
 		BLOCKED: 'Notificaciones bloqueadas',
+		NOT_SUPPORTED:
+			'No disponible en este navegador. Instalá la app desde el menú Compartir > Agregar a Inicio.',
 	},
 	DIALOGS: {
 		CREATE_CHANNEL: {

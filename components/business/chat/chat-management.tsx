@@ -96,16 +96,14 @@ export function ChatManagement() {
 					onCreateChannel={chatManagement.handleCreateChannel}
 					onDeleteChannel={chatManagement.handleDeleteChannel}
 					pushNotificationSettings={
-						pushSupported ? (
-							<PushNotificationSettings
-								isSupported={pushSupported}
-								permission={pushPermission}
-								subscription={pushSubscription}
-								onRequestPermission={requestPermission}
-								onSubscribe={subscribe}
-								onUnsubscribe={unsubscribe}
-							/>
-						) : undefined
+						<PushNotificationSettings
+							isSupported={pushSupported}
+							permission={pushPermission}
+							subscription={pushSubscription}
+							onRequestPermission={requestPermission}
+							onSubscribe={subscribe}
+							onUnsubscribe={unsubscribe}
+						/>
 					}
 				/>
 			)}

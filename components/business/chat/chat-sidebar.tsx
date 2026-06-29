@@ -30,7 +30,7 @@ export function ChatSidebar({
 	pushNotificationSettings,
 }: ChatSidebarProps) {
 	return (
-		<Card className="w-80 flex flex-col h-full overflow-hidden shrink-0">
+		<Card className="w-full max-w-80 flex flex-col h-full overflow-hidden shrink-0">
 			<div className="p-4 border-b">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="text-lg font-semibold">{CHAT_CONSTANTS.CHANNELS.TITLE}</h2>
