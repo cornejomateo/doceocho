@@ -178,7 +178,7 @@ export function BalanceForm({ clientId, budgets, onSubmit, onCancel }: BalanceFo
 				</div>
 
 				<div className="space-y-2">
-					<Label htmlFor="balance_amount_ars">Monto del saldo en ARS</Label>
+					<Label htmlFor="balance_amount_ars">Monto del en ARS</Label>
 					<Input
 						id="balance_amount_ars"
 						name="balance_amount_ars"
@@ -191,7 +191,7 @@ export function BalanceForm({ clientId, budgets, onSubmit, onCancel }: BalanceFo
 				</div>
 
 				<div className="space-y-2">
-					<Label htmlFor="balance_amount_usd">Monto del saldo en USD</Label>
+					<Label htmlFor="balance_amount_usd">Monto del en USD</Label>
 					<Input
 						id="balance_amount_usd"
 						name="balance_amount_usd"
@@ -207,7 +207,7 @@ export function BalanceForm({ clientId, budgets, onSubmit, onCancel }: BalanceFo
 			<NotesInput
 				value={formData.notes || ''}
 				onChange={(value) => setFormData((prev) => ({ ...prev, notes: value ? value : null }))}
-				placeholder="Agregar notas sobre este saldo (opcional)"
+				placeholder="Agregar notas sobre este  (opcional)"
 				rows={3}
 			/>
 
@@ -215,7 +215,7 @@ export function BalanceForm({ clientId, budgets, onSubmit, onCancel }: BalanceFo
 				<Button type="button" variant="outline" onClick={onCancel}>
 					Cancelar
 				</Button>
-				<Button type="submit">Crear saldo</Button>
+				<Button type="submit">Crear </Button>
 			</div>
 		</form>
 	);
