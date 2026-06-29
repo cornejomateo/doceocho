@@ -37,21 +37,59 @@ export function CardDetailModal({
 		useCard(cardId);
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
+	const [dueDate, setDueDate] = useState('');
+	const [priority, setPriority] = useState('none');
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
 	useEffect(() => {
 		if (card) {
 			setTitle(card.title);
 			setDescription(card.description || '');
+			setDueDate(card.due_date?.split('T')[0] || '');
+			setPriority(card.priority || 'none');
+			setHasUnsavedChanges(false);
 		}
 	}, [card]);
 
-	const handleTitleBlur = async (value: string) => {
-		await updateCard({ title: value });
+	const handleTitleChange = (value: string) => {
+		setTitle(value);
+		setHasUnsavedChanges(true);
 	};
 
-	const handleDescriptionBlur = async (value: string) => {
-		await updateCard({ description: value });
+	const handleDescriptionChange = (value: string) => {
+		setDescription(value);
+		setHasUnsavedChanges(true);
+	};
+
+	const handleDueDateChange = (value: string) => {
+		setDueDate(value);
+		setHasUnsavedChanges(true);
+	};
+
+	const handlePriorityChange = (value: string) => {
+		setPriority(value);
+		setHasUnsavedChanges(true);
+	};
+
+	const handleSave = async () => {
+		await updateCard({
+			title,
+			description,
+			due_date: dueDate || null,
+			priority: priority as any,
+		});
+		setHasUnsavedChanges(false);
+	};
+
+	const handleClose = () => {
+		if (hasUnsavedChanges) {
+			if (confirm('Tienes cambios sin guardar. ¿Deseas cerrar sin guardar?')) {
+				onOpenChange(false);
+			}
+		} else {
+			onOpenChange(false);
+		}
 	};
 
 	const handleDeleteCard = async () => {
@@ -67,7 +105,7 @@ export function CardDetailModal({
 	if (!cardId) return null;
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog open={open} onOpenChange={handleClose}>
 			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<VisuallyHidden>
@@ -77,8 +115,7 @@ export function CardDetailModal({
 						<div className="flex-1">
 							<Input
 								value={title}
-								onChange={(e) => setTitle(e.target.value)}
-								onBlur={(e) => handleTitleBlur(e.target.value)}
+								onChange={(e) => handleTitleChange(e.target.value)}
 								className="text-2xl font-bold border-none p-0 focus-visible:ring-0 bg-transparent"
 							/>
 							<div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
@@ -89,9 +126,16 @@ export function CardDetailModal({
 								</span>
 							</div>
 						</div>
-						<Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-							<X className="h-5 w-5" />
-						</Button>
+						<div className="flex items-center gap-2">
+							{hasUnsavedChanges && (
+								<Button onClick={handleSave} size="sm">
+									Guardar
+								</Button>
+							)}
+							<Button variant="ghost" size="icon" onClick={handleClose}>
+								<X className="h-5 w-5" />
+							</Button>
+						</div>
 					</div>
 				</DialogHeader>
 
@@ -132,8 +176,7 @@ export function CardDetailModal({
 								<h3 className="font-semibold mb-2">Descripción</h3>
 								<Textarea
 									value={description}
-									onChange={(e) => setDescription(e.target.value)}
-									onBlur={(e) => handleDescriptionBlur(e.target.value)}
+									onChange={(e) => handleDescriptionChange(e.target.value)}
 									placeholder="Agregar una descripción más detallada..."
 									className="min-h-[100px]"
 								/>
@@ -147,8 +190,8 @@ export function CardDetailModal({
 								</h3>
 								<Input
 									type="date"
-									defaultValue={card.due_date?.split('T')[0] || ''}
-									onChange={(e) => updateCard({ due_date: e.target.value || null })}
+									value={dueDate}
+									onChange={(e) => handleDueDateChange(e.target.value)}
 								/>
 							</div>
 
@@ -206,8 +249,8 @@ export function CardDetailModal({
 							<div>
 								<h3 className="font-semibold mb-2">Prioridad</h3>
 								<select
-									defaultValue={card.priority}
-									onChange={(e) => updateCard({ priority: e.target.value as any })}
+									value={priority}
+									onChange={(e) => handlePriorityChange(e.target.value)}
 									className="w-full p-2 border rounded"
 								>
 									<option value="none">Sin prioridad</option>
