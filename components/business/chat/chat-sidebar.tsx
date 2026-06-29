@@ -44,7 +44,7 @@ export function ChatSidebar({
 				</div>
 				{pushNotificationSettings}
 			</div>
-			<ScrollArea className="flex-1 h-0">
+			<div className="flex-1 overflow-y-auto">
 				{loading && !initialLoadDone ? (
 					<div className="p-4 text-center text-sm text-muted-foreground">
 						{CHAT_CONSTANTS.MESSAGES.LOADING_CHANNELS}
@@ -101,7 +101,7 @@ export function ChatSidebar({
 						))}
 					</div>
 				)}
-			</ScrollArea>
+			</div>
 		</Card>
 	);
 }
