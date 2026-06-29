@@ -124,6 +124,7 @@ export function ChannelMembersDialog({
 
 	const existingMemberIds = members.map((m) => m.users?.uid_user || m.user_id);
 	const availableToAdd = availableUsers.filter((u) => !existingMemberIds.includes(u.uid_user));
+	const isAdmin = currentUserRole === 'Admin';
 
 	return (
 		<>
@@ -136,27 +137,28 @@ export function ChannelMembersDialog({
 						</DialogDescription>
 					</DialogHeader>
 					<div className="space-y-4 py-4">
-						{/* Add Member Section */}
-						<div className="space-y-2">
-							<Label>Agregar miembro</Label>
-							<div className="flex gap-2">
-								<select
-									className="flex-1 px-3 py-2 border rounded-md"
-									value={selectedUser}
-									onChange={(e) => setSelectedUser(e.target.value)}
-								>
-									<option value="">Seleccionar usuario</option>
-									{availableToAdd.map((user) => (
-										<option key={user.uid_user} value={user.uid_user}>
-											{user.username} ({user.role})
-										</option>
-									))}
-								</select>
-								<Button onClick={handleAddMember} disabled={loading || !selectedUser} size="icon">
-									<UserPlus className="h-4 w-4" />
-								</Button>
+						{isAdmin && (
+							<div className="space-y-2">
+								<Label>Agregar miembro</Label>
+								<div className="flex gap-2">
+									<select
+										className="flex-1 px-3 py-2 border rounded-md"
+										value={selectedUser}
+										onChange={(e) => setSelectedUser(e.target.value)}
+									>
+										<option value="">Seleccionar usuario</option>
+										{availableToAdd.map((user) => (
+											<option key={user.uid_user} value={user.uid_user}>
+												{user.username} ({user.role})
+											</option>
+										))}
+									</select>
+									<Button onClick={handleAddMember} disabled={loading || !selectedUser} size="icon">
+										<UserPlus className="h-4 w-4" />
+									</Button>
+								</div>
 							</div>
-						</div>
+						)}
 
 						{error && <div className="text-sm text-destructive">{error}</div>}
 
@@ -186,7 +188,7 @@ export function ChannelMembersDialog({
 														</div>
 													</div>
 												</div>
-												{currentUserRole === 'Admin' && (
+												{isAdmin && (
 													<Button
 														variant="ghost"
 														size="icon"
