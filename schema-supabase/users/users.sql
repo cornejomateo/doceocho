@@ -32,5 +32,13 @@ USING (true);
 CREATE POLICY "Public select users"
 ON public.users
 FOR SELECT
-TO service_role
+TO authenticated
 USING (true);
+
+CREATE POLICY "Users can view own profile"
+ON public.users
+FOR SELECT
+TO authenticated
+USING (
+  uid_user = auth.uid()
+);
