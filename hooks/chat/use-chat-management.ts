@@ -8,6 +8,7 @@ import {
 	cleanChannelMessagesAction,
 } from '@/lib/chat/messages';
 import { getChannelMembersAction, updateLastReadMessage } from '@/lib/chat/channel-members';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import { toast } from '@/components/ui/use-toast';
 import { translateError } from '@/lib/error-translator';
 import { useAuth } from '@/components/provider/auth-provider';
@@ -50,6 +51,8 @@ export function useChatManagement({ currentUserUid, currentUserRole }: UseChatMa
 	const [cleanupDate, setCleanupDate] = useState('');
 	const [sending, setSending] = useState(false);
 	const messagesScrollRef = useRef<HTMLDivElement>(null);
+	const selectedChannelRef = useRef(selectedChannel);
+	selectedChannelRef.current = selectedChannel;
 	const [scrolledToUnread, setScrolledToUnread] = useState(false);
 	const [replyingTo, setReplyingTo] = useState<MessageWithUser | null>(null);
 	const [pendingDeleteMessage, setPendingDeleteMessage] = useState<number | null>(null);
@@ -102,6 +105,66 @@ export function useChatManagement({ currentUserUid, currentUserRole }: UseChatMa
 		},
 		[currentUserUid]
 	);
+
+	useEffect(() => {
+		if (!currentUserUid) return;
+
+		const supabase = getSupabaseClient();
+		const channel = supabase
+			.channel('channels-messages')
+			.on(
+				'postgres_changes',
+				{
+					event: 'INSERT',
+					schema: 'public',
+					table: 'messages',
+				},
+				(payload) => {
+					const msgChannelId = payload.new.channel_id;
+					const msgUserId = payload.new.user_id;
+					if (msgChannelId !== selectedChannelRef.current?.id && msgUserId !== currentUserUid) {
+						setChannels((prev) =>
+							prev.map((ch) =>
+								ch.id === msgChannelId ? { ...ch, unread_count: (ch.unread_count || 0) + 1 } : ch
+							)
+						);
+					}
+				}
+			)
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'channel_members',
+					filter: `user_id=eq.${currentUserUid}`,
+				},
+				(payload) => {
+					if (payload.eventType === 'INSERT') {
+						channelsCache = null;
+						loadChannels(true);
+					} else if (payload.eventType === 'DELETE') {
+						const channelId = payload.old.channel_id;
+						setChannels((prev) => prev.filter((ch) => ch.id !== channelId));
+						setSelectedChannel((prev) => (prev?.id === channelId ? null : prev));
+					} else if (payload.eventType === 'UPDATE') {
+						const newLastReadId = payload.new.last_read_message_id;
+						const oldLastReadId = payload.old.last_read_message_id;
+						if (newLastReadId !== oldLastReadId) {
+							const channelId = payload.new.channel_id;
+							setChannels((prev) =>
+								prev.map((ch) => (ch.id === channelId ? { ...ch, unread_count: 0 } : ch))
+							);
+						}
+					}
+				}
+			)
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [currentUserUid]);
 
 	const loadMembers = async (channelId: number) => {
 		if (!currentUserUid) return;

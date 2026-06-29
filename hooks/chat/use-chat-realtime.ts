@@ -23,8 +23,6 @@ export function useChatRealtime(channelId: number | null) {
 	const [loading, setLoading] = useState(!cached);
 	const [error, setError] = useState<string | null>(null);
 	const supabase = getSupabaseClient();
-	const messagesRef = useRef(messages);
-	messagesRef.current = messages;
 
 	const setMessagesAndCache = useCallback(
 		(msgs: MessageWithUser[] | ((prev: MessageWithUser[]) => MessageWithUser[])) => {
@@ -87,7 +85,7 @@ export function useChatRealtime(channelId: number | null) {
 				setLoading(false);
 			}
 		},
-		[channelId, user, setMessagesAndCache]
+		[channelId, setMessagesAndCache]
 	);
 
 	useEffect(() => {
@@ -119,40 +117,35 @@ export function useChatRealtime(channelId: number | null) {
 					const { eventType, new: newRecord, old: oldRecord } = payload;
 
 					if (eventType === 'INSERT') {
-						const alreadyPresent = messagesRef.current.some((m) => m.id === newRecord.id);
-						if (alreadyPresent) return;
+						setMessagesAndCache((prev) => {
+							if (prev.some((m) => m.id === newRecord.id)) return prev;
 
-						const { data } = await supabase
-							.from('messages')
-							.select(
-								`
-									id, created_at, content, edited_at, deleted_at, user_id, channel_id, reply_to,
-									users!inner (
-										username,
-										role,
-										name,
-										last_name,
-										uid_user
-									)
-								`
-							)
-							.eq('id', newRecord.id)
-							.single();
+							const messageWithUser: MessageWithUser = {
+								id: newRecord.id,
+								created_at: newRecord.created_at,
+								content: newRecord.content,
+								edited_at: newRecord.edited_at,
+								deleted_at: newRecord.deleted_at,
+								user_id: newRecord.user_id,
+								channel_id: newRecord.channel_id,
+								reply_to: newRecord.reply_to,
+								users: null,
+							};
 
-						if (data) {
-							setMessagesAndCache((prev) => {
-								if (prev.some((m) => m.id === data.id)) return prev;
-								return [...prev, data as unknown as MessageWithUser];
-							});
-						}
+							return [...prev, messageWithUser];
+						});
 					} else if (eventType === 'UPDATE') {
 						setMessagesAndCache((prev) =>
-							prev.map((msg) =>
-								msg.id === newRecord.id ? { ...msg, ...newRecord, users: msg.users } : msg
-							)
+							prev.map((msg) => (msg.id === newRecord.id ? { ...msg, ...newRecord } : msg))
 						);
 					} else if (eventType === 'DELETE') {
-						setMessagesAndCache((prev) => prev.filter((msg) => msg.id !== (oldRecord as any)?.id));
+						const deletedId = (oldRecord as any)?.id;
+						if (!deletedId) {
+							return;
+						}
+						setMessagesAndCache((prev) => prev.filter((msg) => msg.id !== deletedId));
+					} else {
+						console.warn('[Realtime] Unhandled event type:', eventType, payload);
 					}
 				}
 			)

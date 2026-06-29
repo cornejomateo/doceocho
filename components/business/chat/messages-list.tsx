@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, MessageSquare, Edit2, Trash2, MessageCircle, Loader2 } from 'lucide-react';
@@ -38,8 +38,12 @@ export function MessagesList({
 	onSetEditingMessage,
 	onReplyTo,
 }: MessagesListProps) {
+	const hasScrolledRef = useRef(false);
+
 	useLayoutEffect(() => {
-		if (!scrollToMessageId || !messages.length || messagesLoading) return;
+		if (!scrollToMessageId || !messages.length || messagesLoading || hasScrolledRef.current) return;
+
+		hasScrolledRef.current = true;
 
 		const nextMessage = messages.find((m) => m.id > scrollToMessageId);
 

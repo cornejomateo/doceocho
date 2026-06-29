@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { MessageSquare } from 'lucide-react';
 import { useAuth } from '@/components/provider/auth-provider';
@@ -55,7 +55,10 @@ export function ChatManagement() {
 		(m) => m.channel_id === chatManagement.selectedChannel?.id
 	);
 
-	const allMessages = [...messages, ...optimisticMessages];
+	const allMessages = useMemo(
+		() => [...messages, ...optimisticMessages],
+		[messages, optimisticMessages]
+	);
 
 	const filteredMessages = chatManagement.searchTerm
 		? allMessages.filter(
