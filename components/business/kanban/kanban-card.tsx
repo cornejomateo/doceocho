@@ -67,7 +67,11 @@ export function KanbanCard({
 	const formatDate = (dateString: string | null) => {
 		if (!dateString) return null;
 		const date = new Date(dateString);
-		return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' });
+		return date.toLocaleDateString('es-AR', {
+			day: '2-digit',
+			month: 'short',
+			timeZone: 'UTC',
+		});
 	};
 
 	const cardLabels = card.labels || [];
