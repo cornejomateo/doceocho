@@ -8,7 +8,6 @@ import {
 	cleanChannelMessagesAction,
 } from '@/lib/chat/messages';
 import { getChannelMembersAction, updateLastReadMessage } from '@/lib/chat/channel-members';
-import { sendPushNotificationToChannel } from '@/actions/push/send-notification';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { toast } from '@/components/ui/use-toast';
 import { translateError } from '@/lib/error-translator';
@@ -229,15 +228,6 @@ export function useChatManagement({ currentUserUid, currentUserRole }: UseChatMa
 
 			if (result.data) {
 				window.dispatchEvent(new CustomEvent('new-message', { detail: result.data }));
-			}
-
-			if (selectedChannelRef.current?.name) {
-				sendPushNotificationToChannel(
-					channelId,
-					currentUserUid,
-					messageContent,
-					selectedChannelRef.current.name
-				);
 			}
 
 			setTimeout(() => {

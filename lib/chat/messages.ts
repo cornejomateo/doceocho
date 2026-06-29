@@ -3,6 +3,7 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getServerSupabaseClient } from '@/lib/get-server-supabase-client';
 import type { Message, MessageWithUser } from '@/lib/chat/chat-types';
+import { sendPushNotificationToChannel } from '@/actions/push/send-notification';
 
 const TABLE = 'messages';
 
@@ -18,6 +19,7 @@ export async function getMessagesAction(
 			.select(
 				`id, created_at, content, edited_at, deleted_at, user_id, channel_id, reply_to,
 				users!inner (
+					uid_user,
 					username,
 					role,
 					name,
@@ -31,7 +33,7 @@ export async function getMessagesAction(
 
 		if (error) return { success: false, error: error.message };
 
-		return { success: true, data: (data || []).reverse() as MessageWithUser[] };
+		return { success: true, data: (data || []).reverse() as unknown as MessageWithUser[] };
 	} catch (error: any) {
 		return { success: false, error: error.message || 'Error al obtener mensajes' };
 	}
@@ -59,12 +61,23 @@ export async function sendMessageAction(
 				edited_at: null,
 				deleted_at: null,
 			})
-			.select(`*, users!inner(username, role, name, last_name)`)
+			.select(`*, users!inner(uid_user, username, role, name, last_name)`)
 			.single();
 
 		if (error) return { success: false, error: error.message };
 
-		return { success: true, data: data as MessageWithUser };
+		const { data: channel } = await supabase
+			.from('channels')
+			.select('name')
+			.eq('id', channelId)
+			.single();
+
+		sendPushNotificationToChannel(channelId, user.id, trimmed, channel?.name ?? 'Chat');
+
+		return {
+			success: true,
+			data: data as unknown as MessageWithUser,
+		};
 	} catch (err: any) {
 		return { success: false, error: err.message };
 	}
