@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
 	Paperclip,
 	MessageSquare,
 	Users,
+	Upload,
 } from 'lucide-react';
 import { useCard } from './hooks/use-card';
 import type { CardWithRelations } from './types';
@@ -33,14 +34,25 @@ export function CardDetailModal({
 	userId,
 	onCardDeleted,
 }: CardDetailModalProps) {
-	const { card, loading, error, updateCard, addLabel, removeLabel, uploadFile, removeCard } =
-		useCard(cardId);
+	const {
+		card,
+		loading,
+		error,
+		updateCard,
+		addLabel,
+		removeLabel,
+		uploadFile,
+		removeCard,
+		removeAttachment,
+	} = useCard(cardId);
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
 	const [dueDate, setDueDate] = useState('');
 	const [priority, setPriority] = useState('none');
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+	const [isUploading, setIsUploading] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		if (card) {
@@ -90,6 +102,36 @@ export function CardDetailModal({
 		} else {
 			onOpenChange(false);
 		}
+	};
+
+	const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const files = e.target.files;
+		if (!files || files.length === 0) return;
+
+		console.log('Iniciando subida de archivos:', files.length, 'archivos');
+		console.log('UserId:', userId);
+		console.log('CardId:', cardId);
+
+		setIsUploading(true);
+		try {
+			for (const file of Array.from(files)) {
+				console.log('Subiendo archivo:', file.name, file.size, file.type);
+				const result = await uploadFile(file, userId);
+				console.log('Resultado de subida:', result);
+			}
+			console.log('Todos los archivos subidos exitosamente');
+		} catch (error) {
+			console.error('Error uploading file:', error);
+		} finally {
+			setIsUploading(false);
+			if (fileInputRef.current) {
+				fileInputRef.current.value = '';
+			}
+		}
+	};
+
+	const handleDeleteAttachment = async (attachmentId: number) => {
+		await removeAttachment(attachmentId);
 	};
 
 	const handleDeleteCard = async () => {
@@ -200,9 +242,22 @@ export function CardDetailModal({
 									<p className="text-sm text-muted-foreground mb-2">
 										Arrastra archivos aquí o haz clic para subir
 									</p>
-									<Button variant="outline" size="sm">
-										Subir archivo
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => fileInputRef.current?.click()}
+										disabled={isUploading}
+									>
+										<Upload className="h-4 w-4 mr-2" />
+										{isUploading ? 'Subiendo...' : 'Subir archivo'}
 									</Button>
+									<input
+										ref={fileInputRef}
+										type="file"
+										multiple
+										onChange={handleFileSelect}
+										className="hidden"
+									/>
 								</div>
 								{card.attachments && card.attachments.length > 0 && (
 									<div className="mt-2 space-y-2">
@@ -212,7 +267,12 @@ export function CardDetailModal({
 												className="flex items-center justify-between p-2 border rounded"
 											>
 												<span className="text-sm">{attachment.file_name}</span>
-												<Button variant="ghost" size="icon" className="h-6 w-6">
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-6 w-6"
+													onClick={() => handleDeleteAttachment(attachment.id)}
+												>
 													<X className="h-3 w-3" />
 												</Button>
 											</div>
