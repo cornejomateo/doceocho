@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MoreVertical, Plus, User } from 'lucide-react';
 import { KanbanCard } from './kanban-card';
 import { useCards } from './hooks/use-cards';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
+import { listClients } from '@/lib/clients/clients';
+import type { Client } from '@/lib/clients/clients';
 import type { List, CardFormData } from './types';
 
 interface KanbanListProps {
@@ -24,8 +28,25 @@ export function KanbanList({
 	onCardMove,
 }: KanbanListProps) {
 	const { cards, loading, addCard } = useCards(list.id);
+	const [showCreateModal, setShowCreateModal] = useState(false);
+	const [createMode, setCreateMode] = useState<'normal' | 'client' | null>(null);
+	const [clients, setClients] = useState<Client[]>([]);
+	const [selectedClient, setSelectedClient] = useState<number | null>(null);
+	const [cardTitle, setCardTitle] = useState('');
 
-	const handleCreateCard = async () => {
+	const handleOpenCreateModal = async () => {
+		setShowCreateModal(true);
+		setCreateMode(null);
+		setCardTitle('');
+		setSelectedClient(null);
+		// Load clients
+		const { data } = await listClients();
+		if (data) {
+			setClients(data);
+		}
+	};
+
+	const handleCreateNormalCard = async () => {
 		const title = prompt('Título de la tarjeta:');
 		if (title) {
 			const newCard = await addCard({ title });
@@ -33,6 +54,20 @@ export function KanbanList({
 				onCreateCard({ title });
 			}
 		}
+		setShowCreateModal(false);
+	};
+
+	const handleCreateFromClient = async () => {
+		if (!selectedClient) return;
+		const client = clients.find((c) => c.id === selectedClient);
+		if (client) {
+			const title = `${client.name || ''} ${client.last_name || ''}`.trim();
+			const newCard = await addCard({ title });
+			if (newCard) {
+				onCreateCard({ title });
+			}
+		}
+		setShowCreateModal(false);
 	};
 
 	const handleDragEnd = (result: any) => {
@@ -99,11 +134,70 @@ export function KanbanList({
 
 			{/* Add Card Button */}
 			<div className="p-3 border-t">
-				<Button variant="ghost" className="w-full justify-start" onClick={handleCreateCard}>
+				<Button variant="ghost" className="w-full justify-start" onClick={handleOpenCreateModal}>
 					<Plus className="h-4 w-4 mr-2" />
 					Agregar tarjeta
 				</Button>
 			</div>
+
+			{/* Create Card Modal */}
+			<Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Crear tarjeta</DialogTitle>
+					</DialogHeader>
+					{createMode === null ? (
+						<div className="space-y-3">
+							<Button
+								variant="outline"
+								className="w-full justify-start gap-2"
+								onClick={handleCreateNormalCard}
+							>
+								<Plus className="h-4 w-4" />
+								Tarjeta normal
+							</Button>
+							<Button
+								variant="outline"
+								className="w-full justify-start gap-2"
+								onClick={() => setCreateMode('client')}
+							>
+								<User className="h-4 w-4" />
+								Desde cliente
+							</Button>
+						</div>
+					) : createMode === 'client' ? (
+						<div className="space-y-4">
+							<div>
+								<label className="text-sm font-medium mb-2 block">Seleccionar cliente</label>
+								<select
+									value={selectedClient || ''}
+									onChange={(e) => setSelectedClient(Number(e.target.value))}
+									className="w-full p-2 border rounded"
+								>
+									<option value="">Seleccionar...</option>
+									{clients.map((client) => (
+										<option key={client.id} value={client.id}>
+											{client.name} {client.last_name}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className="flex gap-2">
+								<Button
+									onClick={handleCreateFromClient}
+									disabled={!selectedClient}
+									className="flex-1"
+								>
+									Crear
+								</Button>
+								<Button variant="outline" onClick={() => setCreateMode(null)} className="flex-1">
+									Volver
+								</Button>
+							</div>
+						</div>
+					) : null}
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
