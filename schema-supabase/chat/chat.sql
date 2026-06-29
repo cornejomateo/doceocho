@@ -29,10 +29,12 @@ $function$
 
 -- Method to update the last_message_id in the channels table when a new message is inserted
 
-CREATE OR REPLACE FUNCTION public.set_last_message()
- RETURNS trigger
- LANGUAGE plpgsql
-AS $function$
+create or replace function set_last_message()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
   update channels
   set last_message_id = NEW.id
@@ -40,7 +42,30 @@ begin
 
   return NEW;
 end;
-$function$
+$$;
+
+------ Method to update the last_read_message_id in the channel_members table when a new message is inserted
+
+CREATE OR REPLACE FUNCTION set_last_read_message()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE channel_members
+  SET last_read_message_id = NEW.id
+  WHERE channel_id = NEW.channel_id
+    AND user_id = NEW.user_id;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_set_last_read_message
+AFTER INSERT ON messages
+FOR EACH ROW
+EXECUTE FUNCTION set_last_read_message();
 
 ------ Channel members ------
 
