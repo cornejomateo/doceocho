@@ -1,9 +1,10 @@
 'use client';
 
+import { useLayoutEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, MessageSquare, Edit2, Trash2, MessageCircle } from 'lucide-react';
+import { Search, MessageSquare, Edit2, Trash2, MessageCircle, Loader2 } from 'lucide-react';
 import { MessageWithUser } from '@/lib/chat/chat-types';
 import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
 import { QuoteMessage } from './quote-message';
@@ -17,6 +18,7 @@ interface MessagesListProps {
 	editingMessage: { id: number; content: string } | null;
 	messagesScrollRef: React.RefObject<HTMLDivElement | null>;
 	messagesLoading: boolean;
+	scrollToMessageId?: number | null;
 	onEditMessage: (messageId: number, newContent: string) => void;
 	onDeleteMessage: (messageId: number) => void;
 	onSetEditingMessage: (message: { id: number; content: string } | null) => void;
@@ -31,11 +33,32 @@ export function MessagesList({
 	editingMessage,
 	messagesScrollRef,
 	messagesLoading,
+	scrollToMessageId,
 	onEditMessage,
 	onDeleteMessage,
 	onSetEditingMessage,
 	onReplyTo,
 }: MessagesListProps) {
+	useLayoutEffect(() => {
+		if (!scrollToMessageId || !messages.length || messagesLoading) return;
+
+		const nextMessage = messages.find((m) => m.id > scrollToMessageId);
+
+		if (nextMessage) {
+			const el = messagesScrollRef.current?.querySelector(`[data-message-id="${nextMessage.id}"]`);
+			if (el) {
+				el.scrollIntoView({ block: 'center' });
+			}
+		} else {
+			const scrollArea = messagesScrollRef.current?.querySelector(
+				'[data-slot="scroll-area-viewport"]'
+			);
+			if (scrollArea) {
+				(scrollArea as HTMLElement).scrollTop = (scrollArea as HTMLElement).scrollHeight;
+			}
+		}
+	}, [scrollToMessageId, messages, messagesLoading, messagesScrollRef]);
+
 	return (
 		<ScrollArea ref={messagesScrollRef} className="max-h-[400px] flex-1 p-3 min-h-0 h-0">
 			<div className="space-y-3">
@@ -103,6 +126,7 @@ function MessageItem({
 	onReplyTo,
 }: MessageItemProps) {
 	const isOwnMessage = message.user_id === currentUserId;
+	const isOptimistic = message.id < 0;
 	const quotedMessage = message.reply_to ? messages.find((m) => m.id === message.reply_to) : null;
 
 	return (
@@ -113,7 +137,7 @@ function MessageItem({
 			<div
 				className={`max-w-[70%] rounded-lg p-2 ${
 					isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'
-				}`}
+				} ${isOptimistic ? 'opacity-60' : ''}`}
 			>
 				{!isOwnMessage && (
 					<div className="text-xs font-medium mb-1 opacity-70">
@@ -165,6 +189,7 @@ function MessageItem({
 					<span>
 						{formatCreatedAtChat(message.created_at)}
 						{message.edited_at && ` ${CHAT_CONSTANTS.MESSAGES.EDITED}`}
+						{isOptimistic && <Loader2 className="inline h-3 w-3 ml-1 animate-spin" />}
 					</span>
 					{!message.deleted_at && (
 						<div className="flex gap-1">

@@ -25,10 +25,12 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useIsMobile } from '@/components/ui/use-mobile';
 import { CHAT_CONSTANTS } from '@/constants/chat/chat.constants';
 
 export function ChatManagement() {
 	const { user } = useAuth();
+	const isMobile = useIsMobile();
 	const {
 		isSupported: pushSupported,
 		permission: pushPermission,
@@ -49,15 +51,24 @@ export function ChatManagement() {
 		chatManagement.selectedChannel?.id || null
 	);
 
+	const optimisticMessages = chatManagement.optimisticMessages.filter(
+		(m) => m.channel_id === chatManagement.selectedChannel?.id
+	);
+
+	const allMessages = [...messages, ...optimisticMessages];
+
 	const filteredMessages = chatManagement.searchTerm
-		? messages.filter(
+		? allMessages.filter(
 				(msg) =>
-					msg.content?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
-					msg.users?.username?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
-					msg.users?.name?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
-					msg.users?.last_name?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase())
+					(msg.content?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
+						msg.users?.username?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
+						msg.users?.name?.toLowerCase().includes(chatManagement.searchTerm.toLowerCase()) ||
+						msg.users?.last_name
+							?.toLowerCase()
+							.includes(chatManagement.searchTerm.toLowerCase())) &&
+					msg.deleted_at === null
 			)
-		: messages;
+		: allMessages;
 
 	useEffect(() => {
 		if (user) {
@@ -71,85 +82,91 @@ export function ChatManagement() {
 
 	return (
 		<div className="flex h-full gap-4 relative overflow-hidden">
-			<ChatSidebar
-				channels={chatManagement.channels}
-				selectedChannel={chatManagement.selectedChannel}
-				loading={chatManagement.loading}
-				initialLoadDone={chatManagement.initialLoadDone}
-				showSidebar={chatManagement.showSidebar}
-				isAdmin={chatManagement.isAdmin}
-				onChannelSelect={chatManagement.handleChannelSelect}
-				onCreateChannel={chatManagement.handleCreateChannel}
-				onDeleteChannel={chatManagement.handleDeleteChannel}
-				onCloseSidebar={() => chatManagement.setShowSidebar(false)}
-				pushNotificationSettings={
-					pushSupported ? (
-						<PushNotificationSettings
-							isSupported={pushSupported}
-							permission={pushPermission}
-							subscription={pushSubscription}
-							onRequestPermission={requestPermission}
-							onSubscribe={subscribe}
-							onUnsubscribe={unsubscribe}
-						/>
-					) : undefined
-				}
-			/>
+			{(!isMobile || !chatManagement.selectedChannel) && (
+				<ChatSidebar
+					channels={chatManagement.channels}
+					selectedChannel={chatManagement.selectedChannel}
+					loading={chatManagement.loading}
+					initialLoadDone={chatManagement.initialLoadDone}
+					isAdmin={chatManagement.isAdmin}
+					onChannelSelect={chatManagement.handleChannelSelect}
+					onCreateChannel={chatManagement.handleCreateChannel}
+					onDeleteChannel={chatManagement.handleDeleteChannel}
+					pushNotificationSettings={
+						pushSupported ? (
+							<PushNotificationSettings
+								isSupported={pushSupported}
+								permission={pushPermission}
+								subscription={pushSubscription}
+								onRequestPermission={requestPermission}
+								onSubscribe={subscribe}
+								onUnsubscribe={unsubscribe}
+							/>
+						) : undefined
+					}
+				/>
+			)}
 
-			<Card className="flex-1 flex flex-col">
-				{chatManagement.selectedChannel ? (
-					<>
-						<ChatHeader
-							channel={chatManagement.selectedChannel}
-							showSearch={chatManagement.showSearch}
-							searchTerm={chatManagement.searchTerm}
-							isAdmin={chatManagement.isAdmin}
-							isMobile={false}
-							onSearchToggle={() => chatManagement.setShowSearch(!chatManagement.showSearch)}
-							onSearchChange={chatManagement.setSearchTerm}
-							onShowMembers={chatManagement.handleShowMembers}
-							onCleanupMessages={() => chatManagement.setShowCleanupDialog(true)}
-							onBack={() => {
-								chatManagement.setSelectedChannel(null);
-								chatManagement.setShowSidebar(true);
-							}}
-						/>
+			{(!isMobile || chatManagement.selectedChannel) && (
+				<Card className="flex-1 flex flex-col">
+					{chatManagement.selectedChannel ? (
+						<>
+							<ChatHeader
+								channel={chatManagement.selectedChannel}
+								showSearch={chatManagement.showSearch}
+								searchTerm={chatManagement.searchTerm}
+								isAdmin={chatManagement.isAdmin}
+								isMobile={isMobile}
+								onSearchToggle={() => chatManagement.setShowSearch(!chatManagement.showSearch)}
+								onSearchChange={chatManagement.setSearchTerm}
+								onShowMembers={chatManagement.handleShowMembers}
+								onCleanupMessages={() => chatManagement.setShowCleanupDialog(true)}
+								onBack={() => {
+									chatManagement.setSelectedChannel(null);
+									chatManagement.setShowSidebar(true);
+								}}
+							/>
 
-						<MessagesList
-							messages={messages}
-							filteredMessages={filteredMessages}
-							searchTerm={chatManagement.searchTerm}
-							currentUserId={user.id}
-							editingMessage={chatManagement.editingMessage}
-							messagesScrollRef={chatManagement.messagesScrollRef}
-							messagesLoading={messagesLoading}
-							onEditMessage={chatManagement.handleEditMessage}
-							onDeleteMessage={chatManagement.handleDeleteMessage}
-							onSetEditingMessage={chatManagement.setEditingMessage}
-							onReplyTo={chatManagement.handleReplyTo}
-						/>
+							<MessagesList
+								key={chatManagement.selectedChannel?.id ?? 'no-channel'}
+								messages={allMessages}
+								filteredMessages={filteredMessages}
+								searchTerm={chatManagement.searchTerm}
+								currentUserId={user.id}
+								editingMessage={chatManagement.editingMessage}
+								messagesScrollRef={chatManagement.messagesScrollRef}
+								messagesLoading={messagesLoading}
+								scrollToMessageId={chatManagement.selectedChannel?.last_read_message_id}
+								onEditMessage={chatManagement.handleEditMessage}
+								onDeleteMessage={chatManagement.handleDeleteMessage}
+								onSetEditingMessage={chatManagement.setEditingMessage}
+								onReplyTo={chatManagement.handleReplyTo}
+							/>
 
-						<MessageInput
-							newMessage={chatManagement.newMessage}
-							sending={chatManagement.sending}
-							replyingTo={chatManagement.replyingTo}
-							onMessageChange={chatManagement.setNewMessage}
-							onSendMessage={() =>
-								chatManagement.selectedChannel &&
-								chatManagement.handleSendMessage(chatManagement.selectedChannel.id)
-							}
-							onCancelReply={chatManagement.handleCancelReply}
-						/>
-					</>
-				) : (
-					<div className="flex-1 flex items-center justify-center text-muted-foreground">
-						<div className="text-center">
-							<MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-							<p>{CHAT_CONSTANTS.MESSAGES.SELECT_CHANNEL}</p>
-						</div>
-					</div>
-				)}
-			</Card>
+							<MessageInput
+								newMessage={chatManagement.newMessage}
+								sending={chatManagement.sending}
+								replyingTo={chatManagement.replyingTo}
+								onMessageChange={chatManagement.setNewMessage}
+								onSendMessage={() =>
+									chatManagement.selectedChannel &&
+									chatManagement.handleSendMessage(chatManagement.selectedChannel.id)
+								}
+								onCancelReply={chatManagement.handleCancelReply}
+							/>
+						</>
+					) : (
+						!isMobile && (
+							<div className="flex-1 flex items-center justify-center text-muted-foreground">
+								<div className="text-center">
+									<MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+									<p>{CHAT_CONSTANTS.MESSAGES.SELECT_CHANNEL}</p>
+								</div>
+							</div>
+						)
+					)}
+				</Card>
+			)}
 
 			{chatManagement.showCreateDialog && (
 				<CreateChannelDialog

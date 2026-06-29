@@ -55,9 +55,9 @@ export function ChatSidebar({
 					</div>
 				) : (
 					<div className="p-1.5 space-y-1">
-						{channels.map((channel) => (
+						{channels.map((channel, i) => (
 							<div
-								key={channel.id}
+								key={`${channel.id}-${i}`}
 								className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${
 									selectedChannel?.id === channel.id
 										? 'bg-primary text-primary-foreground'

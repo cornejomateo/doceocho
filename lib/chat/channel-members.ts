@@ -11,7 +11,6 @@ export async function addChannelMember(
 	channelId: number,
 	userId: string
 ): Promise<{ success: boolean; error?: string }> {
-	console.log(`[addChannelMember] Adding member userId=${userId} to channelId=${channelId}`);
 	try {
 		const supabase = await getServerSupabaseClient();
 		const { error } = await supabase
@@ -21,29 +20,16 @@ export async function addChannelMember(
 			.single();
 
 		if (error) {
-			console.error(
-				`[addChannelMember] Error adding member userId=${userId} to channelId=${channelId}:`,
-				error.message
-			);
 			return { success: false, error: error.message };
 		}
-		console.log(`[addChannelMember] Successfully added userId=${userId} to channelId=${channelId}`);
 		return { success: true };
 	} catch (error: any) {
-		console.error(
-			`[addChannelMember] Exception adding userId=${userId} to channelId=${channelId}:`,
-			error.message
-		);
 		return { success: false, error: error.message };
 	}
 }
 
 export async function addMemberToChannelAction(channelId: number, userId: string) {
-	console.log(
-		`[addMemberToChannelAction] Adding member userId=${userId} to channelId=${channelId}`
-	);
 	try {
-		const supabase = await getServerSupabaseClient();
 		await getCurrentUser();
 
 		const adminSupabase = createClient(
@@ -58,21 +44,10 @@ export async function addMemberToChannelAction(channelId: number, userId: string
 			.single();
 
 		if (error) {
-			console.error(
-				`[addMemberToChannelAction] Error adding userId=${userId} to channelId=${channelId}:`,
-				error.message
-			);
 			return { success: false, error: error.message };
 		}
-		console.log(
-			`[addMemberToChannelAction] Successfully added userId=${userId} to channelId=${channelId}`
-		);
 		return { success: true };
 	} catch (e: any) {
-		console.error(
-			`[addMemberToChannelAction] Exception adding userId=${userId} to channelId=${channelId}:`,
-			e.message
-		);
 		return { success: false, error: e.message };
 	}
 }

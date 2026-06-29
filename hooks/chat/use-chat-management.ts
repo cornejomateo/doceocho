@@ -8,8 +8,9 @@ import {
 	cleanChannelMessagesAction,
 } from '@/lib/chat/messages';
 import { getChannelMembersAction, updateLastReadMessage } from '@/lib/chat/channel-members';
-import { SCROLL_DELAY } from '@/constants/chat/chat.constants';
 import { toast } from '@/components/ui/use-toast';
+import { translateError } from '@/lib/error-translator';
+import { useAuth } from '@/components/provider/auth-provider';
 
 type ChannelsCacheEntry = {
 	data: ChannelWithLastMessage[];
@@ -17,6 +18,10 @@ type ChannelsCacheEntry = {
 };
 
 let channelsCache: ChannelsCacheEntry | null = null;
+
+export function clearChannelsCache() {
+	channelsCache = null;
+}
 const CHANNELS_CACHE_TTL = 30_000;
 
 interface UseChatManagementProps {
@@ -26,11 +31,7 @@ interface UseChatManagementProps {
 	messagesLoading: boolean;
 }
 
-export function useChatManagement({
-	currentUserUid,
-	currentUserRole,
-	messages,
-}: UseChatManagementProps) {
+export function useChatManagement({ currentUserUid, currentUserRole }: UseChatManagementProps) {
 	const [channels, setChannels] = useState<ChannelWithLastMessage[]>([]);
 	const [selectedChannel, setSelectedChannel] = useState<ChannelWithLastMessage | null>(null);
 	const [newMessage, setNewMessage] = useState('');
@@ -57,6 +58,8 @@ export function useChatManagement({
 		name: string;
 	} | null>(null);
 	const [pendingCleanupMessages, setPendingCleanupMessages] = useState(false);
+	const [optimisticMessages, setOptimisticMessages] = useState<MessageWithUser[]>([]);
+	const { user: authUser } = useAuth();
 
 	const totalUnreadCount = channels.reduce((sum, ch) => sum + (ch.unread_count || 0), 0);
 
@@ -116,20 +119,52 @@ export function useChatManagement({
 		const messageContent = newMessage.trim();
 		setNewMessage('');
 
+		const tempId = -Date.now();
+		const replyToId = replyingTo?.id ?? null;
+		const optimisticMessage: MessageWithUser = {
+			id: tempId,
+			created_at: new Date().toISOString(),
+			content: messageContent,
+			edited_at: null,
+			deleted_at: null,
+			user_id: currentUserUid,
+			channel_id: channelId,
+			reply_to: replyToId,
+			users: {
+				uid_user: authUser?.id ?? currentUserUid,
+				username: authUser?.username ?? null,
+				name: authUser?.name ?? null,
+				last_name: authUser?.last_name ?? null,
+				role: authUser?.role ?? null,
+			},
+		};
+
+		setOptimisticMessages((prev) => [...prev, optimisticMessage]);
+		setReplyingTo(null);
+
+		setTimeout(() => {
+			const scrollArea = messagesScrollRef.current?.querySelector(
+				'[data-slot="scroll-area-viewport"]'
+			);
+			if (scrollArea) {
+				(scrollArea as HTMLElement).scrollTop = (scrollArea as HTMLElement).scrollHeight;
+			}
+		}, 50);
+
 		try {
-			const result = await sendMessageAction(channelId, messageContent, replyingTo?.id);
+			const result = await sendMessageAction(channelId, messageContent, replyToId || undefined);
+
+			setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
 
 			if (!result.success) {
 				setNewMessage(messageContent);
 				toast({
 					title: 'Error al enviar mensaje',
-					description: result.error,
+					description: translateError(result.error) || 'Error al enviar mensaje',
 					variant: 'destructive',
 				});
 				return;
 			}
-
-			setReplyingTo(null);
 
 			if (result.data) {
 				window.dispatchEvent(new CustomEvent('new-message', { detail: result.data }));
@@ -140,7 +175,7 @@ export function useChatManagement({
 					'[data-slot="scroll-area-viewport"]'
 				);
 				if (scrollArea) {
-					scrollArea.scrollTop = scrollArea.scrollHeight;
+					(scrollArea as HTMLElement).scrollTop = (scrollArea as HTMLElement).scrollHeight;
 				}
 			}, 50);
 		} finally {
@@ -150,6 +185,10 @@ export function useChatManagement({
 
 	const handleChannelSelect = async (channel: ChannelWithLastMessage) => {
 		setSelectedChannel(channel);
+
+		setChannels((prev) =>
+			prev.map((ch) => (ch.id === channel.id ? { ...ch, unread_count: 0 } : ch))
+		);
 
 		if (channel.last_message_id) {
 			await updateLastReadMessage(channel.last_message_id, channel.id, currentUserUid);
@@ -204,7 +243,7 @@ export function useChatManagement({
 		} else {
 			toast({
 				title: 'Error al eliminar mensaje',
-				description: result.error,
+				description: translateError(result.error) || 'Error al eliminar mensaje',
 				variant: 'destructive',
 			});
 		}
@@ -220,7 +259,7 @@ export function useChatManagement({
 		} else {
 			toast({
 				title: 'Error al editar mensaje',
-				description: result.error,
+				description: translateError(result.error) || 'Error al editar mensaje',
 				variant: 'destructive',
 			});
 		}
@@ -250,7 +289,7 @@ export function useChatManagement({
 		} else {
 			toast({
 				title: 'Error al eliminar canal',
-				description: result.error,
+				description: translateError(result.error) || 'Error al eliminar canal',
 				variant: 'destructive',
 			});
 		}
@@ -276,44 +315,11 @@ export function useChatManagement({
 		} else {
 			toast({
 				title: 'Error al limpiar mensajes',
-				description: result.error || 'Error al limpiar mensajes del canal',
+				description: translateError(result.error) || 'Error al limpiar mensajes del canal',
 				variant: 'destructive',
 			});
 		}
 	};
-
-	useEffect(() => {
-		if (!selectedChannel || !currentUserUid) return;
-		if (!selectedChannel.last_message_id) return;
-
-		void updateLastReadMessage(selectedChannel.last_message_id, selectedChannel.id, currentUserUid);
-
-		setChannels((prev) =>
-			prev.map((ch) => (ch.id === selectedChannel.id ? { ...ch, unread_count: 0 } : ch))
-		);
-	}, [selectedChannel, currentUserUid]);
-
-	const scrollChannelIdRef = useRef<number | null>(null);
-
-	useEffect(() => {
-		if (!selectedChannel || !messages.length) return;
-
-		scrollChannelIdRef.current = selectedChannel.id;
-
-		const timeout = setTimeout(() => {
-			const scrollArea = messagesScrollRef.current?.querySelector(
-				'[data-slot="scroll-area-viewport"]'
-			);
-
-			if (!scrollArea) return;
-
-			if (scrollChannelIdRef.current !== selectedChannel.id) return;
-
-			scrollArea.scrollTop = scrollArea.scrollHeight;
-		}, SCROLL_DELAY);
-
-		return () => clearTimeout(timeout);
-	}, [selectedChannel, messages]);
 
 	return {
 		// State
@@ -339,6 +345,7 @@ export function useChatManagement({
 		pendingDeleteMessage,
 		pendingDeleteChannel,
 		pendingCleanupMessages,
+		optimisticMessages,
 
 		// Setters
 		setNewMessage,
@@ -380,7 +387,3 @@ export function useChatManagement({
 		isAdmin: currentUserRole === 'Admin',
 	};
 }
-
-// This is a placeholder for the messages state that will be passed from the parent component
-// The actual messages state is managed by useChatRealtime hook
-declare const messages: MessageWithUser[];

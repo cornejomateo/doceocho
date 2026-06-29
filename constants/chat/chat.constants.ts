@@ -20,8 +20,8 @@ export const CHAT_CONSTANTS = {
 	PUSH_NOTIFICATIONS: {
 		ENABLE: 'Habilitar notificaciones',
 		ENABLED: 'Notificaciones activadas',
-		SUBSCRIBE: 'Suscribir',
-		UNSUBSCRIBE: 'Desactivar',
+		SUBSCRIBE: 'Recibir notificaciones',
+		UNSUBSCRIBE: 'Desactivar notificaciones',
 		BLOCKED: 'Notificaciones bloqueadas',
 	},
 	DIALOGS: {

@@ -10,6 +10,10 @@ type CacheEntry = {
 };
 
 const cache = new Map<number, CacheEntry>();
+
+export function clearMessagesCache() {
+	cache.clear();
+}
 const CACHE_TTL = 30_000;
 
 export function useChatRealtime(channelId: number | null) {

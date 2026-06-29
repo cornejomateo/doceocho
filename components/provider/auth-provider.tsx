@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 
 import { UserRole } from '@/constants/users/user-role';
 import { getSupabaseClient } from '@/lib/supabase-client';
+import { clearChannelsCache } from '@/hooks/chat/use-chat-management';
+import { clearMessagesCache } from '@/hooks/chat/use-chat-realtime';
 
 type SessionUser = {
 	username: string;
@@ -124,6 +126,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	async function signOutUser() {
 		setLoading(true);
+
+		clearChannelsCache();
+		clearMessagesCache();
 
 		try {
 			await supabase.auth.signOut();
