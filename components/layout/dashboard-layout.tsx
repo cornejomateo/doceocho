@@ -128,7 +128,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 	}
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="min-h-screen bg-background flex flex-col">
 			{sidebarOpen && (
 				<div
 					className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
@@ -262,9 +262,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 			<UsersDialog open={usersDialogOpen} onOpenChange={setUsersDialogOpen} />
 
-			<div className={cn('transition-all duration-200', sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64')}>
+			<div
+				className={cn(
+					'flex-1 flex flex-col min-h-0 transition-all duration-200',
+					sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64'
+				)}
+			>
 				{' '}
-				<header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:px-6">
+				<header className="sticky top-0 z-30 shrink-0 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:px-6">
 					<Button
 						variant="ghost"
 						size="icon"
@@ -289,7 +294,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 						<ThemeToggle />
 					</div>
 				</header>
-				<main className="p-4 lg:p-6">{children}</main>
+				<main className="flex-1 min-h-0 p-4 lg:p-6">{children}</main>
 			</div>
 		</div>
 	);
