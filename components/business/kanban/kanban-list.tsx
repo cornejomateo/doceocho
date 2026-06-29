@@ -70,6 +70,13 @@ export function KanbanList({
 		setShowCreateModal(false);
 	};
 
+	const handleEditList = () => {
+		const newName = prompt('Nuevo nombre de la lista:', list.name);
+		if (newName && newName.trim()) {
+			onEditList(newName.trim());
+		}
+	};
+
 	const handleDragEnd = (result: any) => {
 		if (!result.destination) return;
 
@@ -87,7 +94,7 @@ export function KanbanList({
 				<h3 className="font-semibold">{list.name}</h3>
 				<div className="flex items-center gap-1">
 					<span className="text-xs text-muted-foreground">{cards.length}</span>
-					<Button variant="ghost" size="icon" className="h-6 w-6">
+					<Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleEditList}>
 						<MoreVertical className="h-4 w-4" />
 					</Button>
 				</div>
