@@ -15,7 +15,7 @@ export default function KanbanPage() {
 	const router = useRouter();
 	const supabase = getSupabaseClient();
 	const [userId, setUserId] = useState<string | null>(null);
-	const { boards, loading, error, fetchBoards, addBoard, toggleFavorite, archiveBoard } =
+	const { boards, loading, error, fetchBoards, addBoard, toggleFavorite, archiveBoard, editBoard } =
 		useBoards();
 
 	useEffect(() => {
@@ -54,6 +54,14 @@ export default function KanbanPage() {
 
 	const handleBoardClick = (boardId: number) => {
 		router.push(`/kanban/${boardId}`);
+	};
+
+	const handleEditBoard = (board: Board, e: React.MouseEvent) => {
+		e.stopPropagation();
+		const newName = prompt('Nuevo nombre del tablero:', board.name);
+		if (newName && newName.trim()) {
+			editBoard(board.id, { name: newName.trim() });
+		}
 	};
 
 	return (
@@ -115,10 +123,7 @@ export default function KanbanPage() {
 											variant="ghost"
 											size="icon"
 											className="h-6 w-6"
-											onClick={(e) => {
-												e.stopPropagation();
-												// TODO: Open context menu
-											}}
+											onClick={(e) => handleEditBoard(board, e)}
 										>
 											<MoreVertical className="h-4 w-4" />
 										</Button>
