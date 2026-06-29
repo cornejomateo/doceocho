@@ -3,7 +3,6 @@
 import { useLayoutEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, MessageSquare, Edit2, Trash2, MessageCircle, Loader2 } from 'lucide-react';
 import { MessageWithUser } from '@/lib/chat/chat-types';
 import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
@@ -49,18 +48,13 @@ export function MessagesList({
 			if (el) {
 				el.scrollIntoView({ block: 'center' });
 			}
-		} else {
-			const scrollArea = messagesScrollRef.current?.querySelector(
-				'[data-slot="scroll-area-viewport"]'
-			);
-			if (scrollArea) {
-				(scrollArea as HTMLElement).scrollTop = (scrollArea as HTMLElement).scrollHeight;
-			}
+		} else if (messagesScrollRef.current) {
+			messagesScrollRef.current.scrollTop = messagesScrollRef.current.scrollHeight;
 		}
 	}, [scrollToMessageId, messages, messagesLoading, messagesScrollRef]);
 
 	return (
-		<ScrollArea ref={messagesScrollRef} className="max-h-[400px] flex-1 p-3 min-h-0 h-0">
+		<div ref={messagesScrollRef} className="flex-1 overflow-y-auto p-3 min-h-0 max-h-100">
 			<div className="space-y-3">
 				{messagesLoading ? (
 					<div className="text-center text-muted-foreground py-8">
@@ -100,7 +94,7 @@ export function MessagesList({
 					</div>
 				)}
 			</div>
-		</ScrollArea>
+		</div>
 	);
 }
 

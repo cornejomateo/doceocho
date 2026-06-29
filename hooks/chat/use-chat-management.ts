@@ -143,11 +143,8 @@ export function useChatManagement({ currentUserUid, currentUserRole }: UseChatMa
 		setReplyingTo(null);
 
 		setTimeout(() => {
-			const scrollArea = messagesScrollRef.current?.querySelector(
-				'[data-slot="scroll-area-viewport"]'
-			);
-			if (scrollArea) {
-				(scrollArea as HTMLElement).scrollTop = (scrollArea as HTMLElement).scrollHeight;
+			if (messagesScrollRef.current) {
+				messagesScrollRef.current.scrollTop = messagesScrollRef.current.scrollHeight;
 			}
 		}, 50);
 
@@ -171,11 +168,8 @@ export function useChatManagement({ currentUserUid, currentUserRole }: UseChatMa
 			}
 
 			setTimeout(() => {
-				const scrollArea = messagesScrollRef.current?.querySelector(
-					'[data-slot="scroll-area-viewport"]'
-				);
-				if (scrollArea) {
-					(scrollArea as HTMLElement).scrollTop = (scrollArea as HTMLElement).scrollHeight;
+				if (messagesScrollRef.current) {
+					messagesScrollRef.current.scrollTop = messagesScrollRef.current.scrollHeight;
 				}
 			}, 50);
 		} finally {
