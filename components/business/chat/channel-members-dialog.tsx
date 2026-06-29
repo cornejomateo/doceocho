@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserPlus, UserMinus, Users } from 'lucide-react';
 import {
 	AlertDialog,
@@ -165,7 +164,7 @@ export function ChannelMembersDialog({
 						{/* Members List */}
 						<div className="space-y-2">
 							<Label>Miembros actuales</Label>
-							<ScrollArea className="h-64 border rounded-md p-2">
+							<div className="h-64 border rounded-md p-2 overflow-y-auto">
 								{members.length === 0 ? (
 									<div className="text-center text-sm text-muted-foreground py-4">
 										No hay miembros en este canal
@@ -207,7 +206,7 @@ export function ChannelMembersDialog({
 										))}
 									</div>
 								)}
-							</ScrollArea>
+							</div>
 						</div>
 					</div>
 				</DialogContent>
