@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CHAT_CONSTANTS } from '../../../constants/chat/chat.constants';
 
@@ -20,23 +21,46 @@ export function PushNotificationSettings({
 	onSubscribe,
 	onUnsubscribe,
 }: PushNotificationSettingsProps) {
+	const [error, setError] = useState<string | null>(null);
+	const [loading, setLoading] = useState(false);
+
+	const handleEnable = async () => {
+		setError(null);
+		const result = await onRequestPermission();
+		if (result.success) {
+			setLoading(true);
+			const subResult = await onSubscribe();
+			setLoading(false);
+			if (!subResult.success) {
+				setError(subResult.error || 'Error al suscribirse');
+			}
+		}
+	};
+
+	const handleSubscribe = async () => {
+		setError(null);
+		setLoading(true);
+		const result = await onSubscribe();
+		setLoading(false);
+		if (!result.success) {
+			setError(result.error || 'Error al suscribirse');
+		}
+	};
+
 	if (!isSupported) return null;
 
 	return (
 		<div className="mb-4 p-2 bg-muted rounded">
+			{error && <p className="text-xs text-destructive mb-2">{error}</p>}
 			{permission === 'default' && (
 				<Button
 					size="sm"
 					variant="outline"
 					className="w-full"
-					onClick={async () => {
-						const result = await onRequestPermission();
-						if (result.success) {
-							await onSubscribe();
-						}
-					}}
+					disabled={loading}
+					onClick={handleEnable}
 				>
-					{CHAT_CONSTANTS.PUSH_NOTIFICATIONS.ENABLE}
+					{loading ? 'Activando...' : CHAT_CONSTANTS.PUSH_NOTIFICATIONS.ENABLE}
 				</Button>
 			)}
 			{permission === 'granted' && (
@@ -51,8 +75,14 @@ export function PushNotificationSettings({
 							{CHAT_CONSTANTS.PUSH_NOTIFICATIONS.UNSUBSCRIBE}
 						</Button>
 					) : (
-						<Button size="sm" variant="ghost" onClick={onSubscribe} className="h-6 text-xs">
-							{CHAT_CONSTANTS.PUSH_NOTIFICATIONS.SUBSCRIBE}
+						<Button
+							size="sm"
+							variant="ghost"
+							disabled={loading}
+							onClick={handleSubscribe}
+							className="h-6 text-xs"
+						>
+							{loading ? 'Activando...' : CHAT_CONSTANTS.PUSH_NOTIFICATIONS.SUBSCRIBE}
 						</Button>
 					)}
 				</div>
