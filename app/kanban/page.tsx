@@ -7,7 +7,8 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Star, Archive, MoreVertical } from 'lucide-react';
 import { useBoards } from '@/components/business/kanban/hooks/use-boards';
-import type { Board } from '@/components/business/kanban/types';
+import type { Board, BoardFormData } from '@/components/business/kanban/types';
+import { BoardCreationModal } from '@/components/business/kanban/board-creation-modal';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { getSupabaseClient } from '@/lib/supabase-client';
 
@@ -15,6 +16,7 @@ export default function KanbanPage() {
 	const router = useRouter();
 	const supabase = getSupabaseClient();
 	const [userId, setUserId] = useState<string | null>(null);
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const { boards, loading, error, fetchBoards, addBoard, toggleFavorite, archiveBoard, editBoard } =
 		useBoards();
 
@@ -37,18 +39,14 @@ export default function KanbanPage() {
 		}
 	}, [fetchBoards, userId]);
 
-	const handleCreateBoard = async () => {
+	const handleCreateBoard = async (boardData: BoardFormData) => {
 		if (!userId) {
 			alert('No hay usuario autenticado');
 			return;
 		}
-		// TODO: Open modal to create board
-		const name = prompt('Nombre del tablero:');
-		if (name) {
-			const board = await addBoard({ name }, userId);
-			if (board) {
-				router.push(`/kanban/${board.id}`);
-			}
+		const board = await addBoard(boardData, userId);
+		if (board) {
+			router.push(`/kanban/${board.id}`);
 		}
 	};
 
@@ -74,7 +72,7 @@ export default function KanbanPage() {
 							Gestiona tus proyectos con tableros estilo Trello
 						</p>
 					</div>
-					<Button onClick={handleCreateBoard} className="gap-2">
+					<Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
 						<Plus className="h-4 w-4" />
 						Crear Tablero
 					</Button>
@@ -98,7 +96,7 @@ export default function KanbanPage() {
 				) : boards.length === 0 ? (
 					<div className="text-center py-12">
 						<p className="text-muted-foreground mb-4">No tienes tableros aún</p>
-						<Button onClick={handleCreateBoard} variant="outline" className="gap-2">
+						<Button onClick={() => setIsCreateModalOpen(true)} variant="outline" className="gap-2">
 							<Plus className="h-4 w-4" />
 							Crear tu primer tablero
 						</Button>
@@ -143,6 +141,13 @@ export default function KanbanPage() {
 					</div>
 				)}
 			</div>
+
+			{/* Board Creation Modal */}
+			<BoardCreationModal
+				open={isCreateModalOpen}
+				onOpenChange={setIsCreateModalOpen}
+				onCreate={handleCreateBoard}
+			/>
 		</DashboardLayout>
 	);
 }
