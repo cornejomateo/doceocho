@@ -50,7 +50,6 @@ import {
 import { cn } from '@/lib/utils';
 import { roles, UserRole } from '@/constants/users/user-role';
 import { useAuth } from '@/components/provider/auth-provider';
-import { title } from 'process';
 
 interface UsersDialogProps {
 	open: boolean;
@@ -179,6 +178,8 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 				username: formData.username,
 				password: formData.password,
 				role: formData.role as UserRole,
+				name: formData.name,
+				last_name: formData.last_name,
 			});
 
 			if (error) {
