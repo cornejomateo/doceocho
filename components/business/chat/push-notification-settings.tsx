@@ -20,13 +20,11 @@ export function PushNotificationSettings({
 	onSubscribe,
 	onUnsubscribe,
 }: PushNotificationSettingsProps) {
+	if (!isSupported) return null;
+
 	return (
 		<div className="mb-4 p-2 bg-muted rounded">
-			{!isSupported ? (
-				<p className="text-xs text-muted-foreground">
-					{CHAT_CONSTANTS.PUSH_NOTIFICATIONS.NOT_SUPPORTED}
-				</p>
-			) : permission === 'default' ? (
+			{permission === 'default' && (
 				<Button
 					size="sm"
 					variant="outline"
@@ -40,7 +38,8 @@ export function PushNotificationSettings({
 				>
 					{CHAT_CONSTANTS.PUSH_NOTIFICATIONS.ENABLE}
 				</Button>
-			) : permission === 'granted' ? (
+			)}
+			{permission === 'granted' && (
 				<div className="flex items-center justify-between">
 					<span className="text-xs text-muted-foreground">
 						{subscription
@@ -57,7 +56,8 @@ export function PushNotificationSettings({
 						</Button>
 					)}
 				</div>
-			) : (
+			)}
+			{permission === 'denied' && (
 				<span className="text-xs text-destructive">
 					{CHAT_CONSTANTS.PUSH_NOTIFICATIONS.BLOCKED}
 				</span>
