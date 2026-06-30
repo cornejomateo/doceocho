@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Plus, Search, MoreVertical, Trash2 } from 'lucide-react';
+import { Plus, MoreVertical, Trash2 } from 'lucide-react';
 import { useBoards } from '@/components/business/kanban/hooks/use-boards';
 import type { Board, BoardFormData } from '@/components/business/kanban/types';
 import { BoardCreationModal } from '@/components/business/kanban/board-creation-modal';
@@ -96,21 +95,12 @@ export default function KanbanPage() {
 				<div className="flex items-center justify-between mb-6">
 					<div>
 						<h1 className="text-3xl font-bold">Tableros Kanban</h1>
-						<p className="text-muted-foreground">
-							Gestiona tus proyectos con tableros estilo Trello
-						</p>
+						<p className="text-muted-foreground">Gestiona tus proyectos con tableros</p>
 					</div>
 					<Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
 						<Plus className="h-4 w-4" />
 						Crear Tablero
 					</Button>
-				</div>
-
-				<div className="flex items-center gap-4 mb-6">
-					<div className="relative flex-1 max-w-md">
-						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-						<Input placeholder="Buscar tableros..." className="pl-10" />
-					</div>
 				</div>
 
 				{loading ? (
