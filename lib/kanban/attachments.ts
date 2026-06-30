@@ -31,32 +31,23 @@ export async function uploadAttachment(
 ): Promise<{ data: Attachment | null; error: any }> {
 	const supabase = getSupabaseClient();
 
-	console.log('uploadAttachment llamado con:', { cardId, userId, fileName: file.name });
-
 	// Generate unique filename
 	const timestamp = Date.now();
 	const randomString = Math.random().toString(36).substring(2, 8);
 	const fileName = `${timestamp}_${randomString}_${file.name}`;
 	const filePath = `cards/${cardId}/${fileName}`;
 
-	console.log('Ruta de archivo:', filePath);
-
 	// Upload file to storage
 	const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, file);
 
 	if (uploadError) {
-		console.error('Error al subir a storage:', uploadError);
 		return { data: null, error: uploadError };
 	}
-
-	console.log('Archivo subido exitosamente a storage');
 
 	// Get public URL
 	const {
 		data: { publicUrl },
 	} = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
-
-	console.log('URL pública:', publicUrl);
 
 	// Create attachment record
 	const payload = {
@@ -69,15 +60,7 @@ export async function uploadAttachment(
 		storage_path: filePath,
 	};
 
-	console.log('Payload para insertar en tabla:', payload);
-
 	const { data, error } = await supabase.from(TABLE).insert(payload).select().single();
-
-	if (error) {
-		console.error('Error al insertar en tabla:', error);
-	} else {
-		console.log('Registro insertado exitosamente:', data);
-	}
 
 	return { data, error };
 }

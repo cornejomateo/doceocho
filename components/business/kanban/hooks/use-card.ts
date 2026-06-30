@@ -82,12 +82,12 @@ export function useCard(cardId: number | null) {
 	// Attachments
 	const uploadFile = useCallback(
 		async (file: File, userId: string) => {
-			if (!cardId) return null;
+			if (!cardId) return { data: null, error: 'No card ID provided' };
 			const { data, error } = await uploadAttachment(file, cardId, userId);
 			if (!error && data) {
 				await fetchCard();
 			}
-			return data;
+			return { data, error };
 		},
 		[cardId, fetchCard]
 	);

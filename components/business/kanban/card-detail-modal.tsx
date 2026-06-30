@@ -27,6 +27,8 @@ import {
 	Upload,
 } from 'lucide-react';
 import { useCard } from './hooks/use-card';
+import { translateError } from '@/lib/error-translator';
+import { toast } from '@/components/ui/use-toast';
 import type { CardWithRelations } from './types';
 
 interface CardDetailModalProps {
@@ -126,20 +128,24 @@ export function CardDetailModal({
 		const files = e.target.files;
 		if (!files || files.length === 0) return;
 
-		console.log('Iniciando subida de archivos:', files.length, 'archivos');
-		console.log('UserId:', userId);
-		console.log('CardId:', cardId);
-
 		setIsUploading(true);
 		try {
 			for (const file of Array.from(files)) {
-				console.log('Subiendo archivo:', file.name, file.size, file.type);
-				const result = await uploadFile(file, userId);
-				console.log('Resultado de subida:', result);
+				const { error } = await uploadFile(file, userId);
+				if (error) {
+					toast({
+						variant: 'destructive',
+						title: 'Error al subir archivo',
+						description: translateError(error),
+					});
+				}
 			}
-			console.log('Todos los archivos subidos exitosamente');
 		} catch (error) {
-			console.error('Error uploading file:', error);
+			toast({
+				variant: 'destructive',
+				title: 'Error al subir archivos',
+				description: translateError(error),
+			});
 		} finally {
 			setIsUploading(false);
 			if (fileInputRef.current) {
@@ -153,9 +159,7 @@ export function CardDetailModal({
 	};
 
 	const handleDeleteCard = async () => {
-		console.log('Intentando eliminar tarjeta con ID:', cardId);
 		await removeCard();
-		console.log('Eliminación completada, cerrando modal');
 		onOpenChange(false);
 		if (onCardDeleted) {
 			onCardDeleted();

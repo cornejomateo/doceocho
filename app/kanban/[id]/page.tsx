@@ -11,6 +11,8 @@ import { KanbanList } from '@/components/business/kanban/kanban-list';
 import { CardDetailModal } from '@/components/business/kanban/card-detail-modal';
 import { BoardSettingsModal } from '@/components/business/kanban/board-settings-modal';
 import { ListCreationModal } from '@/components/business/kanban/list-creation-modal';
+import { translateError } from '@/lib/error-translator';
+import { toast } from '@/components/ui/use-toast';
 import type { CardFormData } from '@/components/business/kanban/types';
 
 export default function BoardPage() {
@@ -42,7 +44,11 @@ export default function BoardPage() {
 	const handleCardMove = async (cardId: number, newListId: number, newPosition: number) => {
 		const { error } = await moveCard(cardId, newListId, newPosition);
 		if (error) {
-			console.error('Error moving card:', error);
+			toast({
+				variant: 'destructive',
+				title: 'Error al mover tarjeta',
+				description: translateError(error),
+			});
 		} else {
 			// Refresh the board to get updated card positions
 			fetchBoard();
@@ -146,7 +152,7 @@ export default function BoardPage() {
 									list={list}
 									onEditList={(name) => editList(list.id, { name })}
 									onDeleteList={() => removeList(list.id)}
-									onCreateCard={(card: CardFormData) => console.log('Card created', card)}
+									onCreateCard={(card: CardFormData) => {}}
 									onCardClick={handleCardClick}
 									onCardMove={handleCardMove}
 									dueDateToleranceYellow={board.due_date_tolerance_yellow ?? 2}

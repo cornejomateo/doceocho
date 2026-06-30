@@ -37,18 +37,14 @@ export function useCards(listId: number | null) {
 			if (!listId) return null;
 			setLoading(true);
 			setError(null);
-			console.log('Creating card:', card, 'for list:', listId);
 			const { data, error } = await createCard(card, listId);
-			console.log('Create card result:', { data, error });
 			if (error) {
 				setError(error.message);
 				setLoading(false);
 				return null;
 			}
 			if (data) {
-				console.log('Adding card to state:', data);
 				setCards((prev) => [...prev, data]);
-				console.log('Cards after add:', [...cards, data]);
 			}
 			setLoading(false);
 			return data;
