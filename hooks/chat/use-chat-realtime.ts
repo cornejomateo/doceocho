@@ -120,6 +120,18 @@ export function useChatRealtime(channelId: number | null) {
 						setMessagesAndCache((prev) => {
 							if (prev.some((m) => m.id === newRecord.id)) return prev;
 
+							const existing = prev.find((m) => m.user_id === newRecord.user_id)?.users ?? null;
+							const currentUser =
+								newRecord.user_id === user?.id && user
+									? {
+											uid_user: user.id,
+											username: user.username ?? null,
+											name: user.name ?? null,
+											last_name: user.last_name ?? null,
+											role: user.role ?? null,
+										}
+									: null;
+
 							const messageWithUser: MessageWithUser = {
 								id: newRecord.id,
 								created_at: newRecord.created_at,
@@ -129,7 +141,7 @@ export function useChatRealtime(channelId: number | null) {
 								user_id: newRecord.user_id,
 								channel_id: newRecord.channel_id,
 								reply_to: newRecord.reply_to,
-								users: null,
+								users: existing ?? currentUser,
 							};
 
 							return [...prev, messageWithUser];

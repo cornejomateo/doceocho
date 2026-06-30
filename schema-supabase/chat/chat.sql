@@ -134,6 +134,12 @@ USING (
   EXISTS (SELECT 1 FROM public.users u WHERE u.uid_user = auth.uid() AND u.role = 'Admin')
 );
 
+CREATE INDEX idx_messages_channel_id_id
+ON messages(channel_id, id);
+
+CREATE INDEX idx_channel_members_user_channel
+ON channel_members(user_id, channel_id);
+
 ------ Channels ------
 
 create table public.channels (

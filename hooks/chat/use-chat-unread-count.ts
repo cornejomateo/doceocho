@@ -37,18 +37,9 @@ export function useChatUnreadCount() {
 			.on(
 				'postgres_changes',
 				{
-					event: '*',
+					event: 'INSERT',
 					schema: 'public',
 					table: 'messages',
-				},
-				fetchUnreadCount
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: 'UPDATE',
-					schema: 'public',
-					table: 'channel_members',
 				},
 				fetchUnreadCount
 			)

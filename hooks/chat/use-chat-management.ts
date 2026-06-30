@@ -122,7 +122,8 @@ export function useChatManagement({ currentUserUid, currentUserRole }: UseChatMa
 				(payload) => {
 					const msgChannelId = payload.new.channel_id;
 					const msgUserId = payload.new.user_id;
-					if (msgChannelId !== selectedChannelRef.current?.id && msgUserId !== currentUserUid) {
+					if (msgUserId !== currentUserUid) {
+						channelsCache = null;
 						setChannels((prev) =>
 							prev.map((ch) =>
 								ch.id === msgChannelId ? { ...ch, unread_count: (ch.unread_count || 0) + 1 } : ch
@@ -151,6 +152,7 @@ export function useChatManagement({ currentUserUid, currentUserRole }: UseChatMa
 						const newLastReadId = payload.new.last_read_message_id;
 						const oldLastReadId = payload.old.last_read_message_id;
 						if (newLastReadId !== oldLastReadId) {
+							channelsCache = null;
 							const channelId = payload.new.channel_id;
 							setChannels((prev) =>
 								prev.map((ch) => (ch.id === channelId ? { ...ch, unread_count: 0 } : ch))
@@ -242,6 +244,8 @@ export function useChatManagement({ currentUserUid, currentUserRole }: UseChatMa
 
 	const handleChannelSelect = async (channel: ChannelWithLastMessage) => {
 		setSelectedChannel(channel);
+
+		channelsCache = null;
 
 		setChannels((prev) =>
 			prev.map((ch) => (ch.id === channel.id ? { ...ch, unread_count: 0 } : ch))
