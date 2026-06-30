@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Edit, Trash2, Plus, Minus } from 'lucide-react';
 import { formatCurrency } from '@/utils/formats-money';
+import { formatCreatedAt } from '@/utils/format-date';
 import type { SupplyCardProps } from './types';
 
 export function SupplyCard({
@@ -97,7 +98,7 @@ export function SupplyCard({
 					{item.created_at && (
 						<div>
 							<p className="text-muted-foreground text-xs">Fecha</p>
-							<p className="text-foreground truncate">{item.created_at.split('T')[0]}</p>
+							<p className="text-foreground truncate">{formatCreatedAt(item.created_at)}</p>
 						</div>
 					)}
 				</div>

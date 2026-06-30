@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
+import { translateError } from '@/lib/error-translator';
 import type { SupplyItemStock } from '@/lib/stock/supplies-stock';
 
 export function useSupplyDialogs(
@@ -78,7 +79,7 @@ export function useSupplyDialogs(
 				setImageViewerOpen(false);
 				toast({
 					title: 'Error',
-					description: data.error || 'No se pudo cargar la imagen',
+					description: translateError(data.error) || 'No se pudo cargar la imagen',
 					variant: 'destructive',
 				});
 				return;
@@ -89,7 +90,9 @@ export function useSupplyDialogs(
 				setImageViewerOpen(false);
 				toast({
 					title: 'Sin imagen',
-					description: 'No se encontró una imagen para este insumo',
+					description:
+						translateError('No se encontró una imagen para este insumo') ||
+						'No se encontró una imagen para este insumo',
 					variant: 'destructive',
 				});
 				return;
@@ -101,7 +104,7 @@ export function useSupplyDialogs(
 			setImageViewerOpen(false);
 			toast({
 				title: 'Error',
-				description: 'No se pudo cargar la imagen',
+				description: translateError('No se pudo cargar la imagen') || 'No se pudo cargar la imagen',
 				variant: 'destructive',
 			});
 		} finally {
