@@ -6,7 +6,7 @@ import { useAuth } from '@/components/provider/auth-provider';
 import type { SupplyItemStock } from '@/lib/stock/supplies-stock';
 import ImageViewer from '@/components/ui/image-viewer';
 import { formatCurrency } from '@/utils/formats-money';
-import { useSupplyDialogs } from './hooks/use-supply-dialogs';
+import { useSupplyDialogs } from '@/hooks/supply/use-supply-dialogs';
 import { SupplyCard } from './supply-card';
 import { QuantityDialog } from './quantity-dialog';
 import { DeleteAlertDialog } from './delete-alert-dialog';
