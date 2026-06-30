@@ -78,6 +78,7 @@ export function UsersDialog({ open, onOpenChange }: UsersDialogProps) {
 	const isCurrentUser = (user: User) => user.username === currentUser?.username;
 
 	const loadUsers = async () => {
+		setLoading(true);
 		try {
 			const { data, error } = await listUsers();
 			if (error) {
