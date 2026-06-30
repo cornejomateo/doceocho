@@ -10,6 +10,7 @@ import { useBoards } from '@/components/business/kanban/hooks/use-boards';
 import type { Board, BoardFormData } from '@/components/business/kanban/types';
 import { BoardCreationModal } from '@/components/business/kanban/board-creation-modal';
 import { BoardDeleteModal } from '@/components/business/kanban/board-delete-modal';
+import { BoardEditModal } from '@/components/business/kanban/board-edit-modal';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { getSupabaseClient } from '@/lib/supabase-client';
 
@@ -19,6 +20,7 @@ export default function KanbanPage() {
 	const [userId, setUserId] = useState<string | null>(null);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [boardToDelete, setBoardToDelete] = useState<Board | null>(null);
+	const [boardToEdit, setBoardToEdit] = useState<Board | null>(null);
 	const {
 		boards,
 		loading,
@@ -67,9 +69,12 @@ export default function KanbanPage() {
 
 	const handleEditBoard = (board: Board, e: React.MouseEvent) => {
 		e.stopPropagation();
-		const newName = prompt('Nuevo nombre del tablero:', board.name);
-		if (newName && newName.trim()) {
-			editBoard(board.id, { name: newName.trim() });
+		setBoardToEdit(board);
+	};
+
+	const handleSaveBoardName = (name: string) => {
+		if (boardToEdit) {
+			editBoard(boardToEdit.id, { name });
 		}
 	};
 
@@ -187,6 +192,14 @@ export default function KanbanPage() {
 				open={boardToDelete !== null}
 				onOpenChange={(open) => !open && setBoardToDelete(null)}
 				onConfirm={handleConfirmDelete}
+			/>
+
+			{/* Board Edit Modal */}
+			<BoardEditModal
+				board={boardToEdit}
+				open={boardToEdit !== null}
+				onOpenChange={(open) => !open && setBoardToEdit(null)}
+				onSave={handleSaveBoardName}
 			/>
 		</DashboardLayout>
 	);

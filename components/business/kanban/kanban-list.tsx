@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { MoreVertical, Plus, User } from 'lucide-react';
 import { KanbanCard } from './kanban-card';
 import { useCards } from './hooks/use-cards';
+import { ListEditModal } from './list-edit-modal';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { listClients } from '@/lib/clients/clients';
 import type { Client } from '@/lib/clients/clients';
@@ -33,6 +34,7 @@ export function KanbanList({
 }: KanbanListProps) {
 	const { cards, loading, addCard } = useCards(list.id);
 	const [showCreateModal, setShowCreateModal] = useState(false);
+	const [showEditModal, setShowEditModal] = useState(false);
 	const [createMode, setCreateMode] = useState<'normal' | 'client' | null>(null);
 	const [clients, setClients] = useState<Client[]>([]);
 	const [selectedClient, setSelectedClient] = useState<number | null>(null);
@@ -75,10 +77,12 @@ export function KanbanList({
 	};
 
 	const handleEditList = () => {
-		const newName = prompt('Nuevo nombre de la lista:', list.name);
-		if (newName && newName.trim()) {
-			onEditList(newName.trim());
-		}
+		setShowEditModal(true);
+	};
+
+	const handleSaveListName = (name: string) => {
+		onEditList(name);
+		setShowEditModal(false);
 	};
 
 	const handleDragEnd = (result: any) => {
@@ -214,6 +218,14 @@ export function KanbanList({
 					) : null}
 				</DialogContent>
 			</Dialog>
+
+			{/* List Edit Modal */}
+			<ListEditModal
+				list={list}
+				open={showEditModal}
+				onOpenChange={setShowEditModal}
+				onSave={handleSaveListName}
+			/>
 		</div>
 	);
 }
