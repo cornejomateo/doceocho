@@ -67,7 +67,17 @@ export async function sendMessageAction(
 
 		if (error) return { success: false, error: error.message };
 
+		console.log('[push] sendMessageAction completed, scheduling after() push', {
+			channelId,
+			senderUserId: user.id,
+		});
+
 		after(async () => {
+			console.log('[push] after() callback started', {
+				channelId,
+				senderUserId: user.id,
+			});
+
 			try {
 				const { data: channel, error: channelError } = await supabase
 					.from('channels')
@@ -76,22 +86,33 @@ export async function sendMessageAction(
 					.single();
 
 				if (channelError) {
-					console.error('Failed to fetch channel name for push notification:', {
+					console.error('[push] Failed to fetch channel name:', {
 						channelId,
 						error: channelError.message,
 					});
 					return;
 				}
 
-				await sendPushNotificationToChannel(
+				console.log('[push] Calling sendPushNotificationToChannel', {
+					channelId,
+					senderUserId: user.id,
+					senderUsername: data.users?.username,
+					channelName: channel?.name,
+				});
+
+				const pushResult = await sendPushNotificationToChannel(
+					supabase,
 					channelId,
 					user.id,
-					data.users.username,
+					data.users?.name ?? '',
+					data.users?.last_name ?? '',
 					trimmed,
 					channel?.name ?? 'Canal'
 				);
+
+				console.log('[push] sendPushNotificationToChannel result:', pushResult);
 			} catch (error: any) {
-				console.error('Failed to send push notification:', {
+				console.error('[push] Failed to send push notification:', {
 					channelId,
 					username: user.id,
 					error: error.message,

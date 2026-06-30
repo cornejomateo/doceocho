@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabase-client';
 
 export interface PushSubscription {
@@ -98,12 +99,13 @@ export async function deletePushSubscription(
  */
 export async function getChannelPushSubscriptions(
 	channelId: number,
-	senderUserId: string
+	senderUserId: string,
+	supabase?: SupabaseClient
 ): Promise<{ data: PushSubscription[] | null; error?: string }> {
-	const supabase = getSupabaseClient();
+	const client = supabase ?? getSupabaseClient();
 
 	try {
-		const { data: members, error: membersError } = await supabase
+		const { data: members, error: membersError } = await client
 			.from('channel_members')
 			.select('user_id')
 			.eq('channel_id', channelId)
@@ -114,12 +116,13 @@ export async function getChannelPushSubscriptions(
 		}
 
 		if (!members || members.length === 0) {
+			console.log('[push] No other members in channel');
 			return { data: [] };
 		}
 
 		const userIds = members.map((m) => m.user_id);
 
-		const { data, error } = await supabase
+		const { data, error } = await client
 			.from('push_subscriptions')
 			.select('endpoint, p256dh, auth')
 			.in('user_id', userIds);
@@ -138,6 +141,7 @@ export async function getChannelPushSubscriptions(
 
 		return { data: subscriptions };
 	} catch (error: any) {
+		console.error('[push] getChannelPushSubscriptions error:', error);
 		return { data: null, error: error.message };
 	}
 }

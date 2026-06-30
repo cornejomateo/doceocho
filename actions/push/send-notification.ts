@@ -1,41 +1,47 @@
 'use server';
 
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { configureWebPush, sendPushNotification } from '@/lib/push/vapid';
 import { getChannelPushSubscriptions } from '@/lib/push/subscriptions';
 
 export async function sendPushNotificationToChannel(
+	supabase: SupabaseClient,
 	channelId: number,
 	senderUserId: string,
-	senderUsername: string,
+	senderName: string,
+	senderLastName: string,
 	message: string,
 	channelName: string
 ) {
 	try {
-		// Configure web-push
 		const configured = configureWebPush();
 		if (!configured) {
 			return { success: false, error: 'VAPID keys are not configured', sentCount: 0 };
 		}
 
-		// Get all push subscriptions for channel members (excluding sender)
 		const { data: subscriptions, error } = await getChannelPushSubscriptions(
 			channelId,
-			senderUserId
+			senderUserId,
+			supabase
 		);
 
 		if (error) {
+			console.error('[push] Failed to get subscriptions:', error);
 			return { success: false, error, sentCount: 0 };
 		}
+
 		if (!subscriptions || subscriptions.length === 0) {
 			return { success: true, sentCount: 0 };
 		}
 
-		// Send notification to all subscriptions
 		let sentCount = 0;
-		for (const subscription of subscriptions) {
+		for (let i = 0; i < subscriptions.length; i++) {
+			const subscription = subscriptions[i];
+
+			const displayName = `${senderName} ${senderLastName}`.trim();
 			const result = await sendPushNotification(subscription, {
 				title: `Nuevo mensaje en ${channelName}`,
-				body: `${senderUsername}: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}`,
+				body: `${displayName}: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}`,
 				icon: '/icon-192.png',
 				data: {
 					channelId,
@@ -51,7 +57,7 @@ export async function sendPushNotificationToChannel(
 
 		return { success: true, sentCount };
 	} catch (error: any) {
-		console.error('Error sending push notifications:', error);
+		console.error('[push] Error sending push notifications:', error);
 		return { success: false, error: error.message };
 	}
 }

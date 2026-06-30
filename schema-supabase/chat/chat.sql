@@ -110,6 +110,30 @@ USING (
     EXISTS (SELECT 1 FROM public.users u WHERE u.uid_user = auth.uid() AND u.role = 'Admin')
 );
 
+CREATE OR REPLACE FUNCTION public.is_channel_member(channel_id bigint, user_id uuid)
+RETURNS boolean
+SECURITY DEFINER
+LANGUAGE sql
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.channel_members
+    WHERE channel_members.channel_id = $1
+    AND channel_members.user_id = $2
+  );
+$$;
+
+DROP POLICY IF EXISTS "Channel members select" ON public.channel_members;
+CREATE POLICY "Channel members select"
+ON public.channel_members FOR SELECT
+TO authenticated
+USING (
+  user_id = auth.uid()
+  OR
+  public.is_channel_member(channel_id, auth.uid())
+  OR
+  EXISTS (SELECT 1 FROM public.users u WHERE u.uid_user = auth.uid() AND u.role = 'Admin')
+);
+
 ------ Channels ------
 
 create table public.channels (
@@ -208,7 +232,7 @@ USING (
 
 create table public.push_subscriptions (
   id bigserial not null,
-  user_id text not null,
+  user_id uuid not null default gen_random_uuid (),
   endpoint text not null,
   p256dh text not null,
   auth text not null,
@@ -216,7 +240,7 @@ create table public.push_subscriptions (
   updated_at timestamp with time zone null default now(),
   constraint push_subscriptions_pkey primary key (id),
   constraint push_subscriptions_endpoint_key unique (endpoint),
-  constraint push_subscriptions_user_id_fkey foreign KEY (user_id) references users (username) on delete CASCADE
+  constraint push_subscriptions_user_id_fkey foreign KEY (user_id) references users (uid_user) on update CASCADE on delete CASCADE
 ) TABLESPACE pg_default;
 
 create index IF not exists idx_push_subscriptions_user_id on public.push_subscriptions using btree (user_id) TABLESPACE pg_default;
@@ -229,25 +253,25 @@ CREATE POLICY "Public select push_subscriptions"
 ON public.push_subscriptions
 FOR SELECT
 TO authenticated
-USING (true);
+USING true;
 
 CREATE POLICY "Public insert push_subscriptions"
 ON public.push_subscriptions
 FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Public delete push_subscriptions"
 ON public.push_subscriptions
 FOR DELETE
 TO authenticated
-USING (true);
+USING (user_id = auth.uid());
 
 CREATE POLICY "Public update push_subscriptions"
 ON public.push_subscriptions
 FOR UPDATE
 TO authenticated
-USING (true);
+USING (user_id = auth.uid());
 
 CREATE OR REPLACE FUNCTION public.update_push_subscriptions_updated_at()
  RETURNS trigger
