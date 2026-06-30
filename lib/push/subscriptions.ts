@@ -8,15 +8,18 @@ export interface PushSubscription {
 	};
 }
 
+/**
+ * Save a push subscription for a user
+ */
 export async function savePushSubscription(
-	userId: string,
+	username: string,
 	subscription: PushSubscription
 ): Promise<{ success: boolean; error?: string }> {
 	const supabase = getSupabaseClient();
 
 	try {
 		const { error } = await supabase.from('push_subscriptions').upsert({
-			user_id: userId,
+			user_id: username,
 			endpoint: subscription.endpoint,
 			p256dh: subscription.keys.p256dh,
 			auth: subscription.keys.auth,
@@ -32,8 +35,11 @@ export async function savePushSubscription(
 	}
 }
 
+/**
+ * Get all push subscriptions for a user
+ */
 export async function getUserPushSubscriptions(
-	userId: string
+	username: string
 ): Promise<{ data: PushSubscription[] | null; error?: string }> {
 	const supabase = getSupabaseClient();
 
@@ -41,7 +47,7 @@ export async function getUserPushSubscriptions(
 		const { data, error } = await supabase
 			.from('push_subscriptions')
 			.select('endpoint, p256dh, auth')
-			.eq('user_id', userId);
+			.eq('user_id', username);
 
 		if (error) {
 			return { data: null, error: error.message };
@@ -61,8 +67,11 @@ export async function getUserPushSubscriptions(
 	}
 }
 
+/**
+ * Delete a push subscription
+ */
 export async function deletePushSubscription(
-	userId: string,
+	username: string,
 	endpoint: string
 ): Promise<{ success: boolean; error?: string }> {
 	const supabase = getSupabaseClient();
@@ -71,7 +80,7 @@ export async function deletePushSubscription(
 		const { error } = await supabase
 			.from('push_subscriptions')
 			.delete()
-			.eq('user_id', userId)
+			.eq('user_id', username)
 			.eq('endpoint', endpoint);
 
 		if (error) {
@@ -84,18 +93,22 @@ export async function deletePushSubscription(
 	}
 }
 
+/**
+ * Get all push subscriptions for users in a channel (excluding sender)
+ */
 export async function getChannelPushSubscriptions(
 	channelId: number,
-	senderUserId: string
+	senderUsername: string
 ): Promise<{ data: PushSubscription[] | null; error?: string }> {
 	const supabase = getSupabaseClient();
 
 	try {
+		// Get all users in the channel except the sender
 		const { data: members, error: membersError } = await supabase
 			.from('channel_members')
 			.select('user_id')
 			.eq('channel_id', channelId)
-			.neq('user_id', senderUserId);
+			.neq('user_id', senderUsername);
 
 		if (membersError) {
 			return { data: null, error: membersError.message };
@@ -107,6 +120,7 @@ export async function getChannelPushSubscriptions(
 
 		const userIds = members.map((m) => m.user_id);
 
+		// Get all push subscriptions for these users
 		const { data, error } = await supabase
 			.from('push_subscriptions')
 			.select('endpoint, p256dh, auth')

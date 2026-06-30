@@ -2,56 +2,40 @@
 
 import { configureWebPush, sendPushNotification } from '@/lib/push/vapid';
 import { getChannelPushSubscriptions } from '@/lib/push/subscriptions';
-import { getSupabaseClient } from '@/lib/supabase-client';
+import { getUser } from '@/lib/users/users';
 
 export async function sendPushNotificationToChannel(
 	channelId: number,
-	senderUserId: string,
+	senderUsername: string,
 	message: string,
 	channelName: string
 ) {
-	const supabase = getSupabaseClient();
 	try {
+		// Configure web-push
 		const configured = configureWebPush();
-
 		if (!configured) {
-			return {
-				success: false,
-				error: 'VAPID keys are not configured',
-				sentCount: 0,
-			};
+			return { success: false, error: 'VAPID keys are not configured', sentCount: 0 };
 		}
 
+		// Get all push subscriptions for channel members (excluding sender)
 		const { data: subscriptions, error } = await getChannelPushSubscriptions(
 			channelId,
-			senderUserId
+			senderUsername
 		);
 
 		if (error) {
-			return {
-				success: false,
-				error,
-				sentCount: 0,
-			};
+			return { success: false, error, sentCount: 0 };
+		}
+		if (!subscriptions || subscriptions.length === 0) {
+			return { success: true, sentCount: 0 };
 		}
 
-		if (!subscriptions?.length) {
-			return {
-				success: true,
-				sentCount: 0,
-			};
-		}
+		// Get sender info
+		const senderResult = await getUser(senderUsername);
+		const senderName = senderResult.data?.username || senderUsername;
 
-		const { data: senderProfile } = await supabase
-			.from('users')
-			.select('username')
-			.eq('uid_user', senderUserId)
-			.single();
-
-		const senderName = senderProfile?.username ?? 'Usuario';
-
+		// Send notification to all subscriptions
 		let sentCount = 0;
-
 		for (const subscription of subscriptions) {
 			const result = await sendPushNotification(subscription, {
 				title: `Nuevo mensaje en ${channelName}`,
@@ -60,7 +44,7 @@ export async function sendPushNotificationToChannel(
 				data: {
 					channelId,
 					channelName,
-					senderUserId,
+					senderUsername,
 				},
 			});
 
@@ -69,16 +53,9 @@ export async function sendPushNotificationToChannel(
 			}
 		}
 
-		return {
-			success: true,
-			sentCount,
-		};
+		return { success: true, sentCount };
 	} catch (error: any) {
-		console.error(error);
-
-		return {
-			success: false,
-			error: error.message,
-		};
+		console.error('Error sending push notifications:', error);
+		return { success: false, error: error.message };
 	}
 }

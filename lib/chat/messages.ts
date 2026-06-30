@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getServerSupabaseClient } from '@/lib/get-server-supabase-client';
 import type { Message, MessageWithUser } from '@/lib/chat/chat-types';
 import { sendPushNotificationToChannel } from '@/actions/push/send-notification';
+import { after } from 'next/server';
 
 const TABLE = 'messages';
 
@@ -66,13 +67,36 @@ export async function sendMessageAction(
 
 		if (error) return { success: false, error: error.message };
 
-		const { data: channel } = await supabase
-			.from('channels')
-			.select('name')
-			.eq('id', channelId)
-			.single();
+		after(async () => {
+			try {
+				const { data: channel, error: channelError } = await supabase
+					.from('channels')
+					.select('name')
+					.eq('id', channelId)
+					.single();
 
-		sendPushNotificationToChannel(channelId, user.id, trimmed, channel?.name ?? 'Chat');
+				if (channelError) {
+					console.error('Failed to fetch channel name for push notification:', {
+						channelId,
+						error: channelError.message,
+					});
+					return;
+				}
+
+				await sendPushNotificationToChannel(
+					channelId,
+					data?.users?.username || '',
+					content.trim(),
+					channel?.name || 'Canal'
+				);
+			} catch (error: any) {
+				console.error('Failed to send push notification:', {
+					channelId,
+					username: user.id,
+					error: error.message,
+				});
+			}
+		});
 
 		return {
 			success: true,
