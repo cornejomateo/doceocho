@@ -196,7 +196,7 @@ export function BalanceDetailsModal({
 
 			toast({
 				title: 'Notas actualizadas',
-				description: 'Las notas del saldo se han actualizado exitosamente.',
+				description: 'Las notas del  se han actualizado exitosamente.',
 			});
 
 			setIsEditingNotes(false);
@@ -243,9 +243,9 @@ export function BalanceDetailsModal({
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
 			<DialogContent className="!max-w-5xl !max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
-					<DialogTitle>Detalle del saldo</DialogTitle>
+					<DialogTitle>Detalle del </DialogTitle>
 					<DialogDescription>
-						Información completa del saldo, pagos realizados y estado de la obra.
+						Información completa del , pagos realizados y estado de la obra.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -266,7 +266,7 @@ export function BalanceDetailsModal({
 						{/* Balance Notes Section */}
 						<div className="border rounded-lg p-4">
 							<div className="flex items-center justify-between mb-3">
-								<h4 className="font-semibold">Notas del saldo</h4>
+								<h4 className="font-semibold">Notas del </h4>
 								{!isEditingNotes && (
 									<button
 										onClick={() => setIsEditingNotes(true)}
@@ -283,7 +283,7 @@ export function BalanceDetailsModal({
 									<NotesInput
 										value={balanceNotes}
 										onChange={setBalanceNotes}
-										placeholder="Agregar notas sobre este saldo (opcional)"
+										placeholder="Agregar notas sobre este  (opcional)"
 										rows={3}
 										showLabel={false}
 									/>
