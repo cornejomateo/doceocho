@@ -37,6 +37,7 @@ interface CardDetailModalProps {
 	onOpenChange: (open: boolean) => void;
 	userId: string; // UUID
 	onCardDeleted?: () => void;
+	onCardUpdated?: () => void;
 }
 
 export function CardDetailModal({
@@ -45,6 +46,7 @@ export function CardDetailModal({
 	onOpenChange,
 	userId,
 	onCardDeleted,
+	onCardUpdated,
 }: CardDetailModalProps) {
 	const {
 		card,
@@ -105,6 +107,10 @@ export function CardDetailModal({
 			priority: priority as any,
 		});
 		setHasUnsavedChanges(false);
+		onOpenChange(false);
+		if (onCardUpdated) {
+			onCardUpdated();
+		}
 	};
 
 	const handleClose = () => {

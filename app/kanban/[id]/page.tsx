@@ -59,6 +59,10 @@ export default function BoardPage() {
 		fetchBoard();
 	};
 
+	const handleCardUpdated = () => {
+		fetchBoard();
+	};
+
 	const handleDragEnd = (result: DropResult) => {
 		if (!result.destination) return;
 
@@ -182,6 +186,7 @@ export default function BoardPage() {
 				onOpenChange={setIsCardModalOpen}
 				userId={userId}
 				onCardDeleted={handleCardDeleted}
+				onCardUpdated={handleCardUpdated}
 			/>
 
 			{/* Board Settings Modal */}
