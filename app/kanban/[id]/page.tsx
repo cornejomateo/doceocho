@@ -10,6 +10,7 @@ import { moveCard } from '@/lib/kanban/cards';
 import { KanbanList } from '@/components/business/kanban/kanban-list';
 import { CardDetailModal } from '@/components/business/kanban/card-detail-modal';
 import { BoardSettingsModal } from '@/components/business/kanban/board-settings-modal';
+import { ListCreationModal } from '@/components/business/kanban/list-creation-modal';
 import type { CardFormData } from '@/components/business/kanban/types';
 
 export default function BoardPage() {
@@ -19,16 +20,18 @@ export default function BoardPage() {
 	const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
 	const [isCardModalOpen, setIsCardModalOpen] = useState(false);
 	const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+	const [isListCreationModalOpen, setIsListCreationModalOpen] = useState(false);
 	const userId = '00000000-0000-0000-0000-000000000000'; // TODO: Get actual user UUID from auth
 
 	const { board, lists, loading, error, fetchBoard, addList, editList, removeList, updateBoard } =
 		useBoard(boardId);
 
 	const handleCreateList = async () => {
-		const name = prompt('Nombre de la lista:');
-		if (name) {
-			await addList({ name });
-		}
+		setIsListCreationModalOpen(true);
+	};
+
+	const handleCreateListFromModal = async (name: string) => {
+		await addList({ name });
 	};
 
 	const handleCardClick = (cardId: number) => {
@@ -181,6 +184,13 @@ export default function BoardPage() {
 				open={isSettingsModalOpen}
 				onOpenChange={setIsSettingsModalOpen}
 				onSave={handleSaveSettings}
+			/>
+
+			{/* List Creation Modal */}
+			<ListCreationModal
+				open={isListCreationModalOpen}
+				onOpenChange={setIsListCreationModalOpen}
+				onCreate={handleCreateListFromModal}
 			/>
 		</div>
 	);

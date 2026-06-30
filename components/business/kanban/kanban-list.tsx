@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MoreVertical, Plus, User } from 'lucide-react';
+import { MoreVertical, Plus, User, Trash2 } from 'lucide-react';
 import { KanbanCard } from './kanban-card';
 import { useCards } from './hooks/use-cards';
 import { ListEditModal } from './list-edit-modal';
+import { ListDeleteModal } from './list-delete-modal';
+import { CardCreationModal } from './card-creation-modal';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { listClients } from '@/lib/clients/clients';
 import type { Client } from '@/lib/clients/clients';
@@ -35,6 +37,8 @@ export function KanbanList({
 	const { cards, loading, addCard } = useCards(list.id);
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [showEditModal, setShowEditModal] = useState(false);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [showCardCreationModal, setShowCardCreationModal] = useState(false);
 	const [createMode, setCreateMode] = useState<'normal' | 'client' | null>(null);
 	const [clients, setClients] = useState<Client[]>([]);
 	const [selectedClient, setSelectedClient] = useState<number | null>(null);
@@ -52,15 +56,16 @@ export function KanbanList({
 		}
 	};
 
-	const handleCreateNormalCard = async () => {
-		const title = prompt('Título de la tarjeta:');
-		if (title) {
-			const newCard = await addCard({ title });
-			if (newCard) {
-				onCreateCard({ title });
-			}
-		}
+	const handleCreateNormalCard = () => {
 		setShowCreateModal(false);
+		setShowCardCreationModal(true);
+	};
+
+	const handleCreateCardFromModal = async (title: string) => {
+		const newCard = await addCard({ title });
+		if (newCard) {
+			onCreateCard({ title });
+		}
 	};
 
 	const handleCreateFromClient = async () => {
@@ -78,6 +83,10 @@ export function KanbanList({
 
 	const handleEditList = () => {
 		setShowEditModal(true);
+	};
+
+	const handleDeleteList = () => {
+		setShowDeleteModal(true);
 	};
 
 	const handleSaveListName = (name: string) => {
@@ -104,6 +113,15 @@ export function KanbanList({
 					<span className="text-xs text-muted-foreground">{cards.length}</span>
 					<Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleEditList}>
 						<MoreVertical className="h-4 w-4" />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+						onClick={handleDeleteList}
+						title="Eliminar lista"
+					>
+						<Trash2 className="h-4 w-4" />
 					</Button>
 				</div>
 			</div>
@@ -225,6 +243,21 @@ export function KanbanList({
 				open={showEditModal}
 				onOpenChange={setShowEditModal}
 				onSave={handleSaveListName}
+			/>
+
+			{/* List Delete Modal */}
+			<ListDeleteModal
+				list={list}
+				open={showDeleteModal}
+				onOpenChange={setShowDeleteModal}
+				onConfirm={onDeleteList}
+			/>
+
+			{/* Card Creation Modal */}
+			<CardCreationModal
+				open={showCardCreationModal}
+				onOpenChange={setShowCardCreationModal}
+				onCreate={handleCreateCardFromModal}
 			/>
 		</div>
 	);
