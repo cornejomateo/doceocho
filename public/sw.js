@@ -49,7 +49,6 @@ self.addEventListener('push', (event) => {
 	try {
 		data = event.data.json();
 	} catch (e) {
-		// Fallback to text if JSON parsing fails
 		const text = event.data.text() || 'Nuevo mensaje';
 		data = { body: text, title: 'Notificación' };
 	}
@@ -91,7 +90,6 @@ self.addEventListener('notificationclick', (event) => {
 						return client.focus();
 					}
 				}
-				// Otherwise, open a new window
 				if (clients.openWindow) {
 					return clients.openWindow(targetUrl);
 				}
