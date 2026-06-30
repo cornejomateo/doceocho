@@ -63,7 +63,6 @@ export default function BoardPage() {
 	const handleSaveSettings = (
 		changes: Partial<{ due_date_tolerance_yellow: number; due_date_tolerance_red: number }>
 	) => {
-		console.log('Guardando configuración:', changes);
 		updateBoard(changes);
 	};
 
