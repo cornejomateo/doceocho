@@ -85,9 +85,10 @@ export async function sendMessageAction(
 
 				await sendPushNotificationToChannel(
 					channelId,
-					data?.users?.username || '',
-					content.trim(),
-					channel?.name || 'Canal'
+					user.id,
+					data.users.username,
+					trimmed,
+					channel?.name ?? 'Canal'
 				);
 			} catch (error: any) {
 				console.error('Failed to send push notification:', {
