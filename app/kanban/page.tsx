@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Star, Archive, MoreVertical, Trash2 } from 'lucide-react';
+import { Plus, Search, MoreVertical, Trash2 } from 'lucide-react';
 import { useBoards } from '@/components/business/kanban/hooks/use-boards';
 import type { Board, BoardFormData } from '@/components/business/kanban/types';
 import { BoardCreationModal } from '@/components/business/kanban/board-creation-modal';
@@ -141,10 +141,6 @@ export default function KanbanPage() {
 								<div className="flex items-start justify-between mb-2">
 									<h3 className="font-semibold text-lg">{board.name}</h3>
 									<div className="flex items-center gap-1">
-										{board.is_favorite && (
-											<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										)}
-										{board.is_archived && <Archive className="h-4 w-4 text-muted-foreground" />}
 										<Button
 											variant="ghost"
 											size="icon"

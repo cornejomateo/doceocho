@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Settings, Star, Archive, Users } from 'lucide-react';
+import { ArrowLeft, Plus, Settings, Users } from 'lucide-react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { useBoard } from '@/components/business/kanban/hooks/use-board';
 import { moveCard } from '@/lib/kanban/cards';
@@ -109,12 +109,7 @@ export default function BoardPage() {
 								<ArrowLeft className="h-5 w-5" />
 							</Button>
 							<div>
-								<h1 className="text-2xl font-bold flex items-center gap-2">
-									{board.name}
-									{board.is_favorite && (
-										<Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-									)}
-								</h1>
+								<h1 className="text-2xl font-bold">{board.name}</h1>
 								{board.description && (
 									<p className="text-sm text-muted-foreground">{board.description}</p>
 								)}
@@ -123,12 +118,6 @@ export default function BoardPage() {
 						<div className="flex items-center gap-2">
 							<Button variant="ghost" size="icon">
 								<Users className="h-5 w-5" />
-							</Button>
-							<Button variant="ghost" size="icon">
-								<Star className="h-5 w-5" />
-							</Button>
-							<Button variant="ghost" size="icon">
-								<Archive className="h-5 w-5" />
 							</Button>
 							<Button
 								variant="ghost"
