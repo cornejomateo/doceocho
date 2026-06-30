@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Star, Archive, MoreVertical } from 'lucide-react';
+import { Plus, Search, Star, Archive, MoreVertical, Trash2 } from 'lucide-react';
 import { useBoards } from '@/components/business/kanban/hooks/use-boards';
 import type { Board, BoardFormData } from '@/components/business/kanban/types';
 import { BoardCreationModal } from '@/components/business/kanban/board-creation-modal';
+import { BoardDeleteModal } from '@/components/business/kanban/board-delete-modal';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { getSupabaseClient } from '@/lib/supabase-client';
 
@@ -17,8 +18,18 @@ export default function KanbanPage() {
 	const supabase = getSupabaseClient();
 	const [userId, setUserId] = useState<string | null>(null);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-	const { boards, loading, error, fetchBoards, addBoard, toggleFavorite, archiveBoard, editBoard } =
-		useBoards();
+	const [boardToDelete, setBoardToDelete] = useState<Board | null>(null);
+	const {
+		boards,
+		loading,
+		error,
+		fetchBoards,
+		addBoard,
+		toggleFavorite,
+		archiveBoard,
+		editBoard,
+		removeBoard,
+	} = useBoards();
 
 	useEffect(() => {
 		// Get current user UUID from Supabase
@@ -59,6 +70,18 @@ export default function KanbanPage() {
 		const newName = prompt('Nuevo nombre del tablero:', board.name);
 		if (newName && newName.trim()) {
 			editBoard(board.id, { name: newName.trim() });
+		}
+	};
+
+	const handleDeleteBoard = (board: Board, e: React.MouseEvent) => {
+		e.stopPropagation();
+		setBoardToDelete(board);
+	};
+
+	const handleConfirmDelete = () => {
+		if (boardToDelete) {
+			removeBoard(boardToDelete.id);
+			setBoardToDelete(null);
 		}
 	};
 
@@ -120,6 +143,15 @@ export default function KanbanPage() {
 										<Button
 											variant="ghost"
 											size="icon"
+											className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+											onClick={(e) => handleDeleteBoard(board, e)}
+											title="Eliminar tablero"
+										>
+											<Trash2 className="h-4 w-4" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
 											className="h-6 w-6"
 											onClick={(e) => handleEditBoard(board, e)}
 											title="Editar nombre"
@@ -147,6 +179,14 @@ export default function KanbanPage() {
 				open={isCreateModalOpen}
 				onOpenChange={setIsCreateModalOpen}
 				onCreate={handleCreateBoard}
+			/>
+
+			{/* Board Delete Modal */}
+			<BoardDeleteModal
+				board={boardToDelete}
+				open={boardToDelete !== null}
+				onOpenChange={(open) => !open && setBoardToDelete(null)}
+				onConfirm={handleConfirmDelete}
 			/>
 		</DashboardLayout>
 	);
