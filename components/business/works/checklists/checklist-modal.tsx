@@ -13,11 +13,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Plus, Trash2, Loader2, CheckCircle } from 'lucide-react';
-import { Checklist } from '@/lib/checklists/checklists';
+import { Checklist, getItemsByChecklistId } from '@/lib/checklists/checklists';
 import { toast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { translateError } from '@/lib/error-translator';
 import { useChecklistModal } from '@/hooks/clients/use-checklist-modal';
+import { DEFAULT_TYPES } from '@/constants/budgets/constants';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 
 type ChecklistModalProps = {
 	workId: number;
@@ -28,14 +36,22 @@ type ChecklistModalProps = {
 	onSave: (checklist: {
 		name?: string | null;
 		description?: string | null;
-		items: Array<{ name: string; completed: boolean }>;
+		items: Array<{ description: string }>;
+		width?: number | null;
+		height?: number | null;
+		depth?: string | null;
+		type_furniture?: string | null;
 	}) => Promise<void>;
 	onUpdate?: (
 		checklistId: number,
 		checklist: {
 			name?: string | null;
 			description?: string | null;
-			items: Array<{ name: string; done: boolean }>;
+			items: Array<{ description: string }>;
+			width?: number | null;
+			height?: number | null;
+			depth?: string | null;
+			type_furniture?: string | null;
 		}
 	) => void;
 };
@@ -70,12 +86,21 @@ export function ChecklistModal({
 
 	useEffect(() => {
 		if (isEditMode && checklistToEdit) {
-			initializeChecklist(checklistToEdit);
+			getItemsByChecklistId(checklistToEdit.id).then(({ data }) => {
+				initializeChecklist(checklistToEdit, data ?? undefined);
+			});
 		}
 	}, [checklistToEdit, isEditMode]);
 
-	const { checklist, resetForm, updateField, addItem, removeItem, initializeChecklist } =
-		useChecklistModal();
+	const {
+		checklist,
+		resetForm,
+		updateField,
+		addItem,
+		removeItem,
+		updateItem,
+		initializeChecklist,
+	} = useChecklistModal();
 
 	const handleSaveAndNext = async () => {
 		setIsCreating(true);
@@ -86,8 +111,7 @@ export function ChecklistModal({
 				onUpdate(checklistToEdit.id, {
 					...checklist,
 					items: checklist.items.map((item) => ({
-						name: item.name,
-						done: item.completed,
+						description: item.description,
 					})),
 				});
 				toast({
@@ -182,6 +206,73 @@ export function ChecklistModal({
 										className="h-10"
 									/>
 								</div>
+
+								<div className="space-y-4">
+									<Label>Material</Label>
+									<Select
+										value={checklist.type_furniture || ''}
+										onValueChange={(value) => updateField('type_furniture', value)}
+									>
+										<SelectTrigger className="w-full h-10">
+											<SelectValue placeholder="Seleccionar tipo" />
+										</SelectTrigger>
+										<SelectContent>
+											{DEFAULT_TYPES.map((t: string) => (
+												<SelectItem key={t} value={t}>
+													{t}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-3 gap-4">
+								<div className="space-y-2">
+									<Label htmlFor="width" className="text-sm">
+										Ancho (cm)
+									</Label>
+									<Input
+										id="width"
+										type="number"
+										placeholder="0"
+										value={checklist.width ?? ''}
+										onChange={(e) =>
+											updateField('width', e.target.value ? Number(e.target.value) : null)
+										}
+										className="h-10"
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="height" className="text-sm">
+										Alto (cm)
+									</Label>
+									<Input
+										id="height"
+										type="number"
+										placeholder="0"
+										value={checklist.height ?? ''}
+										onChange={(e) =>
+											updateField('height', e.target.value ? Number(e.target.value) : null)
+										}
+										className="h-10"
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="depth" className="text-sm">
+										Profundidad
+									</Label>
+									<Input
+										id="depth"
+										type="number"
+										placeholder="0"
+										value={checklist.depth ?? ''}
+										onChange={(e) =>
+											updateField('depth', e.target.value ? Number(e.target.value) : null)
+										}
+										className="h-10"
+									/>
+								</div>
 							</div>
 						</CardHeader>
 
@@ -195,15 +286,19 @@ export function ChecklistModal({
 									{checklist.items.map((item, itemIndex) => (
 										<div
 											key={itemIndex}
-											className="flex items-center justify-between p-3 bg-muted/20 rounded-lg border"
+											className="flex items-center gap-2 p-3 bg-muted/20 rounded-lg border"
 										>
-											<span className="text-sm font-medium">{item.name}</span>
+											<Input
+												value={item.description}
+												onChange={(e) => updateItem(itemIndex, e.target.value)}
+												className="flex-1 border-0 bg-transparent focus-visible:ring-1 text-sm h-8"
+											/>
 											<Button
 												type="button"
 												variant="ghost"
 												size="sm"
 												onClick={() => removeItem(itemIndex)}
-												className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+												className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 shrink-0"
 											>
 												<Trash2 className="h-4 w-4" />
 											</Button>

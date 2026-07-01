@@ -21,7 +21,17 @@ import {
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import { Checklist, editChecklist, deleteChecklist } from '@/lib/checklists/checklists';
+import {
+	Checklist,
+	ChecklistItem,
+	deleteChecklist,
+	editChecklist,
+	getItemsByChecklistIds,
+	updateChecklistItem,
+	setAllChecklistItems as setAllItemsApi,
+	deleteChecklistItemsByChecklistId,
+	createChecklistItems,
+} from '@/lib/checklists/checklists';
 import { updateWorkGeneralNote } from '@/lib/works/works';
 import { ChecklistPDFButton } from '@/components/ui/checklist-pdf-button';
 import { PostItNote } from '@/components/ui/post-it-note';
@@ -71,95 +81,94 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 	} = useWorkChecklistData(workId);
 
 	const [checklists, setChecklists] = useState<Checklist[]>(fetchedChecklists ?? []);
+	const [itemsMap, setItemsMap] = useState<Record<number, ChecklistItem[]>>({});
 
 	useEffect(() => {
 		if (fetchedChecklists) {
 			setChecklists(fetchedChecklists);
+			const ids = fetchedChecklists.map((c) => c.id);
+			if (ids.length > 0) {
+				getItemsByChecklistIds(ids).then(({ data }) => {
+					if (data) {
+						const map: Record<number, ChecklistItem[]> = {};
+						for (const item of data) {
+							if (!map[item.checklist_id]) map[item.checklist_id] = [];
+							map[item.checklist_id].push(item);
+						}
+						setItemsMap(map);
+					}
+				});
+			}
 		}
 	}, [fetchedChecklists]);
 
-	const toggleChecklistItem = async (checklistId: number, itemIndex: number) => {
-		// Update local state optimistically
-		const updatedChecklists = checklists.map((checklist) => {
-			if (checklist.id === checklistId) {
-				const updatedItems = [...(checklist.items || [])];
-				if (updatedItems[itemIndex]) {
-					updatedItems[itemIndex] = {
-						...updatedItems[itemIndex],
-						done: !updatedItems[itemIndex].done,
-					};
-				}
-				return { ...checklist, items: updatedItems };
-			}
-			return checklist;
-		});
+	const toggleChecklistItem = async (checklistId: number, itemId: number) => {
+		const item = itemsMap[checklistId]?.find((i) => i.id === itemId);
+		if (!item) return;
 
-		setChecklists(updatedChecklists);
+		const newDone = !item.done;
 
-		// Save to database
+		// Optimistic update
+		setItemsMap((prev) => ({
+			...prev,
+			[checklistId]: (prev[checklistId] || []).map((i) =>
+				i.id === itemId ? { ...i, done: newDone } : i
+			),
+		}));
+
 		try {
 			setSaving(true);
-			const targetChecklist = updatedChecklists.find((c) => c.id === checklistId);
-			if (targetChecklist) {
-				const { error } = await editChecklist(checklistId, {
-					items: targetChecklist.items,
+			const { error } = await updateChecklistItem(itemId, { done: newDone });
+			if (error) {
+				// Revert
+				setItemsMap((prev) => ({
+					...prev,
+					[checklistId]: (prev[checklistId] || []).map((i) =>
+						i.id === itemId ? { ...i, done: !newDone } : i
+					),
+				}));
+				toast({
+					title: 'Error al actualizar item',
+					description: translateError(error),
+					variant: 'destructive',
 				});
-
-				if (error) {
-					const errorMessage = translateError(error);
-					toast({
-						title: 'Error al actualizar checklist',
-						description:
-							errorMessage || 'No se pudo actualizar el checklist. Por favor, intenta nuevamente.',
-						variant: 'destructive',
-					});
-					// Revert on error
-					setChecklists(checklists);
-				}
 			}
 		} catch (error) {
-			const errorMessage = translateError(error);
-			toast({
-				title: 'Error al actualizar checklist',
-				description:
-					errorMessage || 'No se pudo actualizar el checklist. Por favor, intenta nuevamente.',
-				variant: 'destructive',
-			});
-			// Revert on error
-			setChecklists(checklists);
+			setItemsMap((prev) => ({
+				...prev,
+				[checklistId]: (prev[checklistId] || []).map((i) =>
+					i.id === itemId ? { ...i, done: !newDone } : i
+				),
+			}));
 		} finally {
 			setSaving(false);
 		}
 	};
 
 	const setAllChecklistItems = async (checklistId: number, done: boolean) => {
-		const previousChecklists = checklists;
+		const previousItems = itemsMap[checklistId];
 
-		// Update local state optimistically
-		const updatedChecklists = checklists.map((checklist) => {
-			if (checklist.id !== checklistId) return checklist;
-			const items = (checklist.items || []).map((item) => ({ ...item, done }));
-			return { ...checklist, items };
-		});
-		setChecklists(updatedChecklists);
+		// Optimistic update
+		setItemsMap((prev) => ({
+			...prev,
+			[checklistId]: (prev[checklistId] || []).map((i) => ({ ...i, done })),
+		}));
 
-		// Persist
 		try {
 			setSaving(true);
-			const targetChecklist = updatedChecklists.find((c) => c.id === checklistId);
-			if (targetChecklist) {
-				const { error } = await editChecklist(checklistId, { items: targetChecklist.items });
-				if (error) {
-					console.error('Error saving checklist bulk update:', error);
-					setChecklists(previousChecklists);
-				}
+			const { error } = await setAllItemsApi(checklistId, done);
+			if (error) {
+				setItemsMap((prev) => ({ ...prev, [checklistId]: previousItems }));
 			}
 		} catch (error) {
-			console.error('Error saving checklist bulk update:', error);
-			setChecklists(previousChecklists);
+			setItemsMap((prev) => ({ ...prev, [checklistId]: previousItems }));
 		} finally {
 			setSaving(false);
 		}
+	};
+
+	const handleReorderItems = (checklistId: number, items: ChecklistItem[]) => {
+		setItemsMap((prev) => ({ ...prev, [checklistId]: items }));
 	};
 
 	const updateChecklistNotes = (checklistId: number, notes: string) => {
@@ -204,6 +213,7 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 		}
 
 		let description = '';
+		const doneItems = (itemsMap[checklist.id] || []).filter((item) => item.done);
 
 		if (mode === 'claim') {
 			description = checklist.notes!;
@@ -211,14 +221,12 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 			// Build description for daily activity
 			description = `${checklist.name || 'Checklist'}\n\n`;
 
-			const items = checklist.items?.filter((item) => item.done) || [];
-
-			if (items.length) {
+			if (doneItems.length) {
 				description += 'Items:\n';
 
-				items.forEach((item) => {
+				doneItems.forEach((item) => {
 					const status = item.done ? '✓' : '✗';
-					description += `${status} ${item.name}\n`;
+					description += `${status} ${item.description}\n`;
 				});
 			}
 		}
@@ -312,31 +320,46 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 	const handleUpdateChecklist = async (checklistId: number, updates: any) => {
 		try {
 			setSaving(true);
-			// Transform items to include key property
-			const transformedUpdates = {
-				...updates,
-				items: updates.items?.map((item: any, idx: number) => ({
-					name: item.name,
-					done: item.done,
-					key: idx,
-				})),
-			};
-			const { error } = await editChecklist(checklistId, transformedUpdates);
-			if (error) {
-				const errorMessage = translateError(error);
+
+			const { error: checklistError } = await editChecklist(checklistId, {
+				name: updates.name,
+				description: updates.description,
+				width: updates.width,
+				height: updates.height,
+				depth: updates.depth,
+				type_furniture: updates.type_furniture,
+			});
+			if (checklistError) {
 				toast({
 					title: 'Error al actualizar checklist',
-					description:
-						errorMessage || 'No se pudo actualizar el checklist. Por favor, intenta nuevamente.',
+					description: translateError(checklistError),
 					variant: 'destructive',
 				});
 				return;
 			}
 
-			// Update local state
-			setChecklists((prev) =>
-				prev.map((c) => (c.id === checklistId ? { ...c, ...transformedUpdates } : c))
-			);
+			// Sync items: delete all and recreate
+			const { error: deleteError } = await deleteChecklistItemsByChecklistId(checklistId);
+			if (deleteError) throw deleteError;
+
+			if (updates.items?.length > 0) {
+				const { error: createError } = await createChecklistItems(
+					updates.items.map((item: any) => ({
+						description: item.description,
+						checklist_id: checklistId,
+					}))
+				);
+				if (createError) throw createError;
+			}
+
+			// Reload items
+			const { data: newItems } = await getItemsByChecklistIds([checklistId]);
+			if (newItems) {
+				setItemsMap((prev) => ({ ...prev, [checklistId]: newItems }));
+			}
+
+			// Update checklist in local state
+			setChecklists((prev) => prev.map((c) => (c.id === checklistId ? { ...c, ...updates } : c)));
 			setIsEditModalOpen(false);
 			setChecklistToEdit(null);
 			toast({
@@ -392,7 +415,7 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 
 	const totalProgress =
 		checklists.reduce((acc, checklist) => {
-			return acc + calculateProgress(checklist.items || []);
+			return acc + calculateProgress(itemsMap[checklist.id] || []);
 		}, 0) / (checklists.length || 1);
 
 	return (
@@ -461,11 +484,11 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 									<ChecklistCard
 										key={checklist.id}
 										checklist={checklist}
+										items={itemsMap[checklist.id] || []}
 										index={index}
 										user={user}
 										saving={saving}
 										loading={loading}
-										addingClaim={addingClaim}
 										savingNotes={savingNotes}
 										onToggleItem={toggleChecklistItem}
 										onSetAllItems={setAllChecklistItems}
@@ -473,6 +496,7 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 										onAddEntry={handleAddChecklistEntry}
 										onEdit={handleEditChecklist}
 										onDelete={setChecklistToDelete}
+										onReorderItems={handleReorderItems}
 										clientId={clientData?.id}
 									/>
 								))}
@@ -482,6 +506,7 @@ export function ChecklistCompletionModal({ workId, children }: ChecklistCompleti
 							<div className="flex flex-col sm:flex-row justify-center gap-3 pt-8 border-t">
 								<ChecklistPDFButton
 									checklists={checklists}
+									checklistItems={itemsMap}
 									workId={workId}
 									clientName={clientData?.name || 'Cliente sin nombre'}
 									disabled={saving}

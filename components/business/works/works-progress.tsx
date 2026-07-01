@@ -2,9 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { ChecklistModal } from '@/components/business/works/checklists/checklist-modal';
-import { createChecklist, getChecklistsByWorkId } from '@/lib/checklists/checklists';
+import {
+	createChecklist,
+	createChecklistItems,
+	getChecklistsByWorkId,
+} from '@/lib/checklists/checklists';
 import { updateWorkGeneralNote } from '@/lib/works/works';
 import { type StatusFilter } from '@/constants/type-config';
 import { EmailNotificationModal } from '@/components/ui/email-notification-modal';
@@ -96,23 +100,36 @@ export function WorksOpenings() {
 		const { data: existingChecklists } = await getChecklistsByWorkId(checklistWork?.id || -1);
 		const existingCount = existingChecklists?.length || 0;
 
-		const { error } = await createChecklist({
+		const { data: newChecklist, error } = await createChecklist({
 			work_id: checklistWork?.id || null,
 			name: checklist.name || `Mobiliario ${existingCount + 1}`,
 			description: checklist.description || '',
 			notes: '',
-			items: checklist.items.map((item: any) => ({
-				name: item.name,
-				done: item.completed,
-				key: 0,
-			})),
 			progress: checklist.items.length > 0 ? 0 : 100,
+			width: checklist.width ?? null,
+			height: checklist.height ?? null,
+			depth: checklist.depth ?? null,
+			type_furniture: checklist.type_furniture ?? null,
 		});
 
 		if (error) {
 			const errorMessage = translateError(error);
 			console.error('Error creating checklist:', errorMessage);
 			throw error;
+		}
+
+		if (newChecklist && checklist.items.length > 0) {
+			const { error: itemsError } = await createChecklistItems(
+				checklist.items.map((item: any) => ({
+					description: item.description,
+					checklist_id: newChecklist.id,
+				}))
+			);
+			if (itemsError) {
+				const errorMessage = translateError(itemsError);
+				console.error('Error creating checklist items:', errorMessage);
+				throw itemsError;
+			}
 		}
 
 		reload();
@@ -162,21 +179,30 @@ export function WorksOpenings() {
 			/>
 
 			{/* Installations list */}
-			<div className="space-y-4">
-				{paginatedData.map((installation) => {
-					return (
-						<WorkCard
-							key={installation.id}
-							work={installation}
-							user={user}
-							onOpenEmail={openEmail}
-							onOpenWhatsApp={openWhatsApp}
-							onOpenChecklist={openChecklist}
-							onUpdateGeneralNote={handleUpdateGeneralNote}
-						/>
-					);
-				})}
-			</div>
+			{loading ? (
+				<div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+					<Loader2 className="h-5 w-5 animate-spin" />
+					<span>Cargando obras</span>
+				</div>
+			) : paginatedData.length === 0 ? (
+				<p className="text-center py-12 text-muted-foreground">No hay obras para mostrar</p>
+			) : (
+				<div className="space-y-4">
+					{paginatedData.map((installation) => {
+						return (
+							<WorkCard
+								key={installation.id}
+								work={installation}
+								user={user}
+								onOpenEmail={openEmail}
+								onOpenWhatsApp={openWhatsApp}
+								onOpenChecklist={openChecklist}
+								onUpdateGeneralNote={handleUpdateGeneralNote}
+							/>
+						);
+					})}
+				</div>
+			)}
 
 			{/* Pagination */}
 			{totalPages > 1 && (

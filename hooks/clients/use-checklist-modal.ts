@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Work } from '@/lib/works/works';
-import { Checklist } from '@/lib/checklists/checklists';
+import { Checklist, ChecklistItem } from '@/lib/checklists/checklists';
 
 export function useChecklistModal() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -19,21 +19,32 @@ export function useChecklistModal() {
 	const [checklist, setChecklist] = useState<{
 		name: string | null;
 		description: string | null;
-		items: { name: string; completed: boolean }[];
+		items: { description: string }[];
+		width: number | null;
+		height: number | null;
+		depth: string | null;
+		type_furniture: string | null;
 	}>({
 		name: null,
 		description: null,
 		items: [],
+		width: null,
+		height: null,
+		depth: null,
+		type_furniture: null,
 	});
 
-	const initializeChecklist = (checklistToEdit: Checklist) => {
+	const initializeChecklist = (checklistToEdit: Checklist, existingItems?: ChecklistItem[]) => {
 		setChecklist({
 			name: checklistToEdit.name || null,
 			description: checklistToEdit.description || null,
-			items: (checklistToEdit.items || []).map((item) => ({
-				name: item.name,
-				completed: item.done || false,
+			items: (existingItems || []).map((item) => ({
+				description: item.description,
 			})),
+			width: checklistToEdit.width ?? null,
+			height: checklistToEdit.height ?? null,
+			depth: checklistToEdit.depth ?? null,
+			type_furniture: checklistToEdit.type_furniture ?? null,
 		});
 	};
 
@@ -42,6 +53,10 @@ export function useChecklistModal() {
 			name: null,
 			description: null,
 			items: [],
+			width: null,
+			height: null,
+			depth: null,
+			type_furniture: null,
 		});
 	};
 
@@ -52,12 +67,12 @@ export function useChecklistModal() {
 		}));
 	};
 
-	const addItem = (name: string) => {
-		if (!name.trim()) return;
+	const addItem = (description: string) => {
+		if (!description.trim()) return;
 
 		setChecklist((prev) => ({
 			...prev,
-			items: [...prev.items, { name: name.trim(), completed: false }],
+			items: [...prev.items, { description: description.trim() }],
 		}));
 	};
 
@@ -65,6 +80,13 @@ export function useChecklistModal() {
 		setChecklist((prev) => ({
 			...prev,
 			items: prev.items.filter((_, i) => i !== index),
+		}));
+	};
+
+	const updateItem = (index: number, description: string) => {
+		setChecklist((prev) => ({
+			...prev,
+			items: prev.items.map((item, i) => (i === index ? { ...item, description } : item)),
 		}));
 	};
 
@@ -77,6 +99,7 @@ export function useChecklistModal() {
 		updateField,
 		addItem,
 		removeItem,
+		updateItem,
 		resetForm,
 		initializeChecklist,
 	};
