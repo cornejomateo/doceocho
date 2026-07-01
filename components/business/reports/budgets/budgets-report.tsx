@@ -15,35 +15,16 @@ import { useOptimizedRealtime } from '@/hooks/use-optimized-realtime';
 import { formatCurrency, formatCurrencyUSD } from '@/utils/formats-money';
 import { formatShortDate } from '@/utils/format-date';
 import { formatBudgetStatus } from '@/helpers/budgets/formats';
-import {
-	BUDGETS_REPORT_COLUMNS,
-	BUDGETS_REPORT_TITLE,
-	BUDGET_STATUS,
-} from '@/constants/budgets/budgets-report';
+import { BUDGETS_REPORT_COLUMNS, BUDGETS_REPORT_TITLE } from '@/constants/budgets/budgets-report';
 import { BudgetWithWorkAndClient } from '@/lib/budgets/budgets';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
 import { listBudgetsForReport } from '@/lib/reports/budgets/methods';
 import { Button } from '@/components/ui/button';
-import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
-
-type BudgetReportRow = {
-	id: number;
-	date: string;
-	dateRaw: Date;
-	client: string;
-	number: string;
-	type: string;
-	work: string;
-	amountArs: number;
-	amountUsd: number;
-	status: string;
-};
+import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, Filter, Download } from 'lucide-react';
+import type { BudgetReportRow } from './types';
+import { useBudgetFilters } from './hooks/use-budget-filters';
+import { BudgetFilterDialog } from './budget-filter-dialog';
+import { applyBudgetFilters, hasActiveFilters } from '@/helpers/budgets/filter-budgets';
+import { generateBudgetsPDF, getFiltersDescription } from '@/helpers/budgets/generate-budget-pdf';
 
 export function BudgetsReport() {
 	const [searchTerm, setSearchTerm] = useState('');
@@ -51,7 +32,9 @@ export function BudgetsReport() {
 	const [sortField, setSortField] = useState<keyof BudgetReportRow>('date');
 	const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 	const [typeFilter, setTypeFilter] = useState<string>('all');
-	const [statusFilter, setStatusFilter] = useState<string>('all');
+
+	const { filters, updateFilters, resetFilters, filterDialogOpen, setFilterDialogOpen } =
+		useBudgetFilters();
 
 	const {
 		data: budgets,
@@ -105,14 +88,12 @@ export function BudgetsReport() {
 	const filteredRows = useMemo(() => {
 		let filtered = rows;
 
+		// Apply advanced filters (status, amount ranges)
+		filtered = applyBudgetFilters(filtered, filters);
+
 		// Filter by type
 		if (typeFilter !== 'all') {
 			filtered = filtered.filter((r) => r.type === typeFilter);
-		}
-
-		// Filter by status
-		if (statusFilter !== 'all') {
-			filtered = filtered.filter((r) => r.status === statusFilter);
 		}
 
 		// Filter by text
@@ -150,7 +131,7 @@ export function BudgetsReport() {
 			if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
 			return 0;
 		});
-	}, [rows, searchTerm, sortField, sortDirection, typeFilter, statusFilter]);
+	}, [rows, searchTerm, sortField, sortDirection, typeFilter, filters]);
 
 	const handleSort = (field: keyof BudgetReportRow) => {
 		if (sortField === field) {
@@ -159,6 +140,11 @@ export function BudgetsReport() {
 			setSortField(field);
 			setSortDirection('asc');
 		}
+	};
+
+	const handleDownloadPDF = () => {
+		const filtersDesc = getFiltersDescription(filters);
+		generateBudgetsPDF(filteredRows, filtersDesc);
 	};
 
 	const getSortIcon = (field: keyof BudgetReportRow) => {
@@ -181,17 +167,14 @@ export function BudgetsReport() {
 				</div>
 
 				<div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-					<Select value={statusFilter} onValueChange={setStatusFilter}>
-						<SelectTrigger className="w-full sm:w-[140px]">
-							<SelectValue placeholder="Estado" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">Todos los estados</SelectItem>
-							<SelectItem value={BUDGET_STATUS.PENDING}>{BUDGET_STATUS.PENDING}</SelectItem>
-							<SelectItem value={BUDGET_STATUS.ACCEPTED}>{BUDGET_STATUS.ACCEPTED}</SelectItem>
-							<SelectItem value={BUDGET_STATUS.SOLD}>{BUDGET_STATUS.SOLD}</SelectItem>
-						</SelectContent>
-					</Select>
+					<Button
+						variant={hasActiveFilters(filters) ? 'default' : 'outline'}
+						onClick={() => setFilterDialogOpen(true)}
+						className="gap-2"
+					>
+						<Filter className="h-4 w-4" />
+						Filtros
+					</Button>
 
 					<Input
 						placeholder="Buscar por cliente, obra, número..."
@@ -207,10 +190,16 @@ export function BudgetsReport() {
 					<div className="text-sm text-muted-foreground">
 						{loading ? 'Cargando...' : `${filteredRows.length} presupuesto(s)`}
 					</div>
-					<Button variant="outline" onClick={() => refresh()} className="gap-2">
-						<RefreshCw className="h-4 w-4" />
-						Actualizar
-					</Button>
+					<div className="flex items-center gap-2">
+						<Button variant="outline" onClick={handleDownloadPDF} className="gap-2">
+							<Download className="h-4 w-4" />
+							Descargar PDF
+						</Button>
+						<Button variant="outline" onClick={() => refresh()} className="gap-2">
+							<RefreshCw className="h-4 w-4" />
+							Actualizar
+						</Button>
+					</div>
 				</div>
 
 				<Table>
@@ -325,6 +314,14 @@ export function BudgetsReport() {
 					</TableBody>
 				</Table>
 			</Card>
+
+			<BudgetFilterDialog
+				open={filterDialogOpen}
+				onOpenChange={setFilterDialogOpen}
+				filters={filters}
+				onFiltersChange={updateFilters}
+				onReset={resetFilters}
+			/>
 		</div>
 	);
 }

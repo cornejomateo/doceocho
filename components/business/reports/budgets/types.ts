@@ -59,3 +59,32 @@ export interface ClientBudgetsTabState {
 	editModalOpen: boolean;
 	editingBudget: BudgetWithWork | null;
 }
+
+export interface BudgetReportRow {
+	id: number;
+	date: string;
+	dateRaw: Date;
+	client: string;
+	number: string;
+	type: string;
+	work: string;
+	amountArs: number;
+	amountUsd: number;
+	status: string;
+}
+
+export interface BudgetFilters {
+	status: string;
+	minAmountArs: string;
+	maxAmountArs: string;
+	minAmountUsd: string;
+	maxAmountUsd: string;
+}
+
+export interface BudgetFilterDialogProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	filters: BudgetFilters;
+	onFiltersChange: (filters: BudgetFilters) => void;
+	onReset: () => void;
+}

@@ -1,13 +1,17 @@
 import { Card } from '@/components/ui/card';
 import { useLoadEvents } from '@/hooks/calendar/use-load-events';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getClientsCount } from '@/lib/clients/clients';
-import { getWorksInProgressCount } from '@/lib/works/works';
+import { getWorksInProgressCount, Work } from '@/lib/works/works';
 import { getSoldBudgetsCount } from '@/lib/reports/budgets/methods';
+import { getSupabaseClient } from '@/lib/supabase-client';
 
 export function DashboardHome() {
 	const { events, isLoading } = useLoadEvents();
-	const overdueEvents = events.filter((event) => event.is_overdue === true);
+	const overdueEvents = useMemo(
+		() => events.filter((event) => event.is_overdue === true),
+		[events]
+	);
 	const [totalClients, setTotalClients] = useState(0);
 	const [worksInProgress, setWorksInProgress] = useState(0);
 	const [soldBudgets, setSoldBudgets] = useState(0);
@@ -42,7 +46,35 @@ export function DashboardHome() {
 		};
 	}, []);
 
+	const [workDataMap, setWorkDataMap] = useState<Record<number, Work>>({});
+	const [clientDataMap, setClientDataMap] = useState<Record<number, any>>({});
 	const [displayedCount, setDisplayedCount] = useState(5);
+
+	useEffect(() => {
+		const workIds = [...new Set(overdueEvents.filter((e) => e.work_id).map((e) => e.work_id!))];
+		if (workIds.length === 0) {
+			setWorkDataMap({});
+			return;
+		}
+		const supabase = getSupabaseClient();
+		supabase
+			.from('works')
+			.select('*')
+			.in('id', workIds)
+			.then(({ data, error }) => {
+				if (error) {
+					console.error('Error fetching work data:', error);
+					return;
+				}
+				if (data) {
+					const map: Record<number, Work> = {};
+					data.forEach((w: Work) => {
+						map[w.id] = w;
+					});
+					setWorkDataMap(map);
+				}
+			});
+	}, [overdueEvents]);
 
 	const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
 		const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
@@ -77,31 +109,49 @@ export function DashboardHome() {
 						{isLoading ? (
 							<p className="text-sm text-muted-foreground">Cargando eventos...</p>
 						) : overdueEvents.length > 0 ? (
-							visibleEvents.map((event) => (
-								<div
-									key={event.id}
-									className="group flex gap-4 rounded-xl border border-red-500/20 bg-red-500/5 p-4 transition hover:bg-red-500/10"
-								>
-									<p>-</p>
+							visibleEvents.map((event) => {
+								const work = event.work_id ? workDataMap[event.work_id] : null;
+								const locationParts = [
+									work?.locality,
+									work?.address,
+									work?.zone,
+									work?.hood,
+								].filter(Boolean);
+								const locationDisplay =
+									locationParts.length > 0 ? locationParts.join(' · ') : event.work_location || '';
+								const client = event.client_id ? clientDataMap[event.client_id] : null;
+								const clientName = client
+									? `${client.last_name}, ${client.name}`
+									: event.client_name;
 
-									<div className="flex-1 space-y-1 min-w-0">
-										<div className="flex items-center justify-between gap-2">
-											<p className="text-sm font-medium truncate">{event.title}</p>
-											<span className="text-xs rounded-md bg-background px-2 py-0.5 text-muted-foreground border">
-												{event.type}
-											</span>
+								return (
+									<div
+										key={event.id}
+										className="group flex gap-4 rounded-xl border border-red-500/20 bg-red-500/5 p-4 transition hover:bg-red-500/10"
+									>
+										<p>-</p>
+
+										<div className="flex-1 space-y-1 min-w-0">
+											<div className="flex items-center justify-between gap-2">
+												<p className="text-sm font-medium truncate">{event.title}</p>
+												<span className="text-xs rounded-md bg-background px-2 py-0.5 text-muted-foreground border">
+													{event.type}
+												</span>
+											</div>
+
+											{clientName && (
+												<p className="text-sm text-muted-foreground truncate">{clientName}</p>
+											)}
+
+											{locationDisplay && (
+												<p className="text-xs text-muted-foreground truncate">{locationDisplay}</p>
+											)}
+
+											<p className="text-xs text-red-600 pt-1">Venció el {event.date}</p>
 										</div>
-
-										<p className="text-sm text-muted-foreground truncate">{event.client}</p>
-
-										<p className="text-xs text-muted-foreground truncate">
-											{event.location} · {event.address}
-										</p>
-
-										<p className="text-xs text-red-600 pt-1">Venció el {event.date}</p>
 									</div>
-								</div>
-							))
+								);
+							})
 						) : (
 							<p className="text-sm text-muted-foreground text-center">No hay eventos vencidos</p>
 						)}
